@@ -1,0 +1,100 @@
+\hypertarget{display_8h}{
+\section{display/display.h File Reference}
+\label{display_8h}\index{display/display.h@{display/display.h}}
+}
+Display manager. 
+
+{\tt \#include $<$op.h$>$}\par
+\subsection*{Data Structures}
+\begin{CompactItemize}
+\item 
+struct \hyperlink{structdisplay}{display}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void \hyperlink{display_8h_c1d421d8231a87be44954076badad7ad}{init\_\-display\_\-driver} ()
+\item 
+void \hyperlink{display_8h_477e81f40f0d2b23cb1c0a2d7882fba5}{show\_\-display} (\hyperlink{structdisplay}{display} $\ast$d)
+\item 
+void \hyperlink{display_8h_db4e9ac8bb38a1fb86f5058d43cd2bc7}{hide\_\-display} ()
+\item 
+void \hyperlink{display_8h_5aaa4d219fc59ca1e37606cc2f17d306}{wait\_\-display\_\-refresh} ()
+\item 
+void \hyperlink{display_8h_fab00fe4d7b664a2be89be3c63876d9e}{jump\_\-gpu\_\-subroutine} (void $\ast$addr)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+long \hyperlink{display_8h_3070edaacfc862ded073b900e4a8d287}{\_\-GPU\_\-FREE\_\-RAM}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Display manager. 
+
+
+
+\subsection{Function Documentation}
+\hypertarget{display_8h_db4e9ac8bb38a1fb86f5058d43cd2bc7}{
+\index{display.h@{display.h}!hide_display@{hide\_\-display}}
+\index{hide_display@{hide\_\-display}!display.h@{display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void hide\_\-display ()}}
+\label{display_8h_db4e9ac8bb38a1fb86f5058d43cd2bc7}
+
+
+Hide \hyperlink{structdisplay}{display} \hypertarget{display_8h_c1d421d8231a87be44954076badad7ad}{
+\index{display.h@{display.h}!init_display_driver@{init\_\-display\_\-driver}}
+\index{init_display_driver@{init\_\-display\_\-driver}!display.h@{display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void init\_\-display\_\-driver ()}}
+\label{display_8h_c1d421d8231a87be44954076badad7ad}
+
+
+Initialises the \hyperlink{structdisplay}{display} driver and the GPU subroutine manager. \hypertarget{display_8h_fab00fe4d7b664a2be89be3c63876d9e}{
+\index{display.h@{display.h}!jump_gpu_subroutine@{jump\_\-gpu\_\-subroutine}}
+\index{jump_gpu_subroutine@{jump\_\-gpu\_\-subroutine}!display.h@{display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void jump\_\-gpu\_\-subroutine (void $\ast$ {\em addr})}}
+\label{display_8h_fab00fe4d7b664a2be89be3c63876d9e}
+
+
+Call a GPU subroutine in GPU ram. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+addr}]Address of the subroutine \end{description}
+\end{Desc}
+\hypertarget{display_8h_477e81f40f0d2b23cb1c0a2d7882fba5}{
+\index{display.h@{display.h}!show_display@{show\_\-display}}
+\index{show_display@{show\_\-display}!display.h@{display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void show\_\-display ({\bf display} $\ast$ {\em d})}}
+\label{display_8h_477e81f40f0d2b23cb1c0a2d7882fba5}
+
+
+Show the given \hyperlink{structdisplay}{display}. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]\hyperlink{structdisplay}{display} to be displayed \end{description}
+\end{Desc}
+\hypertarget{display_8h_5aaa4d219fc59ca1e37606cc2f17d306}{
+\index{display.h@{display.h}!wait_display_refresh@{wait\_\-display\_\-refresh}}
+\index{wait_display_refresh@{wait\_\-display\_\-refresh}!display.h@{display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void wait\_\-display\_\-refresh ()}}
+\label{display_8h_5aaa4d219fc59ca1e37606cc2f17d306}
+
+
+Wait for the refresh of the current \hyperlink{structdisplay}{display} to be completed. If there is no active \hyperlink{structdisplay}{display}, this will enter a deadlock.
+
+This synchronisation mechanism is useful if you use functions that manipulate the active \hyperlink{structdisplay}{display} (especially \hyperlink{sprite_8h_dee6bffa6fb009e08ce22e260271ddee}{sort\_\-display\_\-layer}).
+
+For this synchronisation mechanism to really work, you should have first initialised interrupts with \hyperlink{interrupt_8h_88ada49c1954d38252049786595d9a5f}{init\_\-interrupts} since it uses the \hyperlink{interrupt_8h_0f959e68baaa86d1982db2bcaf7b6a08}{vblCounter} variable. 
+
+\subsection{Variable Documentation}
+\hypertarget{display_8h_3070edaacfc862ded073b900e4a8d287}{
+\index{display.h@{display.h}!_GPU_FREE_RAM@{\_\-GPU\_\-FREE\_\-RAM}}
+\index{_GPU_FREE_RAM@{\_\-GPU\_\-FREE\_\-RAM}!display.h@{display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}long {\bf \_\-GPU\_\-FREE\_\-RAM}}}
+\label{display_8h_3070edaacfc862ded073b900e4a8d287}
+
+
+Free GPU ram is available at \&\_\-GPU\_\-FREE\_\-RAM. 

@@ -1,0 +1,2 @@
+open_console.o: open_console.c
+open_custom_console.o: open_custom_console.c

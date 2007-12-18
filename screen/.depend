@@ -1,0 +1,6 @@
+a_1_buf.o: a_1_buf.c screen_inline.c
+a_2_buf.o: a_2_buf.c screen_inline.c
+a_z_buf.o: a_z_buf.c screen_inline.c
+n_screen.o: n_screen.c
+s_1_buf.o: s_1_buf.c screen_inline.c
+scr2spr.o: scr2spr.c

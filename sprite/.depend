@@ -1,0 +1,12 @@
+a_sprite.o: a_sprite.c
+c_layer.o: c_layer.c
+d_sprite.o: d_sprite.c
+iter_all.o: iter_all.c
+iter_one.o: iter_one.c
+n_display.o: n_display.c
+n_sprite.o: n_sprite.c
+s_sprite.o: s_sprite.c
+so_layer.o: so_layer.c
+m_layer.o: m_layer.c
+h_layer.o: h_layer.c
+s_layer.o: s_layer.c

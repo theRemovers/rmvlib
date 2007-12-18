@@ -1,0 +1,160 @@
+\hypertarget{screen_8h}{
+\section{screen/screen.h File Reference}
+\label{screen_8h}\index{screen/screen.h@{screen/screen.h}}
+}
+Screen management. 
+
+{\tt \#include $<$jagtypes.h$>$}\par
+{\tt \#include $<$op.h$>$}\par
+{\tt \#include $<$sprite.h$>$}\par
+\subsection*{Data Structures}
+\begin{CompactItemize}
+\item 
+struct \hyperlink{structscreen}{screen}
+\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef long \hyperlink{screen_8h_19d2c966acde4ded69e29a7c6e5ba523}{fixp}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{structscreen}{screen} $\ast$ \hyperlink{screen_8h_7219caf9a8d28484ae0c9838c36e22a9}{new\_\-screen} ()
+\item 
+void \hyperlink{screen_8h_42e9381318fb5a64b26f3e7a03a436d5}{set\_\-simple\_\-screen} (\hyperlink{op_8h_40fbe8949b277afd0fac64228851b12a}{depth} d, int width, int height, \hyperlink{structscreen}{screen} $\ast$scr, phrase $\ast$data)
+\item 
+phrase $\ast$ \hyperlink{screen_8h_e1d7deddbdd14236abb7bb650be20de9}{alloc\_\-simple\_\-screen} (\hyperlink{op_8h_40fbe8949b277afd0fac64228851b12a}{depth} d, int width, int height, \hyperlink{structscreen}{screen} $\ast$scr)
+\item 
+phrase $\ast$ \hyperlink{screen_8h_e4e147d137d67768a02c3ea36f510aa9}{alloc\_\-double\_\-buffered\_\-screens} (\hyperlink{op_8h_40fbe8949b277afd0fac64228851b12a}{depth} d, int width, int height, \hyperlink{structscreen}{screen} $\ast$scr1, \hyperlink{structscreen}{screen} $\ast$scr2)
+\item 
+phrase $\ast$ \hyperlink{screen_8h_c9e72af4cef31769aec4d7fb935674a8}{alloc\_\-z\_\-double\_\-buffered\_\-screens} (\hyperlink{op_8h_40fbe8949b277afd0fac64228851b12a}{depth} d, int width, int height, \hyperlink{structscreen}{screen} $\ast$scr1, \hyperlink{structscreen}{screen} $\ast$scr2)
+\item 
+\hyperlink{structsprite}{sprite} $\ast$ \hyperlink{screen_8h_0c1245ce7e31e9b018ecbc6434b976f5}{sprite\_\-of\_\-screen} (int x, int y, \hyperlink{structscreen}{screen} $\ast$scr)
+\item 
+void \hyperlink{screen_8h_106cd1d335f89831cdad0f2938fe2649}{clear\_\-screen} (\hyperlink{structscreen}{screen} $\ast$dst)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Screen management. 
+
+A \char`\"{}screen\char`\"{} is an additionnal structure that allows to see a part of memory as a frame buffer. It has some private field that are to be used for blitter programming. It also has a logical origin defined by its X coordinate and Y coordinate (\hyperlink{structscreen_a8f8245c6a73a1cc6fb26a3958ac392d}{screen::x} and \hyperlink{structscreen_b438dd943555d059b15556708112ffec}{screen::y}) that are to be used by some primitives (for example to define where the left-upper corner of a block is located in the frame).
+
+Finally, it has also a \hyperlink{structscreen_6f1c894b02dbafcfc37cba6f7b44cd12}{screen::data} field which is the address of the graphical data viewed as a frame buffer.
+
+Some facilities are offered to allocate certain kind of frame buffers. 
+
+\subsection{Typedef Documentation}
+\hypertarget{screen_8h_19d2c966acde4ded69e29a7c6e5ba523}{
+\index{screen.h@{screen.h}!fixp@{fixp}}
+\index{fixp@{fixp}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef long {\bf fixp}}}
+\label{screen_8h_19d2c966acde4ded69e29a7c6e5ba523}
+
+
+The type of fixpoint 16.16 integers 
+
+\subsection{Function Documentation}
+\hypertarget{screen_8h_e4e147d137d67768a02c3ea36f510aa9}{
+\index{screen.h@{screen.h}!alloc_double_buffered_screens@{alloc\_\-double\_\-buffered\_\-screens}}
+\index{alloc_double_buffered_screens@{alloc\_\-double\_\-buffered\_\-screens}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}phrase$\ast$ alloc\_\-double\_\-buffered\_\-screens ({\bf depth} {\em d}, int {\em width}, int {\em height}, {\bf screen} $\ast$ {\em scr1}, {\bf screen} $\ast$ {\em scr2})}}
+\label{screen_8h_e4e147d137d67768a02c3ea36f510aa9}
+
+
+Allocate a \hyperlink{structscreen}{screen} buffer for double buffering. Set the two screens accordingly. It returns the address of the buffer allocated. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Depth of the graphical data. \item[{\em 
+width}]Width in pixels of the graphical data. This must be a valid blitter width. \item[{\em 
+height}]Height in pixels of the graphical data. \item[{\em 
+scr1}]Address of the first \hyperlink{structscreen}{screen}. \item[{\em 
+scr2}]Address of the second \hyperlink{structscreen}{screen}. \end{description}
+\end{Desc}
+\hypertarget{screen_8h_e1d7deddbdd14236abb7bb650be20de9}{
+\index{screen.h@{screen.h}!alloc_simple_screen@{alloc\_\-simple\_\-screen}}
+\index{alloc_simple_screen@{alloc\_\-simple\_\-screen}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}phrase$\ast$ alloc\_\-simple\_\-screen ({\bf depth} {\em d}, int {\em width}, int {\em height}, {\bf screen} $\ast$ {\em scr})}}
+\label{screen_8h_e1d7deddbdd14236abb7bb650be20de9}
+
+
+Allocate a \hyperlink{structscreen}{screen} buffer and set the \hyperlink{structscreen}{screen} accordingly. It returns the address of the buffer allocated. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Depth of the graphical data. \item[{\em 
+width}]Width in pixels of the graphical data. This must be a valid blitter width. \item[{\em 
+height}]Height in pixels of the graphical data. \item[{\em 
+scr}]Address of the \hyperlink{structscreen}{screen}. \end{description}
+\end{Desc}
+\hypertarget{screen_8h_c9e72af4cef31769aec4d7fb935674a8}{
+\index{screen.h@{screen.h}!alloc_z_double_buffered_screens@{alloc\_\-z\_\-double\_\-buffered\_\-screens}}
+\index{alloc_z_double_buffered_screens@{alloc\_\-z\_\-double\_\-buffered\_\-screens}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}phrase$\ast$ alloc\_\-z\_\-double\_\-buffered\_\-screens ({\bf depth} {\em d}, int {\em width}, int {\em height}, {\bf screen} $\ast$ {\em scr1}, {\bf screen} $\ast$ {\em scr2})}}
+\label{screen_8h_c9e72af4cef31769aec4d7fb935674a8}
+
+
+Allocate a \hyperlink{structscreen}{screen} buffer for double buffering with Z-buffer. Set the two screens accordingly. It returns the address of the buffer allocated. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Depth of the graphical data. \item[{\em 
+width}]Width in pixels of the graphical data. This must be a valid blitter width. \item[{\em 
+height}]Height in pixels of the graphical data. \item[{\em 
+scr1}]Address of the first \hyperlink{structscreen}{screen}. \item[{\em 
+scr2}]Address of the second \hyperlink{structscreen}{screen}. \end{description}
+\end{Desc}
+\hypertarget{screen_8h_106cd1d335f89831cdad0f2938fe2649}{
+\index{screen.h@{screen.h}!clear_screen@{clear\_\-screen}}
+\index{clear_screen@{clear\_\-screen}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void clear\_\-screen ({\bf screen} $\ast$ {\em dst})}}
+\label{screen_8h_106cd1d335f89831cdad0f2938fe2649}
+
+
+Clear the given \hyperlink{structscreen}{screen} (fill with color 0). For low depth \hyperlink{structscreen}{screen} ($<$ 8bpp), prefer \hyperlink{blit_8h_680e38bc7efc52d2c23e76a98fc8248c}{blitset} instead. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+dst}]Address of the \hyperlink{structscreen}{screen} \end{description}
+\end{Desc}
+\hypertarget{screen_8h_7219caf9a8d28484ae0c9838c36e22a9}{
+\index{screen.h@{screen.h}!new_screen@{new\_\-screen}}
+\index{new_screen@{new\_\-screen}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf screen}$\ast$ new\_\-screen ()}}
+\label{screen_8h_7219caf9a8d28484ae0c9838c36e22a9}
+
+
+Allocate a new \hyperlink{structscreen}{screen} with malloc. \hypertarget{screen_8h_42e9381318fb5a64b26f3e7a03a436d5}{
+\index{screen.h@{screen.h}!set_simple_screen@{set\_\-simple\_\-screen}}
+\index{set_simple_screen@{set\_\-simple\_\-screen}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void set\_\-simple\_\-screen ({\bf depth} {\em d}, int {\em width}, int {\em height}, {\bf screen} $\ast$ {\em scr}, phrase $\ast$ {\em data})}}
+\label{screen_8h_42e9381318fb5a64b26f3e7a03a436d5}
+
+
+Initialise a \hyperlink{structscreen}{screen}. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Depth of the graphical data. \item[{\em 
+width}]Width in pixels of the graphical data. This must be a valid blitter width. \item[{\em 
+height}]Height in pixels of the graphical data. \item[{\em 
+scr}]Address of the \hyperlink{structscreen}{screen}. \item[{\em 
+data}]Address of the graphical data. This must be phrase aligned. \end{description}
+\end{Desc}
+\hypertarget{screen_8h_0c1245ce7e31e9b018ecbc6434b976f5}{
+\index{screen.h@{screen.h}!sprite_of_screen@{sprite\_\-of\_\-screen}}
+\index{sprite_of_screen@{sprite\_\-of\_\-screen}!screen.h@{screen.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf sprite}$\ast$ sprite\_\-of\_\-screen (int {\em x}, int {\em y}, {\bf screen} $\ast$ {\em scr})}}
+\label{screen_8h_0c1245ce7e31e9b018ecbc6434b976f5}
+
+
+Create a \hyperlink{structsprite}{sprite} corresponding to the given \hyperlink{structscreen}{screen}. The \hyperlink{structsprite}{sprite} is not transparent by default. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+x}]X coordinate of the \hyperlink{structsprite}{sprite} \item[{\em 
+y}]Y coordinate of the \hyperlink{structsprite}{sprite} \item[{\em 
+scr}]Address of the \hyperlink{structscreen}{screen} \end{description}
+\end{Desc}

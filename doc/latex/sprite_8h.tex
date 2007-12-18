@@ -1,0 +1,261 @@
+\hypertarget{sprite_8h}{
+\section{sprite/sprite.h File Reference}
+\label{sprite_8h}\index{sprite/sprite.h@{sprite/sprite.h}}
+}
+Display manager. 
+
+{\tt \#include $<$stddef.h$>$}\par
+{\tt \#include $<$jagdefs.h$>$}\par
+{\tt \#include $<$op.h$>$}\par
+{\tt \#include $<$memalign.h$>$}\par
+{\tt \#include $<$display.h$>$}\par
+\subsection*{Data Structures}
+\begin{CompactItemize}
+\item 
+struct \hyperlink{structanimation__chunk}{animation\_\-chunk}
+\item 
+struct \hyperlink{structsprite}{sprite}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define \hyperlink{sprite_8h_4070ab246c8ac13219b6fd5e02eeaf91}{DISPLAY\_\-DFLT\_\-MAX\_\-SPRITE}~256
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{structsprite}{sprite} $\ast$ \hyperlink{sprite_8h_13703ec545072becbcf294664df806d8}{new\_\-sprite} (int width, int height, int x, int y, \hyperlink{op_8h_40fbe8949b277afd0fac64228851b12a}{depth} d, phrase $\ast$data)
+\item 
+void \hyperlink{sprite_8h_8405e90278a41c6d4e576c49d72aecf4}{set\_\-sprite} (\hyperlink{structsprite}{sprite} $\ast$s, int width, int height, int x, int y, \hyperlink{op_8h_40fbe8949b277afd0fac64228851b12a}{depth} d, phrase $\ast$data)
+\item 
+\hyperlink{structmblock}{mblock} $\ast$ \hyperlink{sprite_8h_d35507fe3be38968539712d2e743d79e}{new\_\-display} (unsigned int max\_\-nb\_\-sprites)
+\item 
+void \hyperlink{sprite_8h_8439f1930459d5613bc2576ebaddc058}{attach\_\-sprite\_\-to\_\-display\_\-at\_\-layer} (\hyperlink{structsprite}{sprite} $\ast$s, \hyperlink{structdisplay}{display} $\ast$d, int layer)
+\item 
+void \hyperlink{sprite_8h_318f6dac0cf3be3157548d09badda13e}{detach\_\-sprite\_\-from\_\-display} (\hyperlink{structsprite}{sprite} $\ast$s)
+\item 
+void \hyperlink{sprite_8h_970107ca72a467e46e448fbb1462514d}{change\_\-sprite\_\-layer} (\hyperlink{structsprite}{sprite} $\ast$s, \hyperlink{structdisplay}{display} $\ast$d, int layer)
+\item 
+void \hyperlink{sprite_8h_dee6bffa6fb009e08ce22e260271ddee}{sort\_\-display\_\-layer} (\hyperlink{structdisplay}{display} $\ast$d, int layer, int($\ast$compare)(\hyperlink{structsprite}{sprite} $\ast$s1, \hyperlink{structsprite}{sprite} $\ast$s2))
+\item 
+void \hyperlink{sprite_8h_f6ece6e4726c9c2ddd062e0d928e2762}{display\_\-iter\_\-layer} (\hyperlink{structdisplay}{display} $\ast$d, int layer, void($\ast$f)(\hyperlink{structsprite}{sprite} $\ast$s))
+\item 
+void \hyperlink{sprite_8h_fac1e9c1004e8b12cd9a8ea6db746c1f}{display\_\-iter\_\-all\_\-layers} (\hyperlink{structdisplay}{display} $\ast$d, void($\ast$f)(\hyperlink{structsprite}{sprite} $\ast$s))
+\item 
+void \hyperlink{sprite_8h_0d76ab09b912d8b673a7a1754d3e9abf}{move\_\-display\_\-layer} (\hyperlink{structdisplay}{display} $\ast$d, int layer, int x, int y)
+\item 
+void \hyperlink{sprite_8h_a892d79504ac7bb25143b3aefc939014}{hide\_\-display\_\-layer} (\hyperlink{structdisplay}{display} $\ast$d, int layer)
+\item 
+void \hyperlink{sprite_8h_318abac1807cf04b421247b0d943f110}{show\_\-display\_\-layer} (\hyperlink{structdisplay}{display} $\ast$d, int layer)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Display manager. 
+
+
+
+\subsection{Define Documentation}
+\hypertarget{sprite_8h_4070ab246c8ac13219b6fd5e02eeaf91}{
+\index{sprite.h@{sprite.h}!DISPLAY_DFLT_MAX_SPRITE@{DISPLAY\_\-DFLT\_\-MAX\_\-SPRITE}}
+\index{DISPLAY_DFLT_MAX_SPRITE@{DISPLAY\_\-DFLT\_\-MAX\_\-SPRITE}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define DISPLAY\_\-DFLT\_\-MAX\_\-SPRITE~256}}
+\label{sprite_8h_4070ab246c8ac13219b6fd5e02eeaf91}
+
+
+Default maximal number of sprites in \hyperlink{structdisplay}{display}. 
+
+\subsection{Function Documentation}
+\hypertarget{sprite_8h_8439f1930459d5613bc2576ebaddc058}{
+\index{sprite.h@{sprite.h}!attach_sprite_to_display_at_layer@{attach\_\-sprite\_\-to\_\-display\_\-at\_\-layer}}
+\index{attach_sprite_to_display_at_layer@{attach\_\-sprite\_\-to\_\-display\_\-at\_\-layer}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void attach\_\-sprite\_\-to\_\-display\_\-at\_\-layer ({\bf sprite} $\ast$ {\em s}, {\bf display} $\ast$ {\em d}, int {\em layer})}}
+\label{sprite_8h_8439f1930459d5613bc2576ebaddc058}
+
+
+Add a \hyperlink{structsprite}{sprite} to a \hyperlink{structdisplay}{display} at given layer. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+s}]Address of the \hyperlink{structsprite}{sprite} \item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+layer}]Layer where to add the \hyperlink{structsprite}{sprite} (modulo 16) \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_970107ca72a467e46e448fbb1462514d}{
+\index{sprite.h@{sprite.h}!change_sprite_layer@{change\_\-sprite\_\-layer}}
+\index{change_sprite_layer@{change\_\-sprite\_\-layer}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void change\_\-sprite\_\-layer ({\bf sprite} $\ast$ {\em s}, {\bf display} $\ast$ {\em d}, int {\em layer})}}
+\label{sprite_8h_970107ca72a467e46e448fbb1462514d}
+
+
+Change the layer of a \hyperlink{structsprite}{sprite} in a \hyperlink{structdisplay}{display}. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+s}]Address of the \hyperlink{structsprite}{sprite} \item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+layer}]Layer where to move the \hyperlink{structsprite}{sprite} (modulo 16) \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_318f6dac0cf3be3157548d09badda13e}{
+\index{sprite.h@{sprite.h}!detach_sprite_from_display@{detach\_\-sprite\_\-from\_\-display}}
+\index{detach_sprite_from_display@{detach\_\-sprite\_\-from\_\-display}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void detach\_\-sprite\_\-from\_\-display ({\bf sprite} $\ast$ {\em s})}}
+\label{sprite_8h_318f6dac0cf3be3157548d09badda13e}
+
+
+Remove a \hyperlink{structsprite}{sprite} from its \hyperlink{structdisplay}{display}. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+s}]Address of the \hyperlink{structsprite}{sprite} \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_fac1e9c1004e8b12cd9a8ea6db746c1f}{
+\index{sprite.h@{sprite.h}!display_iter_all_layers@{display\_\-iter\_\-all\_\-layers}}
+\index{display_iter_all_layers@{display\_\-iter\_\-all\_\-layers}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void display\_\-iter\_\-all\_\-layers ({\bf display} $\ast$ {\em d}, void($\ast$)({\bf sprite} $\ast$s) {\em f})}}
+\label{sprite_8h_fac1e9c1004e8b12cd9a8ea6db746c1f}
+
+
+Iterate the given function on every \hyperlink{structsprite}{sprite} of the \hyperlink{structdisplay}{display} from layer 0 to layer 15. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+f}]Function to iterate \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_f6ece6e4726c9c2ddd062e0d928e2762}{
+\index{sprite.h@{sprite.h}!display_iter_layer@{display\_\-iter\_\-layer}}
+\index{display_iter_layer@{display\_\-iter\_\-layer}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void display\_\-iter\_\-layer ({\bf display} $\ast$ {\em d}, int {\em layer}, void($\ast$)({\bf sprite} $\ast$s) {\em f})}}
+\label{sprite_8h_f6ece6e4726c9c2ddd062e0d928e2762}
+
+
+Iterate the given function on every \hyperlink{structsprite}{sprite} of the given layer. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+layer}]Layer (modulo 16) \item[{\em 
+f}]Function to iterate \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_a892d79504ac7bb25143b3aefc939014}{
+\index{sprite.h@{sprite.h}!hide_display_layer@{hide\_\-display\_\-layer}}
+\index{hide_display_layer@{hide\_\-display\_\-layer}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void hide\_\-display\_\-layer ({\bf display} $\ast$ {\em d}, int {\em layer})}}
+\label{sprite_8h_a892d79504ac7bb25143b3aefc939014}
+
+
+Hide the corresponding layer \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+layer}]Layer (modulo 16) \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_0d76ab09b912d8b673a7a1754d3e9abf}{
+\index{sprite.h@{sprite.h}!move_display_layer@{move\_\-display\_\-layer}}
+\index{move_display_layer@{move\_\-display\_\-layer}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void move\_\-display\_\-layer ({\bf display} $\ast$ {\em d}, int {\em layer}, int {\em x}, int {\em y})}}
+\label{sprite_8h_0d76ab09b912d8b673a7a1754d3e9abf}
+
+
+Move the corresponding layer \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+layer}]Layer (modulo 16) \item[{\em 
+x}]X coordinates \item[{\em 
+y}]Y coordinates \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_d35507fe3be38968539712d2e743d79e}{
+\index{sprite.h@{sprite.h}!new_display@{new\_\-display}}
+\index{new_display@{new\_\-display}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf mblock}$\ast$ new\_\-display (unsigned int {\em max\_\-nb\_\-sprites})}}
+\label{sprite_8h_d35507fe3be38968539712d2e743d79e}
+
+
+Creates a new \hyperlink{structdisplay}{display} that can contain at most max\_\-nb\_\-sprites \hyperlink{structsprite}{sprite}.
+
+The \hyperlink{structmblock}{mblock} returned has its \_\-mblock::addr pointing to the allocated \hyperlink{structdisplay}{display}. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+max\_\-nb\_\-sprites}]maximal number of sprites the \hyperlink{structdisplay}{display} can contain. If 0 then the default value of \hyperlink{sprite_8h_4070ab246c8ac13219b6fd5e02eeaf91}{DISPLAY\_\-DFLT\_\-MAX\_\-SPRITE} is used. \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_13703ec545072becbcf294664df806d8}{
+\index{sprite.h@{sprite.h}!new_sprite@{new\_\-sprite}}
+\index{new_sprite@{new\_\-sprite}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf sprite}$\ast$ new\_\-sprite (int {\em width}, int {\em height}, int {\em x}, int {\em y}, {\bf depth} {\em d}, phrase $\ast$ {\em data})}}
+\label{sprite_8h_13703ec545072becbcf294664df806d8}
+
+
+Create a new \hyperlink{structsprite}{sprite} which is not scaled, not animated, visible and transparent. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+width}]Width in pixels so that the width in bytes is a multiple of 8 \item[{\em 
+height}]Height in pixels \item[{\em 
+x}]X coordinate \item[{\em 
+y}]Y coordinate \item[{\em 
+d}]Depth of the graphical data \item[{\em 
+data}]Address of the graphical data: it should be phrase aligned \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_8405e90278a41c6d4e576c49d72aecf4}{
+\index{sprite.h@{sprite.h}!set_sprite@{set\_\-sprite}}
+\index{set_sprite@{set\_\-sprite}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void set\_\-sprite ({\bf sprite} $\ast$ {\em s}, int {\em width}, int {\em height}, int {\em x}, int {\em y}, {\bf depth} {\em d}, phrase $\ast$ {\em data})}}
+\label{sprite_8h_8405e90278a41c6d4e576c49d72aecf4}
+
+
+Initialisation of a \hyperlink{structsprite}{sprite}.
+
+This can be useful if you want to extend the \char`\"{}class\char`\"{} \hyperlink{structsprite}{sprite}. It initialises the \hyperlink{structsprite}{sprite} as function \hyperlink{sprite_8h_13703ec545072becbcf294664df806d8}{new\_\-sprite}. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+s}]Address of the \hyperlink{structsprite}{sprite} \item[{\em 
+width}]Width in pixels so that the width in bytes is a multiple of 8 \item[{\em 
+height}]Height in pixels \item[{\em 
+x}]X coordinate \item[{\em 
+y}]Y coordinate \item[{\em 
+d}]Depth of the graphical data \item[{\em 
+data}]Address of the graphical data: it should be phrase aligned \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_318abac1807cf04b421247b0d943f110}{
+\index{sprite.h@{sprite.h}!show_display_layer@{show\_\-display\_\-layer}}
+\index{show_display_layer@{show\_\-display\_\-layer}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void show\_\-display\_\-layer ({\bf display} $\ast$ {\em d}, int {\em layer})}}
+\label{sprite_8h_318abac1807cf04b421247b0d943f110}
+
+
+Show the corresponding layer \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+layer}]Layer (modulo 16) \end{description}
+\end{Desc}
+\hypertarget{sprite_8h_dee6bffa6fb009e08ce22e260271ddee}{
+\index{sprite.h@{sprite.h}!sort_display_layer@{sort\_\-display\_\-layer}}
+\index{sort_display_layer@{sort\_\-display\_\-layer}!sprite.h@{sprite.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void sort\_\-display\_\-layer ({\bf display} $\ast$ {\em d}, int {\em layer}, int($\ast$)({\bf sprite} $\ast$s1, {\bf sprite} $\ast$s2) {\em compare})}}
+\label{sprite_8h_dee6bffa6fb009e08ce22e260271ddee}
+
+
+Sort the given layer of the given \hyperlink{structdisplay}{display} according to the given compare function.
+
+The compare function returns a negative (or null) integer if the first \hyperlink{structsprite}{sprite} is \char`\"{}lesser than or equal to\char`\"{} the second \hyperlink{structsprite}{sprite}.
+
+The given layer is sorted increasingly. This means that the \char`\"{}least\char`\"{} \hyperlink{structsprite}{sprite} is displayed first in the layer and the \char`\"{}greatest\char`\"{} one is displayed last.
+
+The sorting algorithm uses O(1) space and O(n log(n)) comparisons (merge sort). It is a stable sort.
+
+Since the sort is made by the 68k while the GPU possibly reads the \hyperlink{structdisplay}{display}, it is safer to make a call to \hyperlink{display_8h_5aaa4d219fc59ca1e37606cc2f17d306}{wait\_\-display\_\-refresh} before sorting a layer of the current active \hyperlink{structdisplay}{display}. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+d}]Address of the \hyperlink{structdisplay}{display} \item[{\em 
+layer}]Layer (modulo 16) \item[{\em 
+compare}]Comparison function \end{description}
+\end{Desc}

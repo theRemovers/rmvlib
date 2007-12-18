@@ -1,0 +1,239 @@
+\hypertarget{sound_8h}{
+\section{sound/sound.h File Reference}
+\label{sound_8h}\index{sound/sound.h@{sound/sound.h}}
+}
+Sound driver. 
+
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define \hyperlink{sound_8h_fa96285ca559bde80a698f5ecba5f276}{VOICE\_\-16}~(1$<$$<$31)
+\item 
+\#define \hyperlink{sound_8h_7902f2a6055686ebb924497c2c8e44c8}{VOICE\_\-BALANCE}(r)~(r $<$$<$ 24)
+\item 
+\#define \hyperlink{sound_8h_14c7eebf2cf42569ab164b81cce15d65}{VOICE\_\-VOLUME}(v)~(v $<$$<$ 16)
+\item 
+\#define \hyperlink{sound_8h_4fa31ec0931963283e51af8745eacb15}{VOICE\_\-FREQ}(replay\_\-freq, freq)~(((freq $\ast$ 4096) / replay\_\-freq) \& 0xffff)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int \hyperlink{sound_8h_03cc970027e4f34a30032b18c43ea9c0}{init\_\-sound\_\-driver} (int frequency)
+\item 
+void \hyperlink{sound_8h_8bcd3096153381707eccf34a369c00bc}{set\_\-voice} (int voice\_\-num, int control, char $\ast$start, int len, char $\ast$loop\_\-start, int loop\_\-len)
+\item 
+void \hyperlink{sound_8h_23b3e574592a6b67fccb30359c5cb44e}{set\_\-panning} (int voice\_\-num, int panning)
+\item 
+void \hyperlink{sound_8h_e05c1997435d78a9edc701d7e8f65991}{set\_\-volume} (int voice\_\-num, int volume)
+\item 
+void \hyperlink{sound_8h_27ba8a26eec3c49641bdf7d3f55f2001}{clear\_\-voice} (int voice\_\-num)
+\item 
+int \hyperlink{sound_8h_d6ddc0adbed9704c699b720bd420c442}{init\_\-module} (char $\ast$module, int tempo\_\-enabled)
+\item 
+void \hyperlink{sound_8h_d48dc8c8ad149ed92c18f55b22425351}{play\_\-module} ()
+\item 
+void \hyperlink{sound_8h_17a64c0098264530befdfc5dc4e3c29b}{clear\_\-module} ()
+\item 
+void \hyperlink{sound_8h_6e56e02c8153ac75e45aeb9cdfa91697}{pause\_\-module} ()
+\item 
+int \hyperlink{sound_8h_d36785f4fd79486b5ac3d9243e97f5ad}{enable\_\-module\_\-voices} (int mask)
+\item 
+void \hyperlink{sound_8h_6d25520db0e0f624d5933b09a620563a}{jump\_\-dsp\_\-subroutine} (void $\ast$addr)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+long \hyperlink{sound_8h_9c6d136991a00ea0ca2e2b6c0171e629}{\_\-DSP\_\-FREE\_\-RAM}
+\item 
+short int \hyperlink{sound_8h_dbc114f900b9c2d12970fb6ee1a7effb}{amiga\_\-frequencies} \mbox{[}MAX\_\-PERIOD\mbox{]}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Sound driver. 
+
+
+
+\subsection{Define Documentation}
+\hypertarget{sound_8h_fa96285ca559bde80a698f5ecba5f276}{
+\index{sound.h@{sound.h}!VOICE_16@{VOICE\_\-16}}
+\index{VOICE_16@{VOICE\_\-16}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define VOICE\_\-16~(1$<$$<$31)}}
+\label{sound_8h_fa96285ca559bde80a698f5ecba5f276}
+
+
+16 bits sound \hypertarget{sound_8h_7902f2a6055686ebb924497c2c8e44c8}{
+\index{sound.h@{sound.h}!VOICE_BALANCE@{VOICE\_\-BALANCE}}
+\index{VOICE_BALANCE@{VOICE\_\-BALANCE}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define VOICE\_\-BALANCE(r)~(r $<$$<$ 24)}}
+\label{sound_8h_7902f2a6055686ebb924497c2c8e44c8}
+
+
+Balance \mbox{[}0..16\mbox{]} \hypertarget{sound_8h_4fa31ec0931963283e51af8745eacb15}{
+\index{sound.h@{sound.h}!VOICE_FREQ@{VOICE\_\-FREQ}}
+\index{VOICE_FREQ@{VOICE\_\-FREQ}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define VOICE\_\-FREQ(replay\_\-freq, freq)~(((freq $\ast$ 4096) / replay\_\-freq) \& 0xffff)}}
+\label{sound_8h_4fa31ec0931963283e51af8745eacb15}
+
+
+Frequency increment \mbox{[}0..0xffff\mbox{]} \hypertarget{sound_8h_14c7eebf2cf42569ab164b81cce15d65}{
+\index{sound.h@{sound.h}!VOICE_VOLUME@{VOICE\_\-VOLUME}}
+\index{VOICE_VOLUME@{VOICE\_\-VOLUME}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define VOICE\_\-VOLUME(v)~(v $<$$<$ 16)}}
+\label{sound_8h_14c7eebf2cf42569ab164b81cce15d65}
+
+
+Volume \mbox{[}0..64\mbox{]} 
+
+\subsection{Function Documentation}
+\hypertarget{sound_8h_17a64c0098264530befdfc5dc4e3c29b}{
+\index{sound.h@{sound.h}!clear_module@{clear\_\-module}}
+\index{clear_module@{clear\_\-module}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void clear\_\-module ()}}
+\label{sound_8h_17a64c0098264530befdfc5dc4e3c29b}
+
+
+Clear the module \hypertarget{sound_8h_27ba8a26eec3c49641bdf7d3f55f2001}{
+\index{sound.h@{sound.h}!clear_voice@{clear\_\-voice}}
+\index{clear_voice@{clear\_\-voice}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void clear\_\-voice (int {\em voice\_\-num})}}
+\label{sound_8h_27ba8a26eec3c49641bdf7d3f55f2001}
+
+
+Clear the given voice \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+voice\_\-num}]voice \end{description}
+\end{Desc}
+\hypertarget{sound_8h_d36785f4fd79486b5ac3d9243e97f5ad}{
+\index{sound.h@{sound.h}!enable_module_voices@{enable\_\-module\_\-voices}}
+\index{enable_module_voices@{enable\_\-module\_\-voices}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int enable\_\-module\_\-voices (int {\em mask})}}
+\label{sound_8h_d36785f4fd79486b5ac3d9243e97f5ad}
+
+
+Set modules voices mask. It returns the mask set. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+mask}]Mask to enable/disable voice of a module. Bit 0 = Voice 0, Bit 1 = Voice 1, ... \end{description}
+\end{Desc}
+\hypertarget{sound_8h_d6ddc0adbed9704c699b720bd420c442}{
+\index{sound.h@{sound.h}!init_module@{init\_\-module}}
+\index{init_module@{init\_\-module}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int init\_\-module (char $\ast$ {\em module}, int {\em tempo\_\-enabled})}}
+\label{sound_8h_d6ddc0adbed9704c699b720bd420c442}
+
+
+Initialise the Protracker player. The length in bytes of the module is not checked and is thus assumed correct. For safety reasons, you should add a buffer of 31$\ast$2 bytes at the end of the module since some values are fixed in the module by this function. It returns the number of voices of the music. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+module}]address of the music \item[{\em 
+tempo\_\-enabled}]enable/disable tempo commands \end{description}
+\end{Desc}
+\hypertarget{sound_8h_03cc970027e4f34a30032b18c43ea9c0}{
+\index{sound.h@{sound.h}!init_sound_driver@{init\_\-sound\_\-driver}}
+\index{init_sound_driver@{init\_\-sound\_\-driver}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int init\_\-sound\_\-driver (int {\em frequency})}}
+\label{sound_8h_03cc970027e4f34a30032b18c43ea9c0}
+
+
+Initialises the \hyperlink{structdisplay}{display} driver and the DSP subroutine manager. It returns back the real replay frequency. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+frequency}]desired replay frequency \end{description}
+\end{Desc}
+\hypertarget{sound_8h_6d25520db0e0f624d5933b09a620563a}{
+\index{sound.h@{sound.h}!jump_dsp_subroutine@{jump\_\-dsp\_\-subroutine}}
+\index{jump_dsp_subroutine@{jump\_\-dsp\_\-subroutine}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void jump\_\-dsp\_\-subroutine (void $\ast$ {\em addr})}}
+\label{sound_8h_6d25520db0e0f624d5933b09a620563a}
+
+
+Call a DSP subroutine in DSP ram. \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+addr}]Address of the subroutine \end{description}
+\end{Desc}
+\hypertarget{sound_8h_6e56e02c8153ac75e45aeb9cdfa91697}{
+\index{sound.h@{sound.h}!pause_module@{pause\_\-module}}
+\index{pause_module@{pause\_\-module}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void pause\_\-module ()}}
+\label{sound_8h_6e56e02c8153ac75e45aeb9cdfa91697}
+
+
+Play/Pause the replay of the current music \hypertarget{sound_8h_d48dc8c8ad149ed92c18f55b22425351}{
+\index{sound.h@{sound.h}!play_module@{play\_\-module}}
+\index{play_module@{play\_\-module}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void play\_\-module ()}}
+\label{sound_8h_d48dc8c8ad149ed92c18f55b22425351}
+
+
+Protracker routine to be called each VBL (50 or 60 Hz) \hypertarget{sound_8h_23b3e574592a6b67fccb30359c5cb44e}{
+\index{sound.h@{sound.h}!set_panning@{set\_\-panning}}
+\index{set_panning@{set\_\-panning}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void set\_\-panning (int {\em voice\_\-num}, int {\em panning})}}
+\label{sound_8h_23b3e574592a6b67fccb30359c5cb44e}
+
+
+Set voice panning \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+voice\_\-num}]voice \item[{\em 
+panning}]panning \end{description}
+\end{Desc}
+\hypertarget{sound_8h_8bcd3096153381707eccf34a369c00bc}{
+\index{sound.h@{sound.h}!set_voice@{set\_\-voice}}
+\index{set_voice@{set\_\-voice}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void set\_\-voice (int {\em voice\_\-num}, int {\em control}, char $\ast$ {\em start}, int {\em len}, char $\ast$ {\em loop\_\-start}, int {\em loop\_\-len})}}
+\label{sound_8h_8bcd3096153381707eccf34a369c00bc}
+
+
+Play a sample \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+voice\_\-num}]voice \item[{\em 
+control}]voice control (i.e. 8/16 bits, panning, volume, frequency) \item[{\em 
+start}]start of sample \item[{\em 
+len}]length in bytes \item[{\em 
+loop\_\-start}]re-start address of sample (or NULL if no re-play) \item[{\em 
+loop\_\-len}]lenght in bytes of the loop \end{description}
+\end{Desc}
+\hypertarget{sound_8h_e05c1997435d78a9edc701d7e8f65991}{
+\index{sound.h@{sound.h}!set_volume@{set\_\-volume}}
+\index{set_volume@{set\_\-volume}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void set\_\-volume (int {\em voice\_\-num}, int {\em volume})}}
+\label{sound_8h_e05c1997435d78a9edc701d7e8f65991}
+
+
+Set voice volume \begin{Desc}
+\item[Parameters: ]\par
+\begin{description}
+\item[{\em 
+voice\_\-num}]voice \item[{\em 
+volume}]volume \end{description}
+\end{Desc}
+
+
+\subsection{Variable Documentation}
+\hypertarget{sound_8h_9c6d136991a00ea0ca2e2b6c0171e629}{
+\index{sound.h@{sound.h}!_DSP_FREE_RAM@{\_\-DSP\_\-FREE\_\-RAM}}
+\index{_DSP_FREE_RAM@{\_\-DSP\_\-FREE\_\-RAM}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}long {\bf \_\-DSP\_\-FREE\_\-RAM}}}
+\label{sound_8h_9c6d136991a00ea0ca2e2b6c0171e629}
+
+
+Free DSP ram is available at \&\_\-DSP\_\-FREE\_\-RAM. \hypertarget{sound_8h_dbc114f900b9c2d12970fb6ee1a7effb}{
+\index{sound.h@{sound.h}!amiga_frequencies@{amiga\_\-frequencies}}
+\index{amiga_frequencies@{amiga\_\-frequencies}!sound.h@{sound.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}short int {\bf amiga\_\-frequencies}\mbox{[}MAX\_\-PERIOD\mbox{]}}}
+\label{sound_8h_dbc114f900b9c2d12970fb6ee1a7effb}
+
+
+Amiga period to frequencies increment. Initialised by \hyperlink{sound_8h_03cc970027e4f34a30032b18c43ea9c0}{init\_\-sound\_\-driver} since it depends on the replay frequency. 
