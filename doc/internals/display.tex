@@ -1,0 +1,70 @@
+\chapter{The display container}
+
+In order to realize an efficient OP list backend, it is needed to
+distinguish the abstract notion of sprites from the notion of OP
+sprites.
+
+The \emph{display} container offers a high-level view of what will be
+displayed by the Jaguar.
+
+\section{The display container}
+Logically, a display is divided in several \emph{layers}\footnote{in
+  practice, there are 16 layers but this number can be modified if
+  needed by recompiling the library with different parameters}. Each
+layer can contain zero, one or more \emph{sprites}. The content of a
+layer can ---of course--- evolves dynamically.
+
+\smallskip
+
+For instance \Fref{final} shows a display composed of three layers:
+\begin{enumerate}
+\item A background layer \Fref{layer1} that contains one sprite (the
+  image with the sun and the grass)
+\item A foreground layer \Fref{layer2} that contains a transparent
+  sprite (the house)
+\item A layer \Fref{layer3} that contains two sprites (the two
+  characters)
+\end{enumerate}
+
+The three layers are superimposed as shown in \Fref{over}, yielding
+the image of \Fref{final}.
+
+\begin{figure}[htbp]
+  \centering
+  \input layer1  
+  \caption{The background}
+  \label{fig:layer1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \input layer2
+  \caption{The foreground}
+  \label{fig:layer2}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \input layer3
+  \caption{The characters}
+  \label{fig:layer3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \input over
+  \caption{The three layers superimposed}
+  \label{fig:over}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \input final
+  \caption{The final result}
+  \label{fig:final}
+\end{figure}
+
+\section{The sprite data structure}
+A sprite can have several properties.
+
+

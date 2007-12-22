@@ -1,0 +1,63 @@
+\documentclass[a4paper]{book}
+
+\usepackage{latexsym}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{xspace}
+\usepackage{slashbox}
+\usepackage{fancyhdr}
+
+\usepackage{tikz}
+
+\title{Sprite manager internals}
+\author{The Removers}
+
+\newcommand{\ie}{i.e.\@\xspace}
+
+\newcommand{\Value}[1]{\ensuremath{\mathrm{#1}}}
+\newcommand{\hsc}{\Value{HSCALE}}
+\newcommand{\vsc}{\Value{VSCALE}}
+\newcommand{\rem}{\Value{REMAINDER}}
+\newcommand{\wid}{\Value{WIDTH}}
+\newcommand{\hei}{\Value{HEIGHT}}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+
+\newcommand{\suite}[2][n]{\ensuremath{\left( #2_{#1} \right)_{#1 \in \N}}}
+\newcommand{\K}{\ensuremath{\mathop{k}}}
+
+\newcommand{\Def}{\ensuremath{\stackrel{\text{def}}{=}}}
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+
+\newcommand{\Lref}[1]{Lemma~\ref{lem:#1}}
+\newcommand{\Tref}[1]{Theorem~\ref{thm:#1}}
+\newcommand{\Fref}[1]{Figure~\ref{fig:#1}}
+
+\newcommand{\floor}[1]{\ensuremath{\lfloor #1 \rfloor}}
+\newcommand{\abs}[1]{\ensuremath{| #1 |}}
+
+\newcommand{\cleardoubleemptypage}{\newpage{\pagestyle{empty}\cleardoublepage}}
+
+\begin{document}
+\pagestyle{fancyplain}
+\lhead[\fancyplain{}{\sc\thepage}]{\fancyplain{}{\sc\tiny\rightmark}}
+\rhead[\fancyplain{}{\sc\tiny\leftmark}]{\fancyplain{}{\sc\thepage}}
+\cfoot{}
+
+\maketitle
+
+\cleardoubleemptypage
+\pagenumbering{roman}
+\tableofcontents
+\cleardoubleemptypage
+\pagenumbering{arabic}
+\include{euclide}
+\include{remainder}
+\include{display}
+\include{building}
+
+\end{document}

@@ -1,0 +1,161 @@
+\chapter{About Euclide's division}
+
+In $\Z$, we have
+\begin{theorem}[Euclide's division]
+  Let $a, b \in \Z$ with $b \neq 0$. There exists a unique $(q,r) \in
+  \Z \times \N$ such that $a = b q + r$ with $0 \leq r < \abs{b}$.
+\end{theorem}
+
+In $\N$, we have
+\begin{theorem}[Euclide's division]
+  Let $a, b \in \N$ with $b \neq 0$. There exists a unique $(q,r) \in
+  \N \times \N$ such that $a = b q + r$ with $0 \leq r < b$.
+\end{theorem}
+
+In both cases, we write $q = a / b$ and $r = a \% b$. Our problem now
+is to express Euclide's division in $\Z$ as a function of Euclide's
+division in $\N$.
+
+So, let $a, b \in \Z$ with $b \neq 0$. 
+
+There are four cases that are studied afterwards.
+
+\section{$a \geq 0$ and $b > 0$}
+Then it is Euclide's division in $\N$.
+
+\section{$a \leq 0$ and $b > 0$}
+In this case, $-a \in \N$.
+
+Let $q = (-a) / b$ and $r = (-a) \% b$.
+
+We have $-a = b q + r$ with $0 \leq r < b$.
+
+Thus $a = b \times (-q) - r$.
+
+\begin{itemize}
+\item If $r = 0$ then $a = b \times (-q)$.
+
+  So
+  \begin{align*}
+    a / b & = - ((-a) / b) \\
+    a \% b & = (-a) \% b
+  \end{align*}
+
+\item If $r > 0$ then $0 < b - r < b = \abs{b}$.
+
+  We have 
+  \begin{align*}
+    a & = a - b + b \\
+    & = b \times (-q) -b + b - r \\
+    & = b \times (-q-1) + b - r
+  \end{align*}
+
+  So
+  \begin{align*}
+    a / b & = - ((-a) / b) - 1 \\
+    a \% b & = b - ((-a) \% b)
+  \end{align*}
+\end{itemize}
+
+\section{$a \geq 0$ and $b < 0$}
+
+  Then $-b > 0$ so $-b \in \N$.
+
+  Let $q = a / (-b)$ and $r = a \% (-b)$.
+
+  We have $a = (-b) \times q + r$ with $0 \leq r < -b$.
+
+  Thus $a = b \times (-q) + r$ with $0 \leq r < \abs{b}$.
+
+  So
+  \begin{align*}
+    a / b & = - (a / (-b)) \\
+    a \% b & = a \% (-b)
+  \end{align*}
+
+\section{$a \leq 0$ and $b < 0$}
+
+  Then $-a \in \N$ and $-b \in \N$.
+
+  Let $q = (-a) / (-b)$ and $r = (-a) \% (-b)$.
+
+  We have $-a = (-b) \times q + r$ with $0 \leq r < -b$.
+
+  Thus $a = b q - r$.
+
+  \begin{itemize}
+  \item If $r = 0$ then $a = b q$.
+
+    So 
+    \begin{align*}
+      a / b & = (-a) / (-b) \\
+      a \% b & = (-a) \% (-b)
+    \end{align*}
+
+  \item If $r > 0$ then $0 < -r - b < -b = \abs{b}$.
+
+    Thus
+    \begin{align*}
+      a & = a + b - b \\
+      & = b q + b - b - r \\
+      & = b (q+1) + (-b - r)
+    \end{align*}
+
+    So
+    \begin{align*}
+      a / b & = ((-a)/(-b)) + 1 \\
+      a \% b & = - b - ((-a)\%(-b))
+    \end{align*}
+  \end{itemize}
+
+\section{Summary}
+To summarise, we have
+\begin{center}
+  \begin{tabular}{|c|c|c|}
+    \hline
+    \backslashbox{$a$}{$b$} & $b > 0$ & $b < 0$ \\
+    \hline
+    $a \geq 0$ &
+    \begin{math}
+      \begin{array}{l}
+        q \leftarrow a / b \\
+        r \leftarrow a \% b \\
+      \end{array}
+    \end{math}
+    &        
+    \begin{math}
+      \begin{array}{l}
+        q \leftarrow a / (-b) \\
+        r \leftarrow a \% (-b) \\
+        q \leftarrow -q \\
+      \end{array}
+    \end{math}
+    \\ 
+    \hline
+    $a \leq 0$ &
+    \begin{math}
+      \begin{array}{l}
+        q \leftarrow (-a) / b \\
+        r \leftarrow (-a) \% b \\
+        q \leftarrow -q \\
+        r \leftarrow -r \\
+        \textbf{if $r < 0$ then} \\
+        \quad q \leftarrow q - 1 \\
+        \quad r \leftarrow r + b \\
+      \end{array}
+    \end{math}
+    &
+    \begin{math}
+      \begin{array}{l}
+        q \leftarrow (-a) / (-b) \\
+        r \leftarrow (-a) \% (-b) \\
+        r \leftarrow -r \\
+        \textbf{if $r < 0$ then} \\
+        \quad q \leftarrow q + 1 \\
+        \quad r \leftarrow r - b \\
+      \end{array}
+    \end{math}
+    \\
+    \hline
+  \end{tabular}
+\end{center}

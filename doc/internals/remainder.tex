@@ -1,0 +1,185 @@
+\chapter{About scaled sprites}
+
+\section{Scope}
+A scaled sprite is characterised by:
+\begin{itemize}
+\item its width \wid{}
+\item its height \hei{}
+\item its horizontal scaling factor \hsc{}. This is a 3.5 fixed point
+  integer.
+\item its vertical scaling factor \vsc{}. This is a 3.5 fixed point
+  integer.
+\item its so called remainder \rem{}. This is a 3.5 fixed point
+  integer.
+\end{itemize}
+
+According to \verb/Jag_v8.pdf/, we have:\\
+{\small After each display line is drawn the \rem{} is
+  decremented by one. If it becomes negative then \vsc{} is added to
+  the \rem{} until it becomes positive. \hei{} is decremented every
+  time \vsc{} is added to \rem{}.}\\
+
+The problem is to compute the value of the remainder after $n$ lines
+have been processed by the Object Processor and the corresponding line
+in the source image of the sprite.
+
+\section{Formalization}
+Let $r \geq 0$ and $v > 0$.
+
+We define the function $\K : \R \to \N$ by:
+\begin{center}
+  if $x \in \R$, then $\K(x) \Def \min \{ i \in \N \mid x - 1 + i v \geq 0 \}$
+\end{center}
+It is obvious that $\K$ is well-defined since $v > 0$. Moreover, if $x \geq 1$ then $\K(x) = 0$.
+
+We define \suite{r} as follows:
+\begin{align*}
+  r_0 & \Def r \\
+  r_{n+1} & \Def r_n - 1 + \K(r_n) v 
+\end{align*}
+
+We also define \suite{y} as follows:
+\begin{align*}
+  y_0 & \Def 0 \\
+  y_{n+1} & \Def y_n + \K(r_n)
+\end{align*}
+
+The problem is: given $n \in \N$, is there a smarter way to compute
+the values of $r_n$ and $y_n$ than using the recursive definitions?
+
+\section{Solution}
+\begin{lemma}
+  \label{lem:lem1}
+  \begin{enumerate}
+  \item $\forall n: r_n \geq 0$
+  \item $\forall n: y_n \geq 0$
+  \end{enumerate}
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:lem2}
+  $$\forall n: r_{n+1} = r_0 - (n+1) + y_{n+1} v$$
+  \begin{proof}
+    By induction on $n$.
+
+    Indeed, we have
+    \begin{align*}
+      r_{n+1} & = r_n - 1 + (y_{n+1} - y_n) v \\
+      & = r_{n-1} - 1 + (y_n - y_{n-1}) v - 1 + (y_{n+1} - y_n) v \\
+      & = r_{n-1} - 2 + (y_{n+1} - y_{n-1}) v \\
+      & = \ldots \\
+      & = r_0 - (n+1) + (y_{n+1} - y_0) v \\
+      & = r_0 - (n+1) + y_{n+1} v \\
+    \end{align*}
+  \end{proof}
+\end{lemma}
+
+\begin{theorem}
+  \label{thm:thm1}
+  $$\forall n: r_0 - (n+1) = y_{n+1} \times (- v) + r_{n+1}$$
+\end{theorem}
+
+\begin{lemma}
+  \label{lem:lem3}
+  If $r_n < 1$ then $r_{n+1} < v$
+  \begin{proof}
+    Assume that $r_n < 1$. Then $r_n - 1 < 0$ thus $\K(r_n) > 0$.
+    
+    We show that $r_{n+1} < v$.
+    
+    By definition, $r_{n+1} = r_n - 1 + \K(r_n) v$. By contradiction,
+    assume that $r_{n+1} \geq v$. Then $r_{n+1} - v \geq 0$, \ie $r_n - 1
+    + (\K(r_n) - 1) v \geq 0$. This is absurd since $\K(r_n)$ is
+    the minimal integer $k$ such that $r_n - 1 + k v \geq 0$.
+    
+    Thus $0 \leq r_{n+1} < v$.
+  \end{proof}
+\end{lemma}    
+
+\begin{lemma}
+  \label{lem:lem4}
+  If $r_n < v$ then $r_{n+1} < v$.
+  \begin{proof}
+    There are two cases.
+
+    Either $r_n < 1$ and then $r_{n+1} < v$ by \Lref{lem3}.
+
+    Or $1 \leq r_n < v$. Then $r_{n+1} = r_n - 1 < v$.
+  \end{proof}
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:lem5}
+  Let $n \in \N$.
+
+  \begin{enumerate}
+  \item if $n \leq \floor{r_0}$, then $r_n = r_0 - n$.
+  \item if $n > \floor{r_0}$, then $0 \leq r_n < v$.
+  \end{enumerate}
+  \begin{proof}
+    This follows from \Lref{lem4} and from the observation that if
+    $r_n \geq 1$ then $r_{n+1} = r_n - 1$.
+  \end{proof}
+\end{lemma}
+
+Let $n > \floor{r_0}$. Then by \Tref{thm1}, we have 
+$$r_0 - n = y_n \times (-v) + r_n \text{ with } 0 \leq r_n < v$$
+
+Thus, we have $\frac{r_0 - n}{v} - (- y_n) = \frac{r_n}{v}$, hence $0
+\leq \frac{r_0 - n}{v} - (- y_n) < 1$. 
+
+In other words, $- y_n = \floor{\frac{r_0 - n}{v}}$ when $n > \floor{r_0}$.
+
+Thus, when $n > \floor{r_0}$, $y_n = - \floor{\frac{r_0 - n}{v}}$ and
+$r_n = r_0 - n + y_n v$.
+
+\bigskip
+
+\fbox{In the sequel, we assume that $r_0 \in \Q$ and $v \in \Q$.}
+
+\medskip
+
+Then there exists $d\footnote{in our concrete case, $d = 2^5$} \in \N$
+such that $d r_0 \in \N$ and $d v \in \N$.
+
+We recall that
+\begin{theorem}[Euclide's division]
+  Let $a, b \in \Z$ with $b \neq 0$. There exists a unique $(q,r) \in
+  \Z \times \N$ such that $a = b q + r$ with $0 \leq r < \abs{b}$.
+
+  We say that $q$ is the \emph{quotient} of the division and $r$ is the
+  \emph{remainder} of the division.
+\end{theorem}
+
+\bigskip
+
+We thus have for $n \geq \floor{r_0}$ that
+
+$$d r_0 - d n = y_n \times (- d v) + d r_n$$
+
+with $(d r_0 - d n) \in \Z$, $- d v \in \Z$, $- d v \neq 0$ and $0 \leq
+d r_n < \abs{- d v} = d v$.
+
+\smallskip 
+
+Hence, when $n > \floor{r_0}$,
+\begin{itemize}
+\item $y_n$ is the quotient of the division of $d r_0 - d n$ by $- d
+  v$, and
+\item $d r_n$ is the remainder of the division of $d r_0 - d n$ by $- d
+  v$.
+\end{itemize}
+
+Note that when $n > \floor{r_0}$, we have $r_0 - n < 0$. 
+
+Note also that we have $- v < 0$ since $v > 0$.
+
+\smallskip
+
+Recall finally that when $n \leq \floor{r_0}$,
+\begin{itemize}
+\item $y_n = 0$
+\item $r_n = r_0 - n$
+\end{itemize}
+
+
