@@ -26,19 +26,8 @@
 #include <stddef.h>
 #include <jagdefs.h>
 #include <op.h>
-#include <memalign.h>
 #include <display.h>
 
-#if DISPLAY_USE_LEGACY_ANIMATION
-typedef struct {
-  char speed;
-  char reserved1;
-  char reserved2;
-  char reserved3;
-  phrase *data[];
-} animation;
-
-#else
 /** An animation chunck is used to describe one part of an animation.
  */
 typedef struct {
@@ -51,8 +40,6 @@ typedef struct {
   short int speed;
   short int reserved1;
 } animation_chunk;
-
-#endif
 
 /** 
  * The sprite data structure.
@@ -129,18 +116,6 @@ typedef struct {
    * boundary in memory. */
   phrase *data;
 
-#if DISPLAY_USE_LEGACY_ANIMATION
-  animation *animation;
-
-  struct {
-    char counter;
-    char speed;
-    struct {
-      unsigned short int has_looped : 1;
-      unsigned short int index : 15;
-    } state;
-  } animation_data;
-#else
   /** Address of an array of ::animation_chunk that describes the animation.
    *
    * The last ::animation_chunk should have it animation_chunk::data
@@ -159,7 +134,6 @@ typedef struct {
       unsigned short int index : 15;
     };
   } animation_data;
-#endif
 } sprite;
 
 /** Create a new sprite which is not scaled, not animated, visible and
@@ -196,20 +170,6 @@ void set_sprite(/** Address of the sprite */
 		depth d, 
 		/** Address of the graphical data: it should be phrase aligned */
 		phrase *data);
-
-/** Default maximal number of sprites in ::display. */
-#define DISPLAY_DFLT_MAX_SPRITE 256
-
-/** Creates a new ::display that can contain at most max_nb_sprites
- * ::sprite.
- *
- * The ::mblock returned has its _mblock::addr pointing to the
- * allocated display.
- */
-mblock *new_display(/** maximal number of sprites the ::display can contain. 
-		     * If 0 then the default value of ::DISPLAY_DFLT_MAX_SPRITE is used. 
-		     */
-		    unsigned int max_nb_sprites);
 
 /** Add a ::sprite to a ::display at given layer. */
 void attach_sprite_to_display_at_layer(/** Address of the ::sprite */

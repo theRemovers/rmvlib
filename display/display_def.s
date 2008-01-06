@@ -16,11 +16,6 @@
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
-	.if	^^defined	DISPLAY_USE_LEGACY_ANIMATION
-	.else
-DISPLAY_USE_LEGACY_ANIMATION	equ	0
-	.endif
-
 	.offset	0
 	;; these two fields must be at the beginning in this order (see hashtbl)
 	;; an attached sprite has always previous != NULL
@@ -74,12 +69,7 @@ SPRITE_HSCALE:		ds.b	1
 SPRITE_DATA:		ds.l	1 ; used if Animation if Off
 SPRITE_ANIM_ARRAY:	ds.l	1 ; must be defined is Animation is On
 SPRITE_ANIM_DATA:
-	.if	DISPLAY_USE_LEGACY_ANIMATION
-SPRITE_ANIM_COUNTER:	ds.b	1
-SPRITE_ANIM_SPEED:	ds.b	1
-	.else
 SPRITE_ANIM_COUNTER:	ds.w	1
-	.endif
 	;; bit #15: has looped
 	;; other bits: index in the animation
 SPRITE_ANIM_INDEX:	ds.w	1

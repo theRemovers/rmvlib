@@ -15,14 +15,6 @@
 ; You should have received a copy of the GNU Lesser General Public 
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
-
-	;; 0 = two lists swapped
-	;; 1 = a single list (modified)
-	.if	^^defined	DISPLAY_SWAP_METHOD
-	.else
-DISPLAY_SWAP_METHOD	equ	1
-	.endif
-
 	;; use OP interrupt instead of CPU interrupt
 	.if	^^defined	DISPLAY_USE_OP_IT
 	.else
@@ -56,12 +48,6 @@ DISPLAY_IT_SAVE_REGS	equ	0
 	.print	"The display manager will use CPU interrupt"	
 	.endif
 
-	.if	DISPLAY_SWAP_METHOD
-	.print	"The display manager will use a single shared OP list"
-	.else
-	.print	"The display manager will use two really separate OP list"
-	.endif
-
 	.if	DISPLAY_BG_IT
 	.print	"The BG color will be used to indicate the display manager setting"
 	.endif
@@ -72,21 +58,10 @@ DISPLAY_IT_SAVE_REGS	equ	0
 	.print	"The interrupt handler will **not** save used registers"
 	.endif
 
-	.if	DISPLAY_USE_LEGACY_ANIMATION
-	.print	"The old format for animation is assumed"
-	.else
-	.print	"The new format for animation is assumed"
-	.endif	
-	
 	;; BG = RED -> CPU interrupt
 DISPLAY_BG_CPU		equ	$f800
 	;; BG = BLUE -> OP interrupt
 DISPLAY_BG_OP		equ	$07c0
-	.if	DISPLAY_SWAP_METHOD
-DISPLAY_BG_SWAP		equ	$003f
-	.else
-DISPLAY_BG_SWAP		equ	$0000
-	.endif
 
 	.if	(SPRITE_PREVIOUS <> 0)
 	.fail
@@ -97,6 +72,12 @@ DISPLAY_BG_SWAP		equ	$0000
 	
 DISPLAY_NB_LAYER	equ	4	; 2^DISPLAY_NB_LAYER
 DISPLAY_DFLT_MAX_SPRITE	equ	256	; 
+DISPLAY_NB_STRIPS	equ	8
+
+	.offset	0
+DISPLAY_STRIP_TREE:	ds.l	2*13
+	.qphrase
+DISPLAY_STRIP_TREE_SIZEOF:	ds.l	0
 	
 	.offset	0
 DISPLAY_PHYS:		ds.l	1
@@ -104,7 +85,6 @@ DISPLAY_LOG:		ds.l	1
 	.long
 DISPLAY_Y:		ds.w	1
 DISPLAY_X:		ds.w	1
-	.if	DISPLAY_SWAP_METHOD
 	.phrase
 DISPLAY_LIST:	
 DISPLAY_LIST_OB1:	ds.l	2	; if vde < VC then STOP
@@ -114,21 +94,21 @@ DISPLAY_LIST_OB4:	ds.l	2	; if true then DISPLAY_PHYS
 DISPLAY_LIST_OB5:	ds.l	2	; GPU
 DISPLAY_LIST_OB6:	ds.l	2	; if true then OB4
 DISPLAY_LIST_OB7:	ds.l	2	; STOP
-	.endif
 	.long
-DISPLAY_HASHTBL:	ds.l	4*(1<<DISPLAY_NB_LAYER)	; layer_coords,reserved,previous,next
+DISPLAY_STRIPS:
+	.rept	DISPLAY_NB_STRIPS
+	ds.w	1		; Y
+	ds.w	1		; H
+	ds.l	1		; offset
+	.endr
+	.long
+DISPLAY_HASHTBL:
+	.rept	(1<<DISPLAY_NB_LAYER)
+	ds.l	1		; attribute
+	ds.l	1		; Y|X
+	ds.l	1		; previous
+	ds.l	1		; next
+	.endr
 	.qphrase 
 DISPLAY_SIZEOF:		ds.l	0
 
-	.if	!DISPLAY_SWAP_METHOD
-	.offset	0
-DISPLAY_LIST_OB1:	ds.l	2	; if vde < VC then STOP
-DISPLAY_LIST_OB2:	ds.l	2	; if vdb > VC then STOP
-DISPLAY_LIST_OB3:	ds.l	2	; if vdb = VC then GPU
-DISPLAY_LIST_OB4:	ds.l	2	; if true then DISPLAY_PHYS
-DISPLAY_LIST_OB5:	ds.l	2	; GPU
-DISPLAY_LIST_OB6:	ds.l	2	; if true then OB4
-DISPLAY_LIST_OB7:	ds.l	2	; STOP
-	.qphrase
-DISPLAY_LIST:		ds.l	0
-	.endif

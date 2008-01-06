@@ -1,5 +1,5 @@
 ; The Removers'Library 
-; Copyright (C) 2006 Seb/The Removers
+; Copyright (C) 2006-2008 Seb/The Removers
 ; http://removers.atari.org/
 	
 ; This library is free software; you can redistribute it and/or 
@@ -19,11 +19,11 @@
 	include	"jaguar.inc"
 
 	.if	^^defined	DISPLAY_H
-	.print	"sprites.s already included"
+	.print	"display_def.s already included"
 	end
 	.endif
 DISPLAY_H	equ	1
-	.print	"including display.s"
+	.print	"including display_def.s"
 
 	include	"display_def.s"
 	
@@ -31,7 +31,9 @@ DISPLAY_H	equ	1
 	.extern	_bcopy
 	.extern	_vblCounter
 	.extern	_stop_object
-			
+
+;; DISPLAY_BG_IT	equ	1
+	
 	include	"display_cfg.s"
 
 GPU_STACK_SIZE		equ	32	; in long words
@@ -191,7 +193,6 @@ gpu_display_driver:
 	load	(r15+DISPLAY_PHYS/4),r14 ; physical list
 	store	r1,(r15+DISPLAY_PHYS/4)	; logical becomes physical
 	store	r14,(r15+DISPLAY_LOG/4)	; physical becomes logical
-	.if	DISPLAY_SWAP_METHOD
 	shrq	#3,r1		; physical list address in phrases
 	load	(r15+(DISPLAY_LIST_OB4+4)/4),r2	; read BRANCH object
 	move	r1,r28		; copy address
@@ -202,11 +203,6 @@ gpu_display_driver:
 	or	r28,r2		; low bits
 	store	r1,(r15+DISPLAY_LIST_OB4/4)
 	store	r2,(r15+((DISPLAY_LIST_OB4+4)/4))
-	.else
-	movei	#OLP,r2
-	rorq	#16,r1		; word swapped
-	store	r1,(r2)
-	.endif
 .endm
 	.if	!DISPLAY_USE_OP_IT
 .gpu_display_from_cpu_it:
@@ -217,7 +213,7 @@ gpu_display_driver:
 	load	(r1),r15
 	gpu_display_swap_lists
 	.if	DISPLAY_BG_IT
-	movei	#DISPLAY_BG_CPU|DISPLAY_BG_SWAP,r1
+	movei	#DISPLAY_BG_CPU,r1
 	.endif
 *	movei	#.gpu_display_main,r28
 	bset	#9,r29		; clear latch 0
@@ -238,7 +234,7 @@ gpu_display_driver:
 	.endif
 	gpu_display_swap_lists
 	.if	DISPLAY_BG_IT
-	movei	#DISPLAY_BG_OP|DISPLAY_BG_SWAP,r1	; BLUE
+	movei	#DISPLAY_BG_OP,r1	; BLUE
 	.endif
 	movei	#OBF,r28
 	storew	r28,(r28)	; relaunch OP
@@ -257,326 +253,373 @@ gpu_display_driver:
 	storew	r1,(r2)
 	.endif
 	;; must not modify neither r29 nor r30 nor r31 !!
-	;; r15 is display_list address
+	;; r15 is display address
 	;; r14 is logical list address
-*	movei	#active_display_list,r1
-*	load	(r1),r1
-*	moveq	#DISPLAY_LOG,r14
-	movei	#DISPLAY_HASHTBL,r0
-	add	r15,r0		; to hash table
-*	add	r1,r14
-*	addq	#4,r0		; skip previous field
-*	load	(r14),r14	; logical list
-	.if	!DISPLAY_SWAP_METHOD
-	movei	#DISPLAY_LIST,r2
-	add	r2,r14
-	.endif
-	addq	#DISPLAY_Y,r15
-	movei	#_a_vdb,r19
-	load	(r15),r27	; DISPLAY_Y|DISPLAY_X
-	loadw	(r19),r19	; a_vdb
-	moveq	#1<<DISPLAY_NB_LAYER,r3 ; layer counter	
-	addq	#1,r19
-	movei	#.compute_one_layer,r20
-	shrq	#1,r19		; (a_vdb+1)/2
-	movei	#.do_layer,r21
-	movei	#.do_layer_tst,r22
-	movei	#.next_in_layer,r23
+	movei	#DISPLAY_STRIP_TREE_SIZEOF,r0
+	movei	#DISPLAY_STRIPS,r1
+	;; r20 is .gpu_display_strips
+	movei	#.gpu_display_strips,r20
+	add	r14,r0		; skip decision tree in logical list
+	move	r20,r2
+	add	r15,r1		; to read strips 
+	moveq	#DISPLAY_NB_STRIPS,r3
+.gpu_copy_strips:
+	load	(r1),r4		; read Y|H
+	addq	#4,r1
+	move	r4,r6
+	sharq	#16,r4		; Y
+	load	(r1),r5		; read offset (in bytes)	
+	store	r4,(r2)
+	addq	#4,r2
+	addq	#4,r1
+	add	r0,r5		; start of corresponding list
+	shrq	#3,r5		; in phrases
+	subq	#1,r3		; strip--
+	store	r5,(r2)		; do not change flags!
+	jr	ne,.gpu_copy_strips
+	addqt	#4,r2
+	shlq	#16,r6
+	shrq	#16,r6
+	add	r4,r6		; y_max
+	store	r6,(r2)
+	;; the strips have been copied in GPU ram at this point!
+	movei	#_a_vdb,r0	
+	movei	#DISPLAY_HASHTBL,r10
+	loadw	(r0),r0		     ; a_vdb
+	load	(r15+DISPLAY_Y/4),r1 ; read DISPLAY_Y|DISPLAY_X
+	addq	#1,r0		     ; a_vdb+1
+	move	r1,r2
+	add	r15,r10		     ; address of hash table
+	sharq	#16,r1		     ; DISPLAY_Y
+	shrq	#1,r0		     ; y_min = (a_vdb+1)/2
+	shlq	#16,r2		     ; DISPLAY_X|0
+	add	r0,r1		     ; y_min + DISPLAY_Y
+	shrq	#16,r2		     ; DISPLAY_X
+	shlq	#16,r1		     ; (y_min + DISPLAY_Y)|0
+	moveq	#1<<DISPLAY_NB_LAYER,r11 ; layer counter
+	or	r2,r1			 ; (y_min + DISPLAY_Y)|DISPLAY_X
+	movei	#.compute_one_layer,r28
+	movei	#.do_layer,r27
+	movei	#.do_layer_tst,r26
+	movei	#.next_in_layer,r25
 	movei	#.anim_off,r24
-	movei	#.non_scaled_sprite,r25
-	movei	#.y_height_ok,r26
+	movei	#.non_scaled_sprite,r23
+	movei	#.non_scaled_cut_sprite,r22
 .compute_one_layer:
-	;; r0 go through hash table
-	;; r3 is the layer counter
-	;; r14 is logical list pointer
-	;; r19 is (a_vdb+1)
-	;; r27 is DISPLAY_Y|DISPLAY_X
-	load	(r0),r4		; read attribute
-	addq	#4,r0
-	sharq	#1,r4		; test hidden flag
-	jr	cs,.layer_visible ; if set then the layer is visible
-	moveq	#0,r15		; simulate empty layer
-	jump	(r22)		; test if layer is empty
-	addq	#12,r0		; next layer
-.layer_visible:	
-	load	(r0),r28	; LAYER_Y|LAYER_X
-	addq	#8,r0		; go to "next" field
-	move	r27,r1
-	move	r28,r2
-	shlq	#16,r1
-	shlq	#16,r2
-	sharq	#16,r28		; LAYER_Y
-	add	r2,r1		; DISPLAY_X+LAYER_X|0
-	move	r27,r2
-	sharq	#16,r1		; DISPLAY_X+LAYER_X
-	sharq	#16,r2		; DISPLAY_Y
-	add	r28,r2		; DISPLAY_Y+LAYER_Y
-	;; r1 is DISPLAY_X+LAYER_X
-	;; r2 is DISPLAY_Y+LAYER_Y
-	load	(r0),r15	; get sprite address
-	jump	(r22)		; go test if layer is empty
-	addq	#4,r0		; next layer in hash table
+	;; r10 goes through hash table
+	;; r11 is the layer counter
+	;; r1 is (y_min + DISPLAY_Y)|DISPLAY_X where y_min = (a_vdb+1)/2
+	load	(r10),r9	; read attribute
+	addq	#4,r10		; skip it
+	sharq	#1,r9		; test hidden flag
+	jr	cs,.layer_visible ; set then visible
+	moveq	#0,r14		  ; otherwise simulate empty layer
+	jump	(r26)		  ; jump .do_layer_tst
+	addq	#12,r10		; next layer
+.layer_visible:
+	load	(r10),r9	; LAYER_Y|LAYER_X
+	move	r1,r2		; copy (y_min+DISPLAY_Y)|DISPLAY_X
+	move	r9,r3		; copy LAYER_Y|LAYER_X
+	shlq	#16,r2		; DISPLAY_X|0
+	shlq	#16,r3		; LAYER_X|0
+	sharq	#16,r9		; LAYER_Y
+	add	r3,r2		; (DISPLAY_X+LAYER_X)|0
+	move	r1,r3		; copy (y_min+DISPLAY_Y)|DISPLAY_X
+	sharq	#16,r2		; DISPLAY_X+LAYER_X
+	sharq	#16,r3		; y_min+DISPLAY_Y
+	addq	#8,r10		; go to "next" field
+	add	r9,r3		; y_min+DISPLAY_Y+LAYER_Y
+	;; r2 is DISPLAY_X+LAYER_X
+	;; r3 is y_min+DISPLAY_Y+LAYER_Y
+	load	(r10),r14	; get sprite address
+	jump	(r26)		  ; jump .do_layer_tst	
+	addq	#4,r10		; next layer
 .do_layer:
-	load	(r15+SPRITE_SND_PHRASE/4),r4
-	btst	#SPRITE_INVISIBLE,r4
-	jump	ne,(r23)				; if sprite invisible then next_in_layer
-	btst	#SPRITE_ANIM_ON_OFF,r4			; is it animated?
-	jump	eq,(r24)				; no then anim_off
-	load	(r15+(SPRITE_SND_PHRASE+4)/4),r5	; ** load low bits of snd phrase **
-	.if	DISPLAY_USE_LEGACY_ANIMATION
+	;; r14 is sprite base address
+	;; process a sprite
+	;;  1-check if visible
+	;;  2-compute DATA base address
+	;; for unscaled sprites:
+	;;  3a-compute coords 
+	;;  4a-emit 
+	;; for scaled sprites:
+	;;  3b-compute coords 
+	;;  4b-emit
+	load	(r14+SPRITE_SND_PHRASE/4),r9
+	btst	#SPRITE_INVISIBLE,r9 ; invisible?
+	jump	ne,(r25)	; jump ne,.next_in_layer
+	btst	#SPRITE_ANIM_ON_OFF,r9 ; animated?
+	jump	eq,(r24)	; jump eq,.anim_off
+	load	(r14+(SPRITE_SND_PHRASE+4)/4),r8 ; ** load low bits of snd phrase **
 .anim_on:
-	load	(r15+SPRITE_ANIM_DATA/4),r7	; anim settings
-	load	(r15+SPRITE_ANIM_ARRAY/4),r6	; anim array address
-	move	r7,r8
-	move	r7,r9
-	shrq	#24,r8		; 0|0|0|COUNTER
-	shlq	#16,r9		; INDEX.w|0|0
-	subq	#1,r8		; COUNTER--
-	jr	ne,.anim_no_next ; if not null then do nothing special
-	shrq	#14,r9		; 0|0|INDEX.w << 2
-.anim_next:
-	move	r7,r8
-	addq	#1<<2,r9	; INDEX++
-	shrq	#16,r8		; ?|SPEED
-.anim_no_next:
-	;; here the lower byte of r8 is the new COUNTER
-	;; and the lower word of r9 contains the INDEX (plus the loop flag) shifted by two bits
-	bclr	#15+2,r9	; ignore loop flag
-	move	r6,r10		; copy array address
-	shlq	#8,r7		; SPEED|?|?|?
-	add	r9,r6		; array[index]
-	shrq	#24,r7		; 0|0|0|SPEED
-	load	(r6),r6		; DATA address
-	shlq	#16,r7		; 0|SPEED|0|0
-	cmpq	#0,r6		; is DATA address null ?
-	jr	ne,.no_anim_index_fix	; no
-	shlq	#24,r8		; COUNTER|0|0|0
-.anim_index_fix:
-	moveq	#1,r9		; loop flag
-	load	(r10),r6	; DATA address
-	shlq	#17,r9		; loop flag set and INDEX = 0 
-.no_anim_index_fix:
-	or	r8,r7		; COUNTER|SPEED|0|0
-	shrq	#2,r9		; 0|0|INDEX.w
-	or	r9,r7
-	jr	.data_ok
-	store	r7,(r15+SPRITE_ANIM_DATA/4)
-	.else
-.anim_on:
-	load	(r15+SPRITE_ANIM_DATA/4),r7	; anim settings
-	load	(r15+SPRITE_ANIM_ARRAY/4),r10	; anim array address
-	move	r7,r8
-	shlq	#17,r7		; clear loop flag
-	shrq	#16,r8		; COUNTER
-	shrq	#14,r7		; INDEX<<3
-	move	r10,r11		; copy array address
-	add	r7,r10
-	subq	#1,r8
+	load	(r14+SPRITE_ANIM_DATA/4),r7 ; anim settings
+	load	(r14+SPRITE_ANIM_ARRAY/4),r12 ; anim array address
+	move	r7,r6		; COUNTER|(L|INDEX)
+	shlq	#17,r7		; clear LOOP flag
+	shrq	#16,r6		; COUNTER
+	shrq	#17-3,r7	; INDEX<<3
+	move	r12,r13
+	add	r7,r12		; address of animation chunck
+	subq	#1,r6		; COUNTER--
 	jr	ne,.anim_no_next
 	shrq	#3,r7		; INDEX
 .anim_next:
-	addq	#1<<3,r10
+	addq	#1<<3,r12	; next animation chunck
 	addq	#1,r7		; INDEX++
-	load	(r10),r6	; DATA address
-	addq	#4,r10
-	cmpq	#0,r6		; is DATA null ?
+	load	(r12),r4	; DATA base address
+	addq	#4,r12
+	cmpq	#0,r4		; end of array?
 	jr	ne,.anim_write_data
-	loadw	(r10),r8	; SPEED
+	loadw	(r12),r6	; new COUNTER = SPEED
 	jr	.anim_index_fix
-	move	r8,r7		; loop INDEX
+	move	r6,r7		; loop INDEX
 .anim_no_next:
 	jr	.anim_write_data
-	load	(r10),r6	; DATA address
+	load	(r12),r4	; DATA base address
 .anim_index_fix:
-	shlq	#3,r8
-	bset	#15,r7		; loop flag
-	add	r8,r11
-	load	(r11),r6	; DATA address
-	addq	#4,r11
-	loadw	(r11),r8	; SPEED
+	shlq	#3,r6		; INDEX<<3
+	bset	#15,r7		; set LOOP flag
+	add	r6,r13
+	load	(r13),r4	; DATA base address
+	addq	#4,r13
+	loadw	(r13),r6	; new COUNTER = SPEED
 .anim_write_data:
-	;; r7 = INDEX + loop flag
-	;; r8 = COUNTER
-	shlq	#16,r8
-	or	r8,r7
+	;; r4 = DATA base address
+	;; r6 = COUNTER
+	;; r7 = L|INDEX
+	shlq	#16,r6
+	or	r6,r7
 	jr	.data_ok
-	store	r7,(r15+SPRITE_ANIM_DATA/4)
-	.endif
+	store	r7,(r14+SPRITE_ANIM_DATA/4)
 .anim_off:
-	load	(r15+SPRITE_DATA/4),r6
-.data_ok:	
-	;; r4 contains the higher bits of snd phrase
-	;; r5 contains the lower bits of snd phrase
-	;; r6 contains DATA field (in bytes)
-	shrq	#3,r6		; DATA in phrases
-	load	(r15+SPRITE_Y/4),r7	; Y|X
-	move	r5,r9
-	move	r7,r8
-	shlq	#16,r7
-	sharq	#16,r8		; Y
-	sharq	#16,r7		; X
-	shlq	#22,r9		; keep HEIGHT<<22
-	add	r1,r7		; X+DISPLAY_X
-	cmpq	#0,r9		; HEIGHT = 0 ?
-	jump	eq,(r23)	; yes -> .next_in_layer
-	shrq	#22,r9		; HEIGHT
-	add	r2,r8		; Y+DISPLAY_Y
-	btst	#SPRITE_TYPE,r4
-	jump	eq,(r25)	; if non scaled sprite then .non_scaled_sprite
-	shrq	#12,r5		; clear for HEIGHT field
+	load	(r14+SPRITE_DATA/4),r4 ; DATA base address
+.data_ok:
+	;; at this point, DATA is computed
+	;; the content of the registers is the following
+	;; r1 is (y_min + DISPLAY_Y)|DISPLAY_X where y_min = (a_vdb+1)/2
+	;; r2 is DISPLAY_X+LAYER_X
+	;; r3 is y_min+DISPLAY_Y+LAYER_Y
+	;; r4 is DATA in bytes
+	;; r8 is low bits of snd phrase
+	;; r9 is high bits of snd phrase
+	;; r10 goes through hash table
+	;; r11 is layer counter
+	;; r14 is sprite base address
+	load	(r14+SPRITE_Y/4),r5 ; Y|X
+	shrq	#3,r4		; DATA in phrases
+	move	r5,r6
+	shlq	#16,r5		; X|0
+	sharq	#16,r6		; Y
+	sharq	#16,r5		; X
+	add	r3,r6		; Y+y_min+DISPLAY_Y+LAYER_Y
+	add	r2,r5		; X+DISPLAY_X+LAYER_X
+	;; r5 is X (still to be adjusted according to HOTSPOT)
+	;; r6 is Y (...)
+	move	r8,r19		; copy low bits of snd phrase
+	move	r8,r7		; copy low bits of snd phrase
+	shlq	#22,r19		; HEIGHT<<22
+	shrq	#12,r8		; clear HEIGHT field
+	cmpq	#0,r19		; HEIGHT<<22 = 0?
+	jump	eq,(r25)	; jump eq,.next_in_layer
+	shrq	#22,r19		; HEIGHT
+	;; r19 is HEIGHT (not null)
+	shlq	#12,r8		; 12 lower bits cleared
+	shlq	#4,r7
+	btst	#SPRITE_TYPE,r9	;
+	jump	eq,(r23)	; jump eq,.non_scaled_sprite
+	shrq	#32-10,r7	; DWIDTH
 .scaled_sprite:
-	subq	#1,r9		; HEIGHT-- (fix for scaled sprites)
-	jump	eq,(r23)	; if HEIGHT = 0 then .next_in_layer
-	move	r5,r11		; to get DWIDTH
-	load	(r15+SPRITE_SCALE/4),r12 ; load scale values
-	shrq	#6,r11
-	btst	#SPRITE_USE_HOTSPOT,r4 ; check if HOTSPOT is used
-	jr	eq,.jump_scaled_no_hotspot ; no then nothing to fix
+	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
+	jump	eq,(r25)	; jump eq,.next_in_layer
 	nop
-	load	(r15+SPRITE_HY/4),r16 ; load hotspot shifts
-	move	r12,r18		; get scales
-	move	r16,r17
-	shlq	#16,r18		; to get VSCALE
+	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
+	move	r18,r17			 ;
+	shlq	#32-16,r18		 ; VSCALE|HSCALE|0|0
+	move	r17,r0
+	shlq	#32-8,r17	; HSCALE|0|0|0
+	shrq	#32-8,r18	; VSCALE
+	shlq	#8,r0		; REMAINDER|VSCALE|HSCALE|0
+	cmpq	#0,r18		; VSCALE = 0?
+	jump	eq,(r25)	; jump eq,.next_in_layer
+	shrq	#32-8,r0	; REMAINDER
+	btst	#SPRITE_USE_HOTSPOT,r9
+	jr	eq,.scaled_ok_coords
+	shrq	#32-8,r17	; HSCALE
+	load	(r14+SPRITE_HY/4),r16 ; HY|HX
+	move	r16,r13
 	sharq	#16,r16		; HY
-	shrq	#24,r18		; VSCALE
-	shlq	#16,r17		; to get HX
+	shlq	#16,r13		; HX|0
 	imult	r18,r16		; HY*VSCALE
-	jr	.scaled_continue_hotspot
-	move	r12,r18		; get scales
-.jump_scaled_no_hotspot:
-	jr	.scaled_no_hotspot ; trick to have short jumps 
-.scaled_continue_hotspot:
-	sharq	#16,r17		; HX
-	shlq	#24,r18		; to get HSCALE
-	sharq	#5,r16		; get integer part of HY*VSCALE
-	shrq	#24,r18		; HSCALE
-	sub	r16,r8		; Y -= HY*VSCALE
-	imult	r18,r17		; HX*HSCALE
-	btst	#SPRITE_REFLECT,r4 ; REFLECT?
-	jr	eq,.scaled_hotspot_no_reflect
-	sharq	#5,r17		; get integer part of HX*HSCALE
-	neg	r17		; negate HX
-.scaled_hotspot_no_reflect:
-	sub	r17,r7		; X -= HX*HSCALE
-.scaled_no_hotspot:	
-	cmpq	#0,r8
-	jr	pl,.jump_scaled_y_positive	; .scaled_y_positive
-	shlq	#22,r11		; DWIDTH << 22
-	move	r12,r10
-	shlq	#16,r12		; clear REMAINDER
-	shrq	#16,r10		; keep REMAINDER
-	move	r12,r13
-	shlq	#24,r10		; REMAINDER in higher byte
-	shrq	#24,r13		; keep VSCALE
-	shrq	#16,r12		; VSCALE|HSCALE
-	moveq	#1,r16
-	shlq	#24,r13		; VSCALE in higher byte
-	shlq	#5+24,r16	; 1<<5 in higher byte
-	jr	.scaled_sprite_fix_y
-	shrq	#22,r11		; DWIDTH
-.jump_scaled_y_positive:
-	jr	.scaled_y_positive ; trick to have short jumps
-.scaled_sprite_fix_y:
-	sub	r16,r10		; REMAINDER--
-	jr	cc,.scaled_sprite_fix_y_no_add_vscale ; no carry
+	sharq	#16,r13		; HX
+	sharq	#5,r16		; integer part of HY*VSCALE
+	imult	r17,r13		; HX*HSCALE
+	sub	r16,r6		; Y -= HY*VSCALE
+	btst	#SPRITE_REFLECT,r9 ; REFLECT?
+	jr	eq,.scaled_no_reflect
+	sharq	#5,r13		; integer part of HX*HSCALE
+	neg	r13		; negate HX*HSCALE
+.scaled_no_reflect:
+	sub	r13,r5		; X -= HX*HSCALE
+.scaled_ok_coords:
+	;; the content of the registers is the following
+	;; r1 is (y_min+DISPLAY_Y)|DISPLAY_X where y_min = (a_vdb+1)/2
+	;; r2 is DISPLAY_X+LAYER_X
+	;; r3 is y_min+DISPLAY_Y+LAYER_Y
+	;; r4 is DATA in phrases
+	;; r5 is X 
+	;; r6 is Y 
+	;; r7 is DWIDTH
+	;; r8 is low bits of snd phrase (12 lower bits cleared)
+	;; r9 is high bits of snd phrase
+	;; r10 goes through hash table
+	;; r11 is layer counter
+	;; r14 is sprite base address
+	;; r19 is HEIGHT (not null)
+	;; r0 is REMAINDER
+	;; r18 is VSCALE (not null)
+	shlq	#20,r5		; keep only 12 bits for X
+	move	r20,r13		; .gpu_display_strips
+	shrq	#20,r5		; XPOS
+	moveq	#DISPLAY_NB_STRIPS,r12		; i = 0
+	or	r5,r8		; low bits of snd phrase ready
+	;; r5 is now freed
+.scaled_search_strip:
+.scaled_found_strip:
+.scaled_first_strip:
+.scaled_cut_sprite:
+.scaled_emit_sprite:
+	jump	(r25)		; jump .next_in_layer
 	nop
-.scaled_sprite_fix_y_add_vscale:
-	add	r11,r6		; fix DATA
-	subq	#1,r9		; HEIGHT--
-	jump	eq,(r23)	; if HEIGHT = 0 then .next_in_layer
-	add	r13,r10		; add VSCALE to REMAINDER
-	jr	cc,.scaled_sprite_fix_y_add_vscale
-	nop
-.scaled_sprite_fix_y_no_add_vscale:
-	addq	#1,r8				; Y++
-	jr	ne,.scaled_sprite_fix_y		; not null? 
-	nop
-	shrq	#8,r10
-	or	r10,r12
-.scaled_y_positive:
-	store	r12,(r14+5)	; write scale values
-	jump	(r26)		; goto .y_height_ok
-	moveq	#SCBITOBJ,r10	; set TYPE to SCBITOBJ
 .non_scaled_sprite:
-	btst	#SPRITE_USE_HOTSPOT,r4 ; check if HOTSPOT is used
-	jr	eq,.nonscaled_no_hotspot ; no then nothing to fix
+	btst	#SPRITE_USE_HOTSPOT,r9
+	jr	eq,.non_scaled_ok_coords
 	nop
-	load	(r15+SPRITE_HY/4),r16	; load hotspot shifts
-	move	r16,r17
-	sharq	#16,r16		; HY
-	shlq	#16,r17		; to get HX
-	sub	r16,r8		; Y -= HY
-	btst	#SPRITE_REFLECT,r4 ; REFLECT?
-	jr	eq,.non_scaled_hotspot_no_reflect
+	load	(r14+SPRITE_HY/4),r18 ; HY|HX
+	move	r18,r17
+	sharq	#16,r18		; HY
+	shlq	#16,r17
+	sub	r18,r6		; Y -= HY
+	btst	#SPRITE_REFLECT,r9 ; REFLECT?
+	jr	eq,.non_scaled_no_reflect
 	sharq	#16,r17		; HX
 	neg	r17		; negate HX
-.non_scaled_hotspot_no_reflect:	
-	sub	r17,r7		; X -= HX
-.nonscaled_no_hotspot:	
-	cmpq	#0,r8
-	jr	pl,.non_scaled_y_positive ; if Y >= 0 then nothing to do
-	moveq	#BITOBJ,r10	; set TYPE to BITOBJ
-	move	r5,r11		; to get DWIDTH
-	add	r8,r9		; adjust HEIGHT
-	jump	mi,(r23)	; if HEIGHT <= 0 then .next_in_layer
-	shrq	#6,r11
-	neg	r8		; get |Y|
-	shlq	#22,r11		; DWIDTH << 22
-	shrq	#22,r11		; DWIDTH
-	mult	r8,r11		; |Y|*DWIDTH
-	moveq	#0,r8		; Y = 0
-	add	r11,r6		; fix DATA
-.non_scaled_y_positive:	
-.y_height_ok:
-	;; r4 contains the higher bits of snd phrase
-	;; r5 has been shifted right by 12 bits
-	;; r6 contains DATA (in phrases)
-	;; r7 contains X
-	;; r8 contains Y
-	;; r9 contains HEIGHT
-	;; r10 contains TYPE
-	add	r19,r8		; Y+(a_vdb+1)/2
-	shlq	#12,r5		; lower bits of snd phrase ready to receive XPOS
-	shlq	#1+21,r8	; Y*2 << 21
-	shlq	#20,r7		; keep only the 12 lower bits of X
-	shrq	#18,r8		; YPOS
-	shlq	#22,r9
-	or	r8,r10		; YPOS|TYPE
-	move	r14,r11		; LINK
-	store	r4,(r14+2)	; write higher bit of snd phrase
-	shrq	#8,r9		; HEIGHT ready
-	shrq	#3,r11		; in phrases
-	or	r9,r10		; HEIGHT|YPOS|TYPE
-	addq	#4,r11		; next LINK (4 phrases after)
-	shrq	#20,r7		; XPOS
-	move	r11,r12		; copy next LINK
-	or	r7,r5		; lower bits of snd phrase ready
-	move	r12,r13		; copy next LINK
-	store	r5,(r14+3)	; write lower bits of snd phrase
-	shlq	#24,r11
-	shrq	#8,r12
-	or	r11,r10		; lower bits of first phrase ready
-	shlq	#11,r6
-	store	r10,(r14+1)	; write lower bits of first phrase
-	or	r12,r6		; higher bits of first phrase ready
-	shlq	#3,r13		; prepare next LINK
-	store	r6,(r14)
-	move	r13,r14		; next object address
+.non_scaled_no_reflect:
+	sub	r17,r5		; X -= HX
+.non_scaled_ok_coords:
+	;; the content of the registers is the following
+	;; r1 is (y_min+DISPLAY_Y)|DISPLAY_X where y_min = (a_vdb+1)/2
+	;; r2 is DISPLAY_X+LAYER_X
+	;; r3 is y_min+DISPLAY_Y+LAYER_Y
+	;; r4 is DATA in phrases
+	;; r5 is X 
+	;; r6 is Y 
+	;; r7 is DWIDTH
+	;; r8 is low bits of snd phrase (12 lower bits cleared)
+	;; r9 is high bits of snd phrase
+	;; r10 goes through hash table
+	;; r11 is layer counter
+	;; r14 is sprite base address
+	;; r19 is HEIGHT (not null)
+	shlq	#20,r5		; keep only 12 bits for X
+	move	r20,r13		; .gpu_display_strips
+	shrq	#20,r5		; XPOS
+	moveq	#DISPLAY_NB_STRIPS,r12		; i = 0
+	or	r5,r8		; low bits of snd phrase ready
+	;; r5 is now freed
+.non_scaled_search_strip:
+	;; for(i = 0; i < DISPLAY_NB_STRIPS && strip[i].y <= y; i++)
+	load	(r13),r5	; strip[i].y
+	cmp	r5,r6
+	jr	mi,.non_scaled_found_strip ; if y - strip.y < 0 then found
+	subqt	#4,r13		; previous strip (list pointer)
+	subq	#1,r12
+;; 	jr	ne,.non_scaled_search_strip
+	jr	pl,.non_scaled_search_strip ; pl because of the last strip
+	addq	#12,r13		; next strip
+	;; check whether it is in the last strip
+;; 	load	(r13),r5	; y_max
+;; 	cmp	r5,r6
+;; 	jr	mi,.non_scaled_found_strip
+;; 	subq	#4,r13
+	;; the sprite is invisible
+	jump	(r25)		; jump .next_in_layer
+	nop
+.non_scaled_found_strip:
+	cmpq	#DISPLAY_NB_STRIPS,r12
+	jr	ne,.non_scaled_emit_sprite
+	addq	#1,r12
+.non_scaled_first_strip:
+	;; the first strip is particular
+	;; because the part above the strip is invisible
+	addq	#8,r13
+	subq	#1,r12
+.non_scaled_cut_sprite:
+	move	r5,r17		; strip.y
+	sub	r6,r17		; strip.y - y
+	move	r5,r6		; y = strip.y
+	sub	r17,r19		; h -= strip.y - y
+	jump	mi,(r25)	; jump mi,.next_in_layer
+	mult	r7,r17		; DWIDTH*(strip.y-y)
+	add	r17,r4
+.non_scaled_emit_sprite:
+	load	(r13),r15
+	move	r6,r16		; y
+	move	r15,r17
+	shlq	#3,r15		; in bytes
+	addq	#4,r17
+	move	r19,r5		; height
+	store	r17,(r13)	; next object in list
+	shlq	#32-11+1,r16	; keep 11 bits of Y*2
+	shlq	#32-10,r5
+	shrq	#32-14,r16	; YPOS|0
+	shrq	#32-24,r5
+	addq	#4,r13
+	or	r5,r16		; HEIGHT|YPOS|0
+	move	r17,r5		; copy LINK
+	shlq	#32-8,r17
+	shrq	#8,r5
+	or	r17,r16		; low bits of first phrase
+	move	r4,r17
+	store	r16,(r15+1)
+	shlq	#11,r17		; DATA|0
+	store	r8,(r15+3)
+	or	r5,r17		; high bits of first phrase
+	store	r9,(r15+2)
+	subq	#1,r12		; strip--
+	jr	eq,.next_in_layer
+	store	r17,(r15)
+	load	(r13),r5	; strip.y
+	jump	(r22)		; jump .non_scaled_cut_sprite
+	addq	#4,r13
 .next_in_layer:
-	load	(r15+SPRITE_NEXT/4),r15
-.do_layer_tst:	
-	cmpq	#0,r15		; is sprite address null ?
-	jump	ne,(r21)	; if not then continue in layer
+	load	(r14+SPRITE_NEXT/4),r14
+.do_layer_tst:
+	cmpq	#0,r14		; is there a sprite? if yes then process it
+	jump	ne,(r27)	; jump ne,.do_layer 
 	nop
 .end_layer:
-	subq	#1,r3		; one layer less
-	jump	ne,(r20)	; is it finished?
+	subq	#1,r11		; one layer less
+	jump	ne,(r28)	; jump ne,.compute_one_layer
 	nop
-	;; write a final stop object
-	moveq	#STOPOBJ,r0
-	or	r0,r0
-	store	r0,(r14+1)
+	;; this is the end my friend!!
+	;; write a final stop object at the end of each list
+	moveq	#STOPOBJ,r0	
+	addq	#4,r20		; skip Y|H
+	moveq	#DISPLAY_NB_STRIPS,r2
+.gpu_write_stop_objects:
+	load	(r20),r15	; read address
+	shlq	#3,r15		; in bytes
+	subq	#1,r2
+	addqt	#8,r20
+	jr	ne,.gpu_write_stop_objects
+	store	r0,(r15+1)	; emit stop object
+	;; end of the interrupt
 .gpu_display_end_it:
+	.if	DISPLAY_BG_IT
+	movei	#BG,r1
+	moveq	#0,r0	
+	storew	r0,(r1)
+	.endif
 	movei	#_vblCounter,r28
 	loadw	(r28),r26
 	movei	#displayCounter,r28
@@ -591,6 +634,13 @@ gpu_display_driver:
 	addq	#4,r31		; pop from stack
 	jump	t,(r28)		; return
 	store	r29,(r30)	; restore flags
+	.long
+.gpu_display_strips:
+	rept	DISPLAY_NB_STRIPS
+	dc.l	0		; Y
+	dc.l	0		; list address
+	endr
+	dc.l	0		; for y_max
 .gpu_display_driver_loop:
 	movei	#.gpu_display_driver_param,r0
 	movei	#.gpu_display_driver_loop,r1
@@ -679,16 +729,9 @@ _show_display:
 	.if	!(DISPLAY_USE_OP_IT&!DISPLAY_OP_IT_COMP_PT)
 	move.l	d0,active_display_list
 	.endif
-	.if	DISPLAY_SWAP_METHOD
 	add.l	#DISPLAY_LIST,d0
 	swap	d0
 	move.l	d0,OLP
-	.else
-	move.l	d0,a0
-	move.l	DISPLAY_PHYS(a0),d0
-	swap	d0
-	move.l	d0,OLP
-	.endif
 	rts
 
 	.globl	_hide_display

@@ -68,11 +68,7 @@ display_collision_routine:
 	load	(r14+SPRITE_ANIM_DATA/4),r3
 	load	(r14+SPRITE_ANIM_ARRAY/4),r11
 	shlq	#17,r3		; get INDEX
-	.if	DISPLAY_USE_LEGACY_ANIMATION
-	shrq	#15,r3		; INDEX<<2
-	.else
 	shrq	#14,r3		; INDEX<<3
-	.endif
 	add	r3,r11
 	load	(r11),r3	; get DATA
 	jr	.ok_sprite1_data
@@ -87,11 +83,7 @@ display_collision_routine:
 	load	(r15+SPRITE_ANIM_DATA/4),r23
 	load	(r15+SPRITE_ANIM_ARRAY/4),r11
 	shlq	#17,r23		; get INDEX
-	.if	DISPLAY_USE_LEGACY_ANIMATION
-	shrq	#15,r23		; INDEX<<2
-	.else
 	shrq	#14,r23		; INDEX<<3
-	.endif
 	add	r23,r11
 	load	(r11),r23	; get DATA
 	jr	.ok_sprite2_data

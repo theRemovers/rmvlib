@@ -17,7 +17,7 @@ SUBDIRS=$(NASUBDIRS) $(ASUBDIRS) $(OSUBDIRS)
 
 PROJECT=rmvlib
 # also change in Doxyfile!!!
-PROJECT_NUMBER=1.1.3
+PROJECT_NUMBER=1.1.4
 
 TARFILE=$(PROJECT)-$(PROJECT_NUMBER).tar
 
@@ -32,6 +32,7 @@ all: subdirs $(OBJS) $(PROJECT).a
 
 $(PROJECT).a: Makefile subdirs $(OBJS)
 	for dir in $(ASUBDIRS); do $(AR) rvs $(PROJECT).a $$dir/*.o; done
+	$(AR) rvs $(PROJECT).a display/n_display.o
 
 .PHONY: subdirs $(SUBDIRS)
 

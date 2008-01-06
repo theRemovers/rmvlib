@@ -4,12 +4,10 @@ MADMAC=$(JAGPATH)/bin/mac
 CC=$(CROSSPATH)/bin/gcc
 AR=$(CROSSPATH)/bin/ar
 
-SWAPMETHOD=1
+MACFLAGS=-fb -v 
+CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float
 
-MACFLAGS=-fb -v -dDISPLAY_SWAP_METHOD=$(SWAPMETHOD)
-CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float -DDISPLAY_SWAP_METHOD=$(SWAPMETHOD) 
-
-SRCC=
+SRCC=n_display.c
 SRCS=display.s
 SRCH=display.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)

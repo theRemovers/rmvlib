@@ -1,2 +1,18 @@
 \chapter{Building the OP list}
 
+\newcommand{\Var}[1]{\ensuremath{\mathrm{#1}}}
+\newcommand{\Cst}[1]{\ensuremath{\mathbf{#1}}}
+
+\newcommand{\vdb}{\Var{vdb}}
+\newcommand{\vde}{\Var{vde}}
+\newcommand{\vc}{\Cst{vc}}
+
+\begin{tikzpicture}
+  \node[draw,rounded corners] (ob1) at (0,7) {if $\vde < \vc$ then};
+  \node[draw,rounded corners] (ob2) at (0,6) {if $\vdb > \vc$ then};
+  \node[draw,rounded corners] (ob3) at (0,5) {if $2 \frac{\vdb+1}{2} = \vc$ then};
+  \node[draw,rounded corners] (ob4) at (0,4) {goto \Var{list}};
+  \node[draw,rounded corners] (ob5) at (0,3) {GPU object};
+  \node[draw,rounded corners] (ob6) at (0,2) {goto };
+  \node[draw,rounded corners] (ob7) at (0,1) {STOP};
+\end{tikzpicture}

@@ -22,21 +22,20 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
-#ifndef DISPLAY_USE_LEGACY_ANIMATION
-#define DISPLAY_USE_LEGACY_ANIMATION 0
-#endif
+/** Default maximal number of sprites in ::display. */
+#define DISPLAY_DFLT_MAX_SPRITE 256
 
-#ifndef DISPLAY_SWAP_METHOD
-#define DISPLAY_SWAP_METHOD 1
-#endif
+#define DISPLAY_NB_STRIPS 8
 
 #ifndef DISPLAY_USE_OP_IT
 #define DISPLAY_USE_OP_IT 1
 #endif
 
+/** The number of layers is 1<<DISPLAY_NB_LAYER */
 #define DISPLAY_NB_LAYER 4
 
 #include <op.h>
+#include <memalign.h>
 
 #define RGBCOLOR(r,g,b) (((((r) >> 3) & 0x1f) << 11) | ((((b) >> 3) & 0x1f) << 6) | (((g) >> 2) & 0x3f))
 #define CRYCOLOR(c,r,y) ((((c) & 0xf) << 12) | (((r) & 0xf) << 8) | ((y) & 0xff))
@@ -77,6 +76,29 @@ typedef struct {
   op_stop_object ob7;
 } display_list_header;
 
+typedef struct {
+  op_branch_object ob1;
+  op_branch_object ob2;
+  op_branch_object ob3;
+  op_branch_object ob4;
+  op_stop_object ob5;
+  op_branch_object ob6;
+  op_branch_object ob7;
+  op_branch_object ob8;
+  op_branch_object ob9;
+  op_branch_object ob10;
+  op_branch_object ob11;
+  op_branch_object ob12;
+  op_stop_object ob13;
+  char _pad0[sizeof(qphrase)-((11*sizeof(op_branch_object) + 2*sizeof(op_stop_object)) % sizeof(qphrase))];
+} display_strip_tree;
+
+typedef struct {
+  short int y;
+  short int h;
+  int offset;
+} strip;
+
 /** The display type */
 typedef struct {
   qphrase *phys;
@@ -86,23 +108,17 @@ typedef struct {
   short int y;
   /** X coordinate of display */
   short int x;
-#if DISPLAY_SWAP_METHOD
-  char _pad0[8-((4+4+2+2) % 8)];
+  char _pad0[8-((4+4+2+2) % 8)]; // 4
   // dphrase
   display_list_header h;
   // phrase
-#else
-  // long
-#endif
+  /** strips */
+  strip strips[DISPLAY_NB_STRIPS];
 
   //  sprite_header layer[1<<DISPLAY_NB_LAYER];
   layer_desc layer[1<<DISPLAY_NB_LAYER];
 
-#if DISPLAY_SWAP_METHOD
-  char _pad1[sizeof(qphrase)-((4+4+2+2+4+7*sizeof(op_object)+sizeof(sprite_header)*(1<<DISPLAY_NB_LAYER)) % sizeof(qphrase))];
-#else
-  char _pad1[sizeof(qphrase)-((4+4+2+2+sizeof(sprite_header)*(1<<DISPLAY_NB_LAYER)) % sizeof(qphrase))];
-#endif
+  char _pad1[sizeof(qphrase)-((4+4+2+2+4+sizeof(display_list_header)+sizeof(sprite_header)*(1<<DISPLAY_NB_LAYER)+DISPLAY_NB_STRIPS*sizeof(strip)) % sizeof(qphrase))];
   qphrase op_list[];
 } display;
 
@@ -134,5 +150,16 @@ void jump_gpu_subroutine(/** Address of the subroutine */
 
 /** Free GPU ram is available at &_GPU_FREE_RAM. */
 extern long _GPU_FREE_RAM;
+
+/** Creates a new ::display that can contain at most max_nb_sprites
+ * ::sprite.
+ *
+ * The ::mblock returned has its _mblock::addr pointing to the
+ * allocated display.
+ */
+mblock *new_display(/** maximal number of sprites the ::display can contain. 
+		     * If 0 then the default value of ::DISPLAY_DFLT_MAX_SPRITE is used. 
+		     */
+		    unsigned int max_nb_sprites);
 
 #endif

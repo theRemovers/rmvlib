@@ -4,13 +4,11 @@ MADMAC=$(JAGPATH)/bin/mac
 CC=$(CROSSPATH)/bin/gcc
 AR=$(CROSSPATH)/bin/ar
 
-SWAPMETHOD=1
-
-MACFLAGS=-fb -v -dDISPLAY_SWAP_METHOD=$(SWAPMETHOD)
-CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float -DDISPLAY_SWAP_METHOD=$(SWAPMETHOD) 
+MACFLAGS=-fb -v 
+CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float 
 
 SRCC=a_sprite.c c_layer.c d_sprite.c iter_all.c iter_one.c 
-SRCC+=n_display.c n_sprite.c s_sprite.c so_layer.c 
+SRCC+=n_sprite.c s_sprite.c so_layer.c 
 SRCC+=m_layer.c h_layer.c s_layer.c
 SRCS=
 SRCH=sprite.h op.h

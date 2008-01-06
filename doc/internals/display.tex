@@ -65,6 +65,21 @@ the image of \Fref{final}.
 \end{figure}
 
 \section{The sprite data structure}
-A sprite can have several properties.
+A sprite can have several properties:
+
+\begin{itemize}
+\item A sprite corresponds to a piece of graphical data in memory. The
+  image is characterized by its \emph{width}, its \emph{height} and
+  its \emph{depth} (bits per pixel). The width and the depth are such
+  that a line in memory has a size multiple of 8 bytes (phrase
+  aligned).
+
+\item The sprite is either \emph{transparent} or not. When
+  transparent, the pixel of value $0$ represents the transparent
+  pixels.
+
+\item A sprite can be either \emph{scaled} or not. The scale factors
+  are $3,5$ fractionnal integers.
+\end{itemize}
 
 
