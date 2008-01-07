@@ -305,6 +305,7 @@ gpu_display_driver:
 	movei	#.anim_off,r24
 	movei	#.non_scaled_sprite,r23
 	movei	#.non_scaled_cut_sprite,r22
+	movei	#.scaled_cut_sprite,r21
 .compute_one_layer:
 	;; r10 goes through hash table
 	;; r11 is the layer counter
@@ -433,15 +434,14 @@ gpu_display_driver:
 	jump	eq,(r25)	; jump eq,.next_in_layer
 	nop
 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
-	move	r18,r17			 ;
+	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
 	shlq	#32-16,r18		 ; VSCALE|HSCALE|0|0
-	move	r17,r0
+	shlq	#8,r0			 ; REMAINDER|VSCALE|HSCALE|0
+	move	r18,r17			 ;
+	shrq	#32-8,r18	; VSCALE 
+	jump	eq,(r25)	; VSCALE = 0 ? jump eq,.next_in_layer
+	shrq	#8,r0		; 0|REMAINDER|VSCALE|HSCALE
 	shlq	#32-8,r17	; HSCALE|0|0|0
-	shrq	#32-8,r18	; VSCALE
-	shlq	#8,r0		; REMAINDER|VSCALE|HSCALE|0
-	cmpq	#0,r18		; VSCALE = 0?
-	jump	eq,(r25)	; jump eq,.next_in_layer
-	shrq	#32-8,r0	; REMAINDER
 	btst	#SPRITE_USE_HOTSPOT,r9
 	jr	eq,.scaled_ok_coords
 	shrq	#32-8,r17	; HSCALE
@@ -475,9 +475,7 @@ gpu_display_driver:
 	;; r11 is layer counter
 	;; r14 is sprite base address
 	;; r19 is HEIGHT (not null)
-	;; r0 is REMAINDER
-	;; r17 is HSCALE
-	;; r18 is VSCALE (not null)
+	;; r0 is 0|REMAINDER|VSCALE|HSCALE (VSCALE is not null)
 	shlq	#20,r5		; keep only 12 bits for X
 	move	r20,r13		; .gpu_display_strips
 	shrq	#20,r5		; XPOS
@@ -485,12 +483,59 @@ gpu_display_driver:
 	or	r5,r8		; low bits of snd phrase ready
 	;; r5 is now free
 .scaled_search_strip:
-.scaled_found_strip:
-.scaled_first_strip:
-.scaled_cut_sprite:
-.scaled_emit_sprite:
+	;; for(i = 0; i < DISPLAY_NB_STRIPS && strip[i].y <= y; i++)
+	load	(r13),r5	; strip[i].y
+	cmp	r5,r6
+	jr	mi,.scaled_found_strip ; if y - strip.y < 0 then found
+	subqt	#4,r13		; previous strip (list pointer)
+	subq	#1,r12
+	jr	pl,.scaled_search_strip ; pl because of the last strip
+	addq	#12,r13		; next strip
 	jump	(r25)		; jump .next_in_layer
 	nop
+.scaled_found_strip:
+	cmpq	#DISPLAY_NB_STRIPS,r12
+	jr	ne,.scaled_emit_sprite
+	addq	#1,r12
+.scaled_first_strip:
+	;; the first strip is particular
+	;; because the part above the strip is invisible
+	addq	#8,r13
+	subq	#1,r12
+.scaled_cut_sprite:
+	move	r5,r6
+.scaled_emit_sprite:
+	load	(r13),r15
+	move	r6,r16		; y
+	move	r15,r17
+	shlq	#3,r15		; in bytes
+	addq	#4,r17
+	move	r19,r5		; height
+	store	r17,(r13)	; next object in list
+	shlq	#32-11+1,r16	; keep 11 bits of Y*2
+	shlq	#32-10,r5
+	shrq	#32-14,r16	; YPOS|0
+	shrq	#32-24,r5
+	addq	#1,r16		; scaled sprite!	
+	addq	#4,r13
+	or	r5,r16		; HEIGHT|YPOS|0
+	move	r17,r5		; copy LINK
+	shlq	#32-8,r17
+	shrq	#8,r5
+	or	r17,r16		; low bits of first phrase
+	store	r0,(r15+5)	; copy scale factors
+	move	r4,r17
+	store	r16,(r15+1)
+	shlq	#11,r17		; DATA|0
+	store	r8,(r15+3)
+	or	r5,r17		; high bits of first phrase
+	store	r9,(r15+2)
+	subq	#1,r12		; strip--
+	jump	eq,(r25)	; jump eq,.next_in_layer
+	store	r17,(r15)
+	load	(r13),r5	; strip.y
+	jump	(r21)		; jump .scaled_cut_sprite
+	addq	#4,r13
 .non_scaled_sprite:
 	btst	#SPRITE_USE_HOTSPOT,r9
 	jr	eq,.non_scaled_ok_coords
