@@ -476,13 +476,14 @@ gpu_display_driver:
 	;; r14 is sprite base address
 	;; r19 is HEIGHT (not null)
 	;; r0 is REMAINDER
+	;; r17 is HSCALE
 	;; r18 is VSCALE (not null)
 	shlq	#20,r5		; keep only 12 bits for X
 	move	r20,r13		; .gpu_display_strips
 	shrq	#20,r5		; XPOS
 	moveq	#DISPLAY_NB_STRIPS,r12		; i = 0
 	or	r5,r8		; low bits of snd phrase ready
-	;; r5 is now freed
+	;; r5 is now free
 .scaled_search_strip:
 .scaled_found_strip:
 .scaled_first_strip:
@@ -525,7 +526,7 @@ gpu_display_driver:
 	shrq	#20,r5		; XPOS
 	moveq	#DISPLAY_NB_STRIPS,r12		; i = 0
 	or	r5,r8		; low bits of snd phrase ready
-	;; r5 is now freed
+	;; r5 is now free
 .non_scaled_search_strip:
 	;; for(i = 0; i < DISPLAY_NB_STRIPS && strip[i].y <= y; i++)
 	load	(r13),r5	; strip[i].y
