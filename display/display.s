@@ -435,9 +435,9 @@ gpu_display_driver:
 	nop
 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
 	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
+	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
 	shlq	#32-16,r18		 ; VSCALE|HSCALE|0|0
 	shlq	#8,r0			 ; REMAINDER|VSCALE|HSCALE|0
-	move	r18,r17			 ;
 	shrq	#32-8,r18	; VSCALE 
 	jump	eq,(r25)	; VSCALE = 0 ? jump eq,.next_in_layer
 	shrq	#8,r0		; 0|REMAINDER|VSCALE|HSCALE
@@ -475,11 +475,11 @@ gpu_display_driver:
 	;; r11 is layer counter
 	;; r14 is sprite base address
 	;; r19 is HEIGHT (not null)
-	;; r0 is 0|REMAINDER|VSCALE|HSCALE (VSCALE is not null)
-	shlq	#20,r5		; keep only 12 bits for X
+	;; r0 is 0|REMAINDER|VSCALE|HSCALE (VSCALE is not null) ie R0>>16 is the remainder!
 	move	r20,r13		; .gpu_display_strips
-	shrq	#20,r5		; XPOS
+	shlq	#20,r5		; keep only 12 bits for X
 	moveq	#DISPLAY_NB_STRIPS,r12		; i = 0
+	shrq	#20,r5		; XPOS
 	or	r5,r8		; low bits of snd phrase ready
 	;; r5 is now free
 .scaled_search_strip:
