@@ -547,7 +547,22 @@ gpu_display_driver:
 .scaled_emit_sprite:
 	load	(r13),r15
 	move	r6,r16		; y
-	move	r15,r17
+	btst	#1,r15		; is it 32 bytes aligned?
+	jr	eq,.scaled_emit_aligned	; yes
+	move	r15,r17			; copy 
+	shlq	#3,r15			; in bytes
+	addq	#2,r17
+	movei	#O_BREQ|($7ff<<3)|BRANCHOBJ,r5 ; branch always
+	move	r17,r18
+	shrq	#8,r18
+	store	r18,(r15)
+	move	r17,r18
+	addq	#4,r15
+	shlq	#32-8,r18
+	or	r18,r5
+	store	r5,(r15)
+	move	r17,r15
+.scaled_emit_aligned:
 	shlq	#3,r15		; in bytes
 	addq	#4,r17
 	move	r19,r5		; height
@@ -653,7 +668,7 @@ gpu_display_driver:
 	move	r6,r16		; y
 	move	r15,r17
 	shlq	#3,r15		; in bytes
-	addq	#4,r17
+	addq	#2,r17		; next LINK
 	move	r19,r5		; height
 	store	r17,(r13)	; next object in list
 	shlq	#32-11+1,r16	; keep 11 bits of Y*2
