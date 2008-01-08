@@ -430,9 +430,9 @@ gpu_display_driver:
 	jump	eq,(r23)	; jump eq,.non_scaled_sprite
 	shrq	#32-10,r7	; DWIDTH
 .scaled_sprite:
-;; 	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
-;; 	jump	eq,(r25)	; jump eq,.next_in_layer
-;; 	nop
+	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
+	jump	eq,(r25)	; jump eq,.next_in_layer
+	nop
 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
 	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
 	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
