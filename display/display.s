@@ -430,9 +430,9 @@ gpu_display_driver:
 	jump	eq,(r23)	; jump eq,.non_scaled_sprite
 	shrq	#32-10,r7	; DWIDTH
 .scaled_sprite:
-	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
-	jump	eq,(r25)	; jump eq,.next_in_layer
-	nop
+;; 	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
+;; 	jump	eq,(r25)	; jump eq,.next_in_layer
+;; 	nop
 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
 	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
 	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
@@ -482,6 +482,7 @@ gpu_display_driver:
 	shrq	#20,r5		; XPOS
 	or	r5,r8		; low bits of snd phrase ready
 	;; r5 is now free
+	movei	#.scaled_emit_sprite,r18
 .scaled_search_strip:
 	;; for(i = 0; i < DISPLAY_NB_STRIPS && strip[i].y <= y; i++)
 	load	(r13),r5	; strip[i].y
@@ -495,7 +496,7 @@ gpu_display_driver:
 	nop
 .scaled_found_strip:
 	cmpq	#DISPLAY_NB_STRIPS,r12
-	jr	ne,.scaled_emit_sprite
+	jump	ne,(r18)	; jr ne,.scaled_emit_sprite 
 	addq	#1,r12
 .scaled_first_strip:
 	;; the first strip is particular
@@ -503,7 +504,46 @@ gpu_display_driver:
 	addq	#8,r13
 	subq	#1,r12
 .scaled_cut_sprite:
-	move	r5,r6
+	;; r5 is strip.y at this point
+	;; there is a substantial overhead
+	;; for cutting scaled sprites
+	;; so spare them!
+	move	r5,r17		; strip.y
+	move	r0,r18		; 0|REMAINDER|VSCALE|HSCALE
+	sub	r6,r17		; dy = strip.y - y
+	shlq	#16,r0		; VSCALE|HSCALE|0|0
+	shlq	#5,r17		; dy << 5
+	shrq	#16,r18		; REMAINDER
+	move	r0,r16		; VSCALE|HSCALE|0|0
+	shrq	#16,r0		; 0|0|VSCALE|HSCALE (ready to update REMAINDER)
+	move	r5,r6		; y = strip.y
+	movei	#G_REMAIN,r5
+	sub	r17,r18		; REMAINDER - (dy << 5)
+	jr	pl,.scaled_cut_sprite_end
+	moveq	#0,r17		; DATA will not change in this case
+	shrq	#24,r16		; VSCALE
+	neg	r18		; (dy << 5) - REMAINDER
+	div	r16,r18		; ((dy << 5) - REMAINDER) / VSCALE 
+	move	r18,r17		; wait for division to complete (we really waste cycles there)
+	load	(r5),r18	; get G_REMAIN
+	neg	r18		; negate
+	jr	eq,.scaled_cut_sprite_ok_division ; if 0 then ok
+	nop
+	jr	pl,.scaled_cut_sprite_ok_division ; if > 0 then
+	addq	#1,r17				  ; fix quotient
+	add	r16,r18				  ; if < 0 fix also remainder
+.scaled_cut_sprite_ok_division:
+	;; r17 is the quotient
+	;; r18 is the remainder
+	sub	r17,r19		; h -= q
+	jump	mi,(r25)
+	mult	r7,r17		; q*DWIDTH
+.scaled_cut_sprite_end:
+	;; r17 is 0 or q*DWIDTH
+	;; r18 is the new remainder
+	shlq	#16,r18
+	add	r17,r4		; DATA += q*DWIDTH
+	or	r18,r0
 .scaled_emit_sprite:
 	load	(r13),r15
 	move	r6,r16		; y
@@ -516,7 +556,7 @@ gpu_display_driver:
 	shlq	#32-10,r5
 	shrq	#32-14,r16	; YPOS|0
 	shrq	#32-24,r5
-	addq	#1,r16		; scaled sprite!	
+	addq	#1,r16		; scaled sprite!
 	addq	#4,r13
 	or	r5,r16		; HEIGHT|YPOS|0
 	move	r17,r5		; copy LINK
@@ -600,13 +640,14 @@ gpu_display_driver:
 	addq	#8,r13
 	subq	#1,r12
 .non_scaled_cut_sprite:
+	;; r5 is strip.y
 	move	r5,r17		; strip.y
 	sub	r6,r17		; strip.y - y
 	move	r5,r6		; y = strip.y
 	sub	r17,r19		; h -= strip.y - y
 	jump	mi,(r25)	; jump mi,.next_in_layer
 	mult	r7,r17		; DWIDTH*(strip.y-y)
-	add	r17,r4
+	add	r17,r4		; DATA += DWIDTH*(strip.y-y)
 .non_scaled_emit_sprite:
 	load	(r13),r15
 	move	r6,r16		; y
@@ -707,7 +748,9 @@ GPU_SUBROUT_ADDR	equ	.gpu_display_driver_param
 .gpu_display_driver_init:
 	;; assume run from bank 1
 	movei	#GPU_ISP+(GPU_STACK_SIZE*4),r31	; init isp
+	movei	#G_DIVCTRL,r0
 	moveq	#0,r1
+	store	r1,(r0)		; 32 bits unsigned integer division
 	moveta	r31,r31		; ISP (bank 0)
 	movei	#.gpu_display_driver_param,r0
 	movei	#.gpu_display_driver_loop,r2
