@@ -60,37 +60,46 @@ display_collision_routine:
 	;; r15 is SPRITE2 address
 	;; r0 is subrout result address
 	load	(r14+SPRITE_SND_PHRASE/4),r1
-	load	(r15+SPRITE_SND_PHRASE/4),r21
-	btst	#SPRITE_ANIM_ON_OFF,r1
-	jr	eq,.no_sprite1_anim
 	load	(r14+(SPRITE_SND_PHRASE+4)/4),r2
-.sprite1_anim:
-	load	(r14+SPRITE_ANIM_DATA/4),r3
-	load	(r14+SPRITE_ANIM_ARRAY/4),r11
-	shlq	#17,r3		; get INDEX
-	shrq	#14,r3		; INDEX<<3
-	add	r3,r11
-	load	(r11),r3	; get DATA
-	jr	.ok_sprite1_data
-.no_sprite1_anim:
-	load	(r14+SPRITE_Y/4),r4 ; !! get Y|X !! **instead of nop**
-	load	(r14+SPRITE_DATA/4),r3 ; get DATA
-.ok_sprite1_data:
-	btst	#SPRITE_ANIM_ON_OFF,r21
-	jr	eq,.no_sprite2_anim
+  	load	(r14+SPRITE_Y/4),r4 ; !! get Y|X 
+	load	(r15+SPRITE_SND_PHRASE/4),r21
 	load	(r15+(SPRITE_SND_PHRASE+4)/4),r22
-.sprite2_anim:
-	load	(r15+SPRITE_ANIM_DATA/4),r23
-	load	(r15+SPRITE_ANIM_ARRAY/4),r11
-	shlq	#17,r23		; get INDEX
-	shrq	#14,r23		; INDEX<<3
-	add	r23,r11
-	load	(r11),r23	; get DATA
-	jr	.ok_sprite2_data
-.no_sprite2_anim:
-	load	(r15+SPRITE_Y/4),r24 ; !! get Y|X !! **instead of nop**
-	load	(r15+SPRITE_DATA/4),r23 ; get DATA
-.ok_sprite2_data:
+  	load	(r15+SPRITE_Y/4),r24 ; !! get Y|X
+	move	r1,r9		     ; copy high bits of snd phrase
+	move	r21,r10		     ; copy high bits of snd phrase
+	;; the base DATA address will be fetched only if needed
+	moveq	#0,r3		     ; DATA1
+	moveq	#0,r23		     ; DATA2
+;; 	btst	#SPRITE_ANIM_ON_OFF,r1
+;; 	jr	eq,.no_sprite1_anim
+;; 	load	(r14+(SPRITE_SND_PHRASE+4)/4),r2
+;; .sprite1_anim:
+;; 	load	(r14+SPRITE_ANIM_DATA/4),r3
+;; 	load	(r14+SPRITE_ANIM_ARRAY/4),r11
+;; 	shlq	#17,r3		; get INDEX
+;; 	shrq	#14,r3		; INDEX<<3
+;; 	add	r3,r11
+;; 	load	(r11),r3	; get DATA
+;; 	jr	.ok_sprite1_data
+;; .no_sprite1_anim:
+;;  	load	(r14+SPRITE_Y/4),r4 ; !! get Y|X !! **instead of nop**
+;; 	load	(r14+SPRITE_DATA/4),r3 ; get DATA
+;; .ok_sprite1_data:
+;; 	btst	#SPRITE_ANIM_ON_OFF,r21
+;; 	jr	eq,.no_sprite2_anim
+;; 	load	(r15+(SPRITE_SND_PHRASE+4)/4),r22
+;; .sprite2_anim:
+;; 	load	(r15+SPRITE_ANIM_DATA/4),r23
+;; 	load	(r15+SPRITE_ANIM_ARRAY/4),r11
+;; 	shlq	#17,r23		; get INDEX
+;; 	shrq	#14,r23		; INDEX<<3
+;; 	add	r23,r11
+;; 	load	(r11),r23	; get DATA
+;; 	jr	.ok_sprite2_data
+;; .no_sprite2_anim:
+;;  	load	(r15+SPRITE_Y/4),r24 ; !! get Y|X !! **instead of nop**
+;; 	load	(r15+SPRITE_DATA/4),r23 ; get DATA
+;; .ok_sprite2_data:
 	move	r4,r5
 	shlq	#16,r4
 	sharq	#16,r5		; Y1
@@ -260,10 +269,42 @@ display_collision_routine:
 	;; 
 	;; lower word of r17 contains height-1
 	;; lower word of r18 contains width-1
-	;; r3 is DATA1 address (fixed)
-	;; r23 is DATA2 address (fixed)
-	shlq	#16,r18
-	shlq	#16,r17
+	;; r3 is DATA1 address offset
+	;; r23 is DATA2 address offset
+	;; at this point, we need to compute DATA base address
+	btst	#SPRITE_ANIM_ON_OFF,r9
+	jr	eq,.no_sprite1_anim
+	shlq	#16,r18		; instead of nop
+.sprite1_anim:
+	load	(r14+SPRITE_ANIM_DATA/4),r8
+	load	(r14+SPRITE_ANIM_ARRAY/4),r9
+	shlq	#17,r8		; INDEX<<17
+	shrq	#14,r8		; INDEX<<3 (one phrase per anim chunck)
+	add	r8,r9
+	jr	.ok_sprite1_data
+	load	(r9),r9		; DATA
+.no_sprite1_anim:
+	load	(r14+SPRITE_DATA/4),r9
+.ok_sprite1_data:
+	btst	#SPRITE_ANIM_ON_OFF,r10
+	jr	eq,.no_sprite2_anim
+	shlq	#16,r17		; instead of nop
+.sprite2_anim:
+	load	(r15+SPRITE_ANIM_DATA/4),r8
+	load	(r15+SPRITE_ANIM_ARRAY/4),r10
+	shlq	#17,r8		; INDEX<<17
+	shrq	#14,r8		; INDEX<<3 (one phrase per anim chunck)
+	add	r8,r10
+	jr	.ok_sprite1_data
+	load	(r10),r10	; DATA
+.no_sprite2_anim:
+	load	(r15+SPRITE_DATA/4),r10
+.ok_sprite2_data:
+	add	r9,r3		; DATA1
+	add	r10,r23		; DATA2
+	;; DATA computed now
+*	shlq	#16,r18		; done above instead of nop
+*	shlq	#16,r17		; done above instead of nop
 	shrq	#16,r18
 	shrq	#16,r17
 	addq	#1,r18

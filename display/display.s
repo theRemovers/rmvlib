@@ -433,6 +433,7 @@ gpu_display_driver:
 	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
 	jump	eq,(r25)	; jump eq,.next_in_layer
 	nop
+	.if	0
 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
 	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
 	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
@@ -445,6 +446,23 @@ gpu_display_driver:
 	btst	#SPRITE_USE_HOTSPOT,r9
 	jr	eq,.scaled_ok_coords
 	shrq	#32-8,r17	; HSCALE
+	.else
+	load	(r14+SPRITE_SCALE/4),r16 ; REMAINDER|VSCALE|HSCALE
+	move	r16,r0			 ; REMAINDER|VSCALE|HSCALE
+	move	r16,r17			 ; REMAINDER|VSCALE|HSCALE
+	shlq	#32-16,r16		 ; VSCALE|HSCALE|0|0
+	shlq	#16,r0		; VSCALE|HSCALE|0|0
+	shrq	#32-8,r16	; VSCALE
+	shlq	#32-8,r17	; HSCALE|0|0|0
+	move	r16,r18		; VSCALE
+	subq	#1,r16
+	jump	mi,(r25)	; if VSCALE-1 < 0 then VSCALE = 0 so continue to .next_in_layer
+	or	r16,r0		; VSCALE|HSCALE|0|REMAINDER
+	shrq	#32-8,r17	; HSCALE
+	btst	#SPRITE_USE_HOTSPOT,r9
+	jr	eq,.scaled_ok_coords
+	rorq	#16,r0		; 0|REMAINDER|VSCALE|HSCALE
+	.endif
 	load	(r14+SPRITE_HY/4),r16 ; HY|HX
 	move	r16,r13
 	sharq	#16,r16		; HY
@@ -564,7 +582,7 @@ gpu_display_driver:
 	move	r17,r15
 .scaled_emit_aligned:
 	shlq	#3,r15		; in bytes
-	addq	#4,r17
+	addq	#4,r17		; 4 phrases
 	move	r19,r5		; height
 	store	r17,(r13)	; next object in list
 	shlq	#32-11+1,r16	; keep 11 bits of Y*2
@@ -668,7 +686,7 @@ gpu_display_driver:
 	move	r6,r16		; y
 	move	r15,r17
 	shlq	#3,r15		; in bytes
-	addq	#2,r17		; next LINK
+	addq	#2,r17		; next LINK in 2 phrases
 	move	r19,r5		; height
 	store	r17,(r13)	; next object in list
 	shlq	#32-11+1,r16	; keep 11 bits of Y*2
