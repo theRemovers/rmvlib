@@ -54,6 +54,18 @@ let compute_y_r dv dr0 d n =
       let q,r = div drn (-dv) in
 	q,(get_value d r)
 
+let compute_y_r_bis dv dr0 d n =
+  let drn = dr0 - d * n in
+    if drn >= 0 then 0,(get_value d drn)
+    else 
+      let q,r = (-drn) / dv,(-drn) mod dv in
+      let r = -r in
+      let q,r = 
+	if r < 0 then q+1,r+dv
+	else q,r
+      in
+	q,(get_value d r)
+
       
       
       
