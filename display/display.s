@@ -538,31 +538,40 @@ gpu_display_driver:
 	shrq	#16,r0		; 0|0|VSCALE|HSCALE (ready to update REMAINDER)
 	move	r5,r6		; y = strip.y
 	movei	#G_REMAIN,r5
+	shrq	#24,r16		; VSCALE
 	sub	r17,r18		; REMAINDER - (dy << 5)
 	jr	pl,.scaled_cut_sprite_end
 	moveq	#0,r17		; DATA will not change in this case
-	shrq	#24,r16		; VSCALE
 	neg	r18		; (dy << 5) - REMAINDER
 	div	r16,r18		; ((dy << 5) - REMAINDER) / VSCALE 
 	move	r18,r17		; wait for division to complete (we really waste cycles there)
 	load	(r5),r18	; get G_REMAIN
-	neg	r18		; negate
-	jr	eq,.scaled_cut_sprite_ok_division ; if = 0 then ok
+	cmpq	#0,r18
+	jr	pl,.scaled_cut_sprite_ok_remainder
 	nop
-	jr	pl,.scaled_cut_sprite_ok_division ; if > 0 then
-	addq	#1,r17				  ; fix quotient
-	add	r16,r18				  ; if < 0 fix also remainder
+	add	r16,r18
+.scaled_cut_sprite_ok_remainder:
+	jr	eq,.scaled_cut_sprite_ok_division
+	neg	r18
+	addq	#1,r17
+	add	r16,r18
+;; 	neg	r18		; negate
+;; 	jr	eq,.scaled_cut_sprite_ok_division ; if = 0 then ok
+;; 	nop
+;; 	jr	pl,.scaled_cut_sprite_ok_division ; if > 0 then
+;; 	addq	#1,r17				  ; fix quotient
+;; 	add	r16,r18				  ; if < 0 fix also remainder
 .scaled_cut_sprite_ok_division:
 	;; r17 is the quotient
 	;; r18 is the remainder
 	sub	r17,r19		; h -= q
 	jump	mi,(r25)	; if h < 0 then jump .next_in_layer
-	mult	r7,r17		; q*DWIDTH
 .scaled_cut_sprite_end:
-	;; r17 is 0 or q*DWIDTH
+	;; r17 is 0 or DWIDTH
+	mult	r7,r17		; q*DWIDTH (instead of NOP)
 	;; r18 is the new remainder
-	cmpq	#0,r19		; if h = 0
-	jump	eq,(r25)	; then jump .next_in_layer
+;;  	cmpq	#0,r19		; if h = 0
+;;  	jump	eq,(r25)	; then jump .next_in_layer
 	shlq	#16,r18
 	add	r17,r4		; DATA += q*DWIDTH
 	or	r18,r0
