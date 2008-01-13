@@ -87,7 +87,7 @@ void build_display_strip_tree(display *d,qphrase *list) {
   h->ob3.link = (unsigned long)(list+d->strips[6].offset/sizeof(qphrase)) >> 3;
   //
   h->ob4.type = BRANCHOBJ;
-  h->ob4.ypos = (d->strips[7].y + d->strips[7].h)<<1;
+  h->ob4.ypos = d->strips[8].y<<1;
   h->ob4.cc = O_BRGT;
   h->ob4.link = (unsigned long)(list+d->strips[7].offset/sizeof(qphrase)) >> 3;
   //
@@ -171,9 +171,8 @@ mblock *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
 
   int y_min = (a_vdb+1)/2;
 
-  for(i = 0; i < DISPLAY_NB_STRIPS; i++) {
+  for(i = 0; i <= DISPLAY_NB_STRIPS; i++) {
     d->strips[i].y = y_min + strips[i];
-    d->strips[i].h = strips[i+1]-strips[i];
     d->strips[i].offset = i * max_nb_sprites*sizeof(qphrase);
   }
 

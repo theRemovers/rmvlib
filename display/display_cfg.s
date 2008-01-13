@@ -96,9 +96,8 @@ DISPLAY_LIST_OB6:	ds.l	2	; if true then OB4
 DISPLAY_LIST_OB7:	ds.l	2	; STOP
 	.long
 DISPLAY_STRIPS:
-	.rept	DISPLAY_NB_STRIPS
-	ds.w	1		; Y
-	ds.w	1		; H
+	.rept	DISPLAY_NB_STRIPS+1
+	ds.l	1		; Y
 	ds.l	1		; offset
 	.endr
 	.long

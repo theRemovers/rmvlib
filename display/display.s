@@ -266,8 +266,8 @@ gpu_display_driver:
 .gpu_copy_strips:
 	load	(r1),r4		; read Y|H
 	addq	#4,r1
-	move	r4,r6
-	sharq	#16,r4		; Y
+;; 	move	r4,r6
+;; 	sharq	#16,r4		; Y
 	load	(r1),r5		; read offset (in bytes)	
 	store	r4,(r2)
 	addq	#4,r2
@@ -278,10 +278,12 @@ gpu_display_driver:
 	store	r5,(r2)		; do not change flags!
 	jr	ne,.gpu_copy_strips
 	addqt	#4,r2
-	shlq	#16,r6
-	shrq	#16,r6
-	add	r4,r6		; y_max
-	store	r6,(r2)
+	load	(r1),r4
+	store	r4,(r2)
+;; 	shlq	#16,r6
+;; 	shrq	#16,r6
+;; 	add	r4,r6		; y_max
+;; 	store	r6,(r2)
 	;; the strips have been copied in GPU ram at this point!
 	movei	#_a_vdb,r0	
 	movei	#DISPLAY_HASHTBL,r10
@@ -545,7 +547,7 @@ gpu_display_driver:
 	move	r18,r17		; wait for division to complete (we really waste cycles there)
 	load	(r5),r18	; get G_REMAIN
 	neg	r18		; negate
-	jr	eq,.scaled_cut_sprite_ok_division ; if 0 then ok
+	jr	eq,.scaled_cut_sprite_ok_division ; if = 0 then ok
 	nop
 	jr	pl,.scaled_cut_sprite_ok_division ; if > 0 then
 	addq	#1,r17				  ; fix quotient
@@ -554,11 +556,13 @@ gpu_display_driver:
 	;; r17 is the quotient
 	;; r18 is the remainder
 	sub	r17,r19		; h -= q
-	jump	mi,(r25)
+	jump	mi,(r25)	; if h < 0 then jump .next_in_layer
 	mult	r7,r17		; q*DWIDTH
 .scaled_cut_sprite_end:
 	;; r17 is 0 or q*DWIDTH
 	;; r18 is the new remainder
+	cmpq	#0,r19		; if h = 0
+	jump	eq,(r25)	; then jump .next_in_layer
 	shlq	#16,r18
 	add	r17,r4		; DATA += q*DWIDTH
 	or	r18,r0
@@ -680,6 +684,8 @@ gpu_display_driver:
 	sub	r17,r19		; h -= strip.y - y
 	jump	mi,(r25)	; jump mi,.next_in_layer
 	mult	r7,r17		; DWIDTH*(strip.y-y)
+	cmpq	#0,r19		; if h = 0
+	jump	eq,(r25)	; then jump .next_in_layer
 	add	r17,r4		; DATA += DWIDTH*(strip.y-y)
 .non_scaled_emit_sprite:
 	load	(r13),r15

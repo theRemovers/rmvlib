@@ -94,8 +94,9 @@ typedef struct {
 } display_strip_tree;
 
 typedef struct {
-  short int y;
-  short int h;
+/*   short int y; */
+/*   short int h; */
+  int y;
   int offset;
 } strip;
 
@@ -113,12 +114,12 @@ typedef struct {
   display_list_header h;
   // phrase
   /** strips */
-  strip strips[DISPLAY_NB_STRIPS];
+  strip strips[DISPLAY_NB_STRIPS+1];
 
   //  sprite_header layer[1<<DISPLAY_NB_LAYER];
   layer_desc layer[1<<DISPLAY_NB_LAYER];
 
-  char _pad1[sizeof(qphrase)-((4+4+2+2+4+sizeof(display_list_header)+sizeof(sprite_header)*(1<<DISPLAY_NB_LAYER)+DISPLAY_NB_STRIPS*sizeof(strip)) % sizeof(qphrase))];
+  char _pad1[sizeof(qphrase)-((4+4+2+2+4+sizeof(display_list_header)+sizeof(sprite_header)*(1<<DISPLAY_NB_LAYER)+(DISPLAY_NB_STRIPS+1)*sizeof(strip)) % sizeof(qphrase))];
   qphrase op_list[];
 } display;
 
