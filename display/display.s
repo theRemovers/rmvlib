@@ -528,12 +528,14 @@ gpu_display_driver:
 	;; there is a substantial overhead
 	;; for cutting scaled sprites
 	;; so spare them!
+;; 	.if	1
 	move	r5,r17		; strip.y
 	move	r0,r18		; 0|REMAINDER|VSCALE|HSCALE
 	sub	r6,r17		; dy = strip.y - y
 	shlq	#16,r0		; VSCALE|HSCALE|0|0
-	shlq	#5,r17		; dy << 5
+	addq	#1,r17
 	shrq	#16,r18		; REMAINDER
+	shlq	#5,r17		; dy << 5
 	move	r0,r16		; VSCALE|HSCALE|0|0
 	shrq	#16,r0		; 0|0|VSCALE|HSCALE (ready to update REMAINDER)
 	move	r5,r6		; y = strip.y
@@ -555,12 +557,6 @@ gpu_display_driver:
 	neg	r18
 	addq	#1,r17
 	add	r16,r18
-;; 	neg	r18		; negate
-;; 	jr	eq,.scaled_cut_sprite_ok_division ; if = 0 then ok
-;; 	nop
-;; 	jr	pl,.scaled_cut_sprite_ok_division ; if > 0 then
-;; 	addq	#1,r17				  ; fix quotient
-;; 	add	r16,r18				  ; if < 0 fix also remainder
 .scaled_cut_sprite_ok_division:
 	;; r17 is the quotient
 	;; r18 is the remainder
@@ -568,13 +564,46 @@ gpu_display_driver:
 	jump	mi,(r25)	; if h < 0 then jump .next_in_layer
 .scaled_cut_sprite_end:
 	;; r17 is 0 or DWIDTH
-	mult	r7,r17		; q*DWIDTH (instead of NOP)
 	;; r18 is the new remainder
-;;  	cmpq	#0,r19		; if h = 0
-;;  	jump	eq,(r25)	; then jump .next_in_layer
+	moveq	#1,r5		; instead of NOP
+	mult	r7,r17		; q*DWIDTH (instead of NOP)
 	shlq	#16,r18
-	add	r17,r4		; DATA += q*DWIDTH
+	shlq	#16+5,r5
 	or	r18,r0
+	add	r17,r4		; DATA += q*DWIDTH
+	add	r5,r0
+;; 	.else
+;;; The following is a direct adaptation of the algorithm
+;;; that can be found in the NET file (WBK.NET)
+;; 	move	r5,r17		; strip.y
+;; 	move	r0,r18		; 0|REMAINDER|VSCALE|HSCALE
+;; 	sub	r6,r17		; dy = strip.y - y
+;; 	shlq	#16,r0		; VSCALE|HSCALE|0|0
+;; 	shrq	#16,r18		; REMAINDER
+;; 	move	r0,r16		; VSCALE|HSCALE|0|0
+;; 	shrq	#16,r0		; 0|0|VSCALE|HSCALE (ready to update REMAINDER)
+;; 	move	r5,r6		; y = strip.y
+;; 	moveq	#1,r5
+;; 	shrq	#24,r16		; VSCALE
+;; 	shlq	#5,r5		; 1.0
+;; .scaled_cut_sprite_loop:
+;; 	cmpq	#0,r17
+;; 	jr	eq,.scaled_cut_sprite_end
+;; 	subq	#1,r17
+;; 	sub	r5,r18		; REMAINDER -= 1.0
+;; .scaled_cut_sprite_loop_line:
+;; 	cmp	r5,r18
+;; 	jr	pl,.scaled_cut_sprite_loop
+;; 	nop
+;; 	subq	#1,r19		; height--
+;; 	jump	mi,(r25)
+;; 	add	r16,r18		; REMAINDER += VSCALE
+;; 	jr	.scaled_cut_sprite_loop_line
+;; 	add	r7,r4		; next line
+;; .scaled_cut_sprite_end:
+;; 	shlq	#16,r18
+;; 	or	r18,r0
+;; 	.endif
 .scaled_emit_sprite:
 	load	(r13),r15
 	move	r6,r16		; y
