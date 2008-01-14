@@ -435,20 +435,24 @@ gpu_display_driver:
 	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
 	jump	eq,(r25)	; jump eq,.next_in_layer
 	nop
-	.if	0
-	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
-	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
-	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
-	shlq	#32-16,r18		 ; VSCALE|HSCALE|0|0
-	shlq	#8,r0			 ; REMAINDER|VSCALE|HSCALE|0
-	shrq	#32-8,r18	; VSCALE 
-	jump	eq,(r25)	; VSCALE = 0 ? jump eq,.next_in_layer
-	shrq	#8,r0		; 0|REMAINDER|VSCALE|HSCALE
-	shlq	#32-8,r17	; HSCALE|0|0|0
-	btst	#SPRITE_USE_HOTSPOT,r9
-	jr	eq,.scaled_ok_coords
-	shrq	#32-8,r17	; HSCALE
-	.else
+;; 	.if	0
+;; 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
+;; 	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
+;; 	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
+;; 	shlq	#32-16,r18		 ; VSCALE|HSCALE|0|0
+;; 	shlq	#8,r0			 ; REMAINDER|VSCALE|HSCALE|0
+;; 	shrq	#32-8,r18	; VSCALE 
+;; 	jump	eq,(r25)	; VSCALE = 0 ? jump eq,.next_in_layer
+;; 	shrq	#8,r0		; 0|REMAINDER|VSCALE|HSCALE
+;; 	shlq	#32-8,r17	; HSCALE|0|0|0
+;; 	btst	#SPRITE_USE_HOTSPOT,r9
+;; 	jr	eq,.scaled_ok_coords
+;; 	shrq	#32-8,r17	; HSCALE
+;; 	.else
+	;; the REMAINDER is initialised to 1<<5 + VSCALE-1
+	;;  which seems to be a good initial value for it
+	;; the maximal valid VSCALE value is thus 7<<5 - 1
+	;; (otherwise, there are overflows)
 	load	(r14+SPRITE_SCALE/4),r16 ; REMAINDER|VSCALE|HSCALE
 	move	r16,r0			 ; REMAINDER|VSCALE|HSCALE
 	move	r16,r17			 ; REMAINDER|VSCALE|HSCALE
@@ -459,12 +463,15 @@ gpu_display_driver:
 	move	r16,r18		; VSCALE
 	subq	#1,r16
 	jump	mi,(r25)	; if VSCALE-1 < 0 then VSCALE = 0 so continue to .next_in_layer
+	moveq	#1,r13
 	or	r16,r0		; VSCALE|HSCALE|0|REMAINDER
+	shlq	#5,r13		
 	shrq	#32-8,r17	; HSCALE
+	add	r13,r0
 	btst	#SPRITE_USE_HOTSPOT,r9
 	jr	eq,.scaled_ok_coords
 	rorq	#16,r0		; 0|REMAINDER|VSCALE|HSCALE
-	.endif
+;; 	.endif
 	load	(r14+SPRITE_HY/4),r16 ; HY|HX
 	move	r16,r13
 	sharq	#16,r16		; HY
@@ -533,7 +540,7 @@ gpu_display_driver:
 	move	r0,r18		; 0|REMAINDER|VSCALE|HSCALE
 	sub	r6,r17		; dy = strip.y - y
 	shlq	#16,r0		; VSCALE|HSCALE|0|0
-	addq	#1,r17
+	addq	#1,r17		; +1 because we actually compute (remainder - 1)
 	shrq	#16,r18		; REMAINDER
 	shlq	#5,r17		; dy << 5
 	move	r0,r16		; VSCALE|HSCALE|0|0
@@ -564,14 +571,14 @@ gpu_display_driver:
 	jump	mi,(r25)	; if h < 0 then jump .next_in_layer
 .scaled_cut_sprite_end:
 	;; r17 is 0 or DWIDTH
-	;; r18 is the new remainder
+	;; r18 is (remainder - 1)
 	moveq	#1,r5		; instead of NOP
-	mult	r7,r17		; q*DWIDTH (instead of NOP)
+	mult	r7,r17		; q*DWIDTH
 	shlq	#16,r18
 	shlq	#16+5,r5
 	or	r18,r0
 	add	r17,r4		; DATA += q*DWIDTH
-	add	r5,r0
+	add	r5,r0		; add 1<<5 to the remainder
 ;; 	.else
 ;;; The following is a direct adaptation of the algorithm
 ;;; that can be found in the NET file (WBK.NET)
