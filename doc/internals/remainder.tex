@@ -182,4 +182,41 @@ Recall finally that when $n \leq \floor{r_0}$,
 \item $r_n = r_0 - n$
 \end{itemize}
 
+\section{In reality}
+Unfortunately, the Atari Jaguar documentation is not accurate. So
+after looking at the NET files (in particular WBK.NET), we realize
+that instead we have:
+
+\begin{align*}
+  r_0 & \Def r \\
+  r_{n+1} & \Def r_n - 1 + \K(r_n - 1) v 
+\end{align*}
+
+and
+\begin{align*}
+  y_0 & \Def 0 \\
+  y_{n+1} & \Def y_n + \K(r_n - 1)
+\end{align*}
+
+
+Fortunately, we can reuse the previous study. Indeed, let \suite{r'}
+be defined for any $n$ by $r'_n \Def r_n - 1$ and \suite{y'} be
+defined by:
+\begin{align*}
+  y'_0 & \Def 0 \\
+  y'_{n+1} & \Def y'_n + \K(r'_n)
+\end{align*}
+
+We clearly have that $y'_n = y_n$ for any $n$.
+
+Moreover, we have $r'_0 = r_0 - 1$ and for any $n$
+\begin{align*}
+  r'_{n+1} & = r_{n+1} - 1 \\
+  & = r_n - 1 + \K(r_n - 1) v - 1 \\
+  & = r'_n - 1 + \K(r'_n)
+\end{align*}
+
+So we can apply the previous study to compute \suite{r'} and
+\suite{y'} and deduce \suite{r} and \suite{y}.
+
 
