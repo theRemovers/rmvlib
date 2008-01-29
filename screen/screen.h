@@ -39,6 +39,9 @@
 #include <op.h>
 #include <sprite.h>
 
+#define RGBCLUT 0
+#define CRYCLUT 1;
+
 /** The type of fixpoint 16.16 integers */
 typedef long fixp;
 
@@ -63,6 +66,11 @@ typedef struct {
   unsigned short int dwidth;
   /** Address of the graphical data: it must be phrase aligned. Do not modify. */
   phrase *data;
+  /** CLUT based screens */
+  unsigned char clut_type;
+  unsigned char clut_index;
+  short int clut_size;
+  short int *clut;
 } screen;
 
 /** Allocate a new ::screen with malloc. */

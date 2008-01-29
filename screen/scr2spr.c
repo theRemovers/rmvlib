@@ -48,7 +48,13 @@ sprite *sprite_of_screen(int x, int y, screen *scr) {
   s->trans = 1;
   s->rmw = 0;
   s->reflect = 0;
-  s->index = 0;
+
+  if(scr->clut != NULL) {
+    s->index = scr->clut_index;
+  } else {
+    s->index = 0;
+  }
+
   s->iwidth = scr->iwidth;
   s->dwidth = scr->dwidth;
   switch(scr->pitch) {
