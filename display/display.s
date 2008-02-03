@@ -33,6 +33,11 @@ DISPLAY_H	equ	1
 	.extern	_stop_object
 
 ;; DISPLAY_BG_IT	equ	1
+
+	;; mode of division
+	;; 0 = 32 bits
+	;; 1 = 16.16 bits
+GPU_DIV_FRAC	equ	1
 	
 	include	"display_cfg.s"
 
@@ -545,9 +550,12 @@ gpu_display_driver:
 	shlq	#5,r17		; dy << 5
 	move	r0,r16		; VSCALE|HSCALE|0|0
 	shrq	#16,r0		; 0|0|VSCALE|HSCALE (ready to update REMAINDER)
-	move	r5,r6		; y = strip.y
-	movei	#G_REMAIN,r5
 	shrq	#24,r16		; VSCALE
+	move	r5,r6		; y = strip.y
+	.if	GPU_DIV_FRAC
+	shlq	#16,r16		; VSCALE << 16
+	.endif
+	movei	#G_REMAIN,r5
 	sub	r17,r18		; REMAINDER - (dy << 5)
 	jr	pl,.scaled_cut_sprite_end
 	moveq	#0,r17		; DATA will not change in this case
@@ -555,9 +563,15 @@ gpu_display_driver:
 	div	r16,r18		; ((dy << 5) - REMAINDER) / VSCALE 
 	move	r18,r17		; wait for division to complete (we really waste cycles there)
 	load	(r5),r18	; get G_REMAIN
+	.if	GPU_DIV_FRAC
+	sharq	#16,r18		; G_REMAIN>>16
+	jr	pl,.scaled_cut_sprite_ok_remainder
+	shrq	#16,r16		; VSCALE
+	.else
 	cmpq	#0,r18
 	jr	pl,.scaled_cut_sprite_ok_remainder
 	nop
+	.endif
 	add	r16,r18
 .scaled_cut_sprite_ok_remainder:
 	jr	eq,.scaled_cut_sprite_ok_division
@@ -833,8 +847,13 @@ GPU_SUBROUT_ADDR	equ	.gpu_display_driver_param
 	;; assume run from bank 1
 	movei	#GPU_ISP+(GPU_STACK_SIZE*4),r31	; init isp
 	movei	#G_DIVCTRL,r0
-	moveq	#0,r1
-	store	r1,(r0)		; 32 bits unsigned integer division
+	.if	GPU_DIV_FRAC
+	moveq	#1,r1		; 16.16 bits unsigned
+	.else
+	moveq	#0,r1		; 32 bits unsigned
+	.endif
+	store	r1,(r0)		; set division mode
+ 	moveq	#0,r1		; clear r1 (to clear mutex afterwards)
 	moveta	r31,r31		; ISP (bank 0)
 	movei	#.gpu_display_driver_param,r0
 	movei	#.gpu_display_driver_loop,r2

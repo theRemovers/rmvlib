@@ -38,7 +38,13 @@ DISPLAY_BG_IT		equ	0
 	.else
 DISPLAY_IT_SAVE_REGS	equ	0
 	.endif
-		
+
+	;; mode of division
+	.if	^^defined	GPU_DIV_FRAC
+	.else
+GPU_DIV_FRAC	equ	0
+	.endif
+	
 	.if	DISPLAY_USE_OP_IT
 	.print	"The display manager will use OP interrupt"
 	.if	DISPLAY_OP_IT_COMP_PT
@@ -58,6 +64,12 @@ DISPLAY_IT_SAVE_REGS	equ	0
 	.print	"The interrupt handler will **not** save used registers"
 	.endif
 
+	.if	GPU_DIV_FRAC
+	.print	"Division mode is 16.16"
+	.else
+	.print	"Division mode is 32"
+	.endif
+	
 	;; BG = RED -> CPU interrupt
 DISPLAY_BG_CPU		equ	$f800
 	;; BG = BLUE -> OP interrupt
