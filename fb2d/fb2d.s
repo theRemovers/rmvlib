@@ -22,107 +22,7 @@
 SINE_PREC	equ	4	; 128<<4 = 2048
 NB_PARAMS	equ	3
 
-	;; GPU or DSP ?
-USE_GPU		equ	0
-
-	.if	USE_GPU
-	.extern	GPU_SUBROUT_ADDR
-.macro	jsr_risc
-	;; \1: address of the subroutine
-	move.l	\1,GPU_SUBROUT_ADDR
-.endm
-	.else
-	.extern	DSP_SUBROUT_ADDR
-.macro	jsr_risc
-	;; \1: address of the subroutine
-	move.l	\1,DSP_SUBROUT_ADDR
-.endm
-	.endif
-				
-.macro	mulf
-	;; \1, \2: fixp integers
-	;; \3, \4, \5, \6, \7: temporary registers
-	;; \?8:	if defined, register containing a return address
-	;; result goes in \4
-	moveq	#0,\7
-	abs	\1
-	jr	cc,.pos\~
-	move	\1,\3
-	abs	\2
-	jr	cc,.oppsign\~
-	move	\2,\4
-	jr	.samesign\~
-	nop
-.pos\~:
-	abs	\2
-	jr	cc,.samesign\~
-	move	\2,\4
-.oppsign\~:
-	moveq	#1,\7
-.samesign\~:
-	; fractionnal part 1 in \1 (lower word)
-	; fractionnal part 2 in \2 (lower word)
-	shrq	#16,\3		; integer part 1
-	shrq	#16,\4		; integer part 2
-	;; \7 is the sign of the result (0 = positive, 1 = negative)
-	;; \3.\1 * \4.\2 = \3*\4.(\1*\4 + \2*\3 + (\1*\2 >> 16))
-	move	\1,\5
-	move	\2,\6
-	mult	\4,\5		; \1*\4
-	mult	\3,\6		; \2*\3
-	add	\6,\5		; \1*\4+\2*\3
-	mult	\3,\4
-	mult	\1,\2
-	shlq	#16,\4		; \3*\4
-	shrq	#16,\2
-	add	\5,\4
-	cmpq	#0,\7
-	.if	\?8
-	jump	eq,(\8)
-	.else
-	jr	eq,.done\~
-	.endif
-	add	\2,\4		; instead of nop
-	.if	\?8
-	jump	(\8)
-	.endif
-	neg	\4		; instead of nop if \?8
-	.if	!\?8
-.done\~:
-	.endif
-.endm
-
-.macro	imulf
-	;; \1: 16 bit integer
-	;; \2: fixp integer
-	;; \3, \4: temporary register
-	;; \?5:	if defined, register containing a return address
-	;; result goes in \2
-	moveq	#0,\4
-	shlq	#16,\1
-	move	\2,\3
-	sharq	#16,\1		; ext.l
-	sharq	#16,\2		; integer part
-	abs	\1		; get absolute value
-	jr	cc,.pos\~
-	imult	\1,\2
-	moveq	#1,\4
-.pos\~:
-	mult	\1,\3		; instead of nop
-	shlq	#16,\2
-	cmpq	#0,\4
-	.if	\?5
-	jump	eq,(\5)
-	.else
-	jr	eq,.done\~
-	.endif
-	add	\3,\2		; instead of nop
-	.if	\?5
-	jump	(\5)
-	.endif
-	neg	\2		; negate (instead of nop if \?5)
-.done\~:	
-.endm
+	.include	"risc.s"
 
 .macro	read_rom_table
 	;; \1: integer which represent the precision (128 << \1)
@@ -152,24 +52,12 @@ USE_GPU		equ	0
 	.endif
 	shlq	#1,\4		; make 16.16 value (instead of nop if \?6)
 .endm	
-
-.macro	fast_jsr
-	;; \1: jump address
-	;; \2: return address
-	move	PC,\2
-	jump	(\1)
-	addqt	#6,\2
-.endm
 	
 	.text
 
 	.phrase
 fb2d_manager:
-	.if	USE_GPU	
-	.gpu
-	.else
 	.dsp
-	.endif
 	.org	0
 .fb2d_begin:
 .fb2d_set_rotation:
@@ -350,7 +238,7 @@ FB2D_PARAMS	equ	.fb2d_params-.fb2d_begin
 	.extern	_bcopy
 	.globl	_init_fb2d_manager
 
-;;; void *init_fb2d_manager(void *addr);
+;;; void *init_fb2d_manager(void *dsp_addr);
 _init_fb2d_manager:
 	pea	FB2D_MANAGER_SIZE
 	move.l	4+4(sp),-(sp)
@@ -358,20 +246,20 @@ _init_fb2d_manager:
 	jsr	_bcopy
 	lea	12(sp),sp
 	move.l	4(sp),d0
-	move.l	d0,fb2d_address
+	move.l	d0,fb2d_dsp_address
 	add.l	#FB2D_MANAGER_SIZE,d0
 	rts
 
 	.globl	_fb2d_compose_linear_transform
 ;;; void fb2d_compose_linear_transform(linear_transform *m1, linear_transform *m2)
 _fb2d_compose_linear_transform:
-	move.l	fb2d_address,a0
+	move.l	fb2d_dsp_address,a0
 	lea	FB2D_PARAMS(a0),a1
 	move.l	4(sp),(a1)+
 	move.l	8(sp),(a1)+
 	move.l	#$80000000,(a1)
 	lea	FB2D_MULT_MATRIX(a0),a1
-	jsr_risc	a1
+	jsr_dsp	a1
 	lea	FB2D_PARAMS+8(a0),a0
 .wait:
 	tst.l	(a0)
@@ -381,13 +269,13 @@ _fb2d_compose_linear_transform:
 	.globl	_fb2d_set_rotation
 ;;; void fb2d_set_rotation(linear_transform *m, int angle)
 _fb2d_set_rotation:
-	move.l	fb2d_address,a0
+	move.l	fb2d_dsp_address,a0
 	lea	FB2D_PARAMS(a0),a1
 	move.l	4(sp),(a1)+
 	move.l	8(sp),(a1)+
 	move.l	#$80000000,(a1)
 	lea	FB2D_SET_ROTATION(a0),a1
-	jsr_risc	a1
+	jsr_dsp	a1
 	lea	FB2D_PARAMS+8(a0),a0
 .wait:
 	tst.l	(a0)
@@ -397,7 +285,7 @@ _fb2d_set_rotation:
 	.globl	_fb2d_set_matching_points
 ;;; void fb2d_set_matching_points(affine_transform *m, int x1, int y1, int x2, int y2)
 _fb2d_set_matching_points:
-	move.l	fb2d_address,a0
+	move.l	fb2d_dsp_address,a0
 	lea	FB2D_PARAMS(a0),a1
 	move.l	4(sp),(a1)+
 	move.w	20+2(sp),d0	; y2
@@ -406,7 +294,7 @@ _fb2d_set_matching_points:
 	move.l	d0,(a1)+	; y2|x2
 	move.l	#$80000000,(a1)
 	lea	FB2D_MULT_MATRIX_VECTOR(a0),a1
-	jsr_risc	a1
+	jsr_dsp	a1
 	move.l	4(sp),a1
 	moveq	#0,d0
 	move.w	8+2(sp),d0
@@ -547,7 +435,7 @@ _fb2d_copy_straight:
 ;;; fb2d_compute_bounding_box(linear_transform *m, int w1, int h1, int *w2, int *h2);
 _fb2d_compute_bounding_box:	
 	movem.l	d2-d4,-(sp)
-	move.l	fb2d_address,a0
+	move.l	fb2d_dsp_address,a0
 	move.l	#private_matrix,a1
 	;; initialise matrix
 	;; A = (w 0)
@@ -565,7 +453,7 @@ _fb2d_compute_bounding_box:
 	move.l	a1,(a0)+
 	move.l	#$80000000,(a0)
 	lea	FB2D_MULT_MATRIX-(FB2D_PARAMS+8)(a0),a0
-	jsr_risc	a0
+	jsr_dsp	a0
 	lea	FB2D_PARAMS+8-FB2D_MULT_MATRIX(a0),a0
 .wait:
 	tst.l	(a0)
@@ -645,13 +533,13 @@ _fb2d_copy_transformed:
 	move.l	d4,(a0)+	; y2
 	lea	-16(a0),a0
 	;; mult matrix (for clipping)
-	move.l	fb2d_address,a1
+	move.l	fb2d_dsp_address,a1
 	lea	FB2D_PARAMS(a1),a1
 	move.l	d2,(a1)+	; transformation
 	move.l	a0,(a1)+	; private matrix
 	move.l	#$80000000,(a1)
 	lea	FB2D_MULT_MATRIX-(FB2D_PARAMS+8)(a1),a1
-	jsr_risc	a1
+	jsr_dsp	a1
 	lea	FB2D_PARAMS+8-FB2D_MULT_MATRIX(a1),a1
 	lea	-16(a0),a0
 .wait1:	
@@ -718,7 +606,7 @@ _fb2d_copy_transformed:
 	move.l	d6,(a1)+	; 1|-w
 	move.l	#$80000000,(a1)
 	lea	FB2D_MULT_MATRIX_VECTOR-(FB2D_PARAMS+8)(a1),a1
-	jsr_risc	a1
+	jsr_dsp	a1
 	lea	FB2D_PARAMS+8-FB2D_MULT_MATRIX_VECTOR(a1),a1
 	move.l	SCREEN_Y(a0),d1
 	move.l	d2,a0		; transformation
@@ -791,7 +679,7 @@ _fb2d_copy_transformed:
 
 	.bss
 	.long
-fb2d_address:
+fb2d_dsp_address:
 	ds.l	1
 
 	.long
