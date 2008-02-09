@@ -12,7 +12,7 @@ SRCS=fb2d.s render.s
 SRCH=fb2d.h render.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) screen_def.s jaguar.inc
+DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) screen_def.s risc.c jaguar.inc
 INSTALLH=fb2d.h
 INSTALLLIB=fb2d.o
 

@@ -25,6 +25,13 @@
 #include <jagdefs.h>
 #include <screen.h>
 
+typedef struct vertex {
+  fixp x;
+  fixp y;
+} vertex;
+
 void draw_point(screen *scr, int color, fixp x, fixp y);
+
+void draw_vertices(screen *scr, int color, int nb, vertex *vertices);
 
 #endif
