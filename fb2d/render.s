@@ -56,7 +56,7 @@ _draw_vertices:
 	cmp.w	d3,d1
 	bge.s	.skip
 	swap	d1
-	move.w	VERTEX_X(a1),d1
+	move.w	VERTEX_X(a1),d1	; integer part of X
 	blt.s	.skip
 	cmp.w	d2,d1
 	bge.s	.skip
