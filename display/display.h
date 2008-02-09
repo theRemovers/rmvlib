@@ -25,7 +25,8 @@
 /** Default maximal number of sprites in ::display. */
 #define DISPLAY_DFLT_MAX_SPRITE 256
 
-#define DISPLAY_NB_STRIPS 8
+#define DISPLAY_LOG_NB_STRIPS 3
+#define DISPLAY_NB_STRIPS (1 << DISPLAY_LOG_NB_STRIPS)
 
 #ifndef DISPLAY_USE_OP_IT
 #define DISPLAY_USE_OP_IT 1
@@ -76,26 +77,26 @@ typedef struct {
   op_stop_object ob7;
 } display_list_header;
 
-typedef struct {
-  op_branch_object ob1;
-  op_branch_object ob2;
-  op_branch_object ob3;
-  op_branch_object ob4;
-  op_stop_object ob5;
-  op_branch_object ob6;
-  op_branch_object ob7;
-  op_branch_object ob8;
-  op_branch_object ob9;
-  op_branch_object ob10;
-  op_branch_object ob11;
-  op_branch_object ob12;
-  op_stop_object ob13;
-  char _pad0[sizeof(qphrase)-((11*sizeof(op_branch_object) + 2*sizeof(op_stop_object)) % sizeof(qphrase))];
-} display_strip_tree;
+/* typedef struct { */
+/*   op_branch_object ob1; */
+/*   op_branch_object ob2; */
+/*   op_branch_object ob3; */
+/*   op_branch_object ob4; */
+/*   op_stop_object ob5; */
+/*   op_branch_object ob6; */
+/*   op_branch_object ob7; */
+/*   op_branch_object ob8; */
+/*   op_branch_object ob9; */
+/*   op_branch_object ob10; */
+/*   op_branch_object ob11; */
+/*   op_branch_object ob12; */
+/*   op_stop_object ob13; */
+/*   char _pad0[sizeof(qphrase)-((11*sizeof(op_branch_object) + 2*sizeof(op_stop_object)) % sizeof(qphrase))]; */
+/* } display_strip_tree; */
+
+#define DISPLAY_STRIP_TREE_SIZEOF (sizeof(dphrase)*(((sizeof(phrase)*(3*(1<<(DISPLAY_LOG_NB_STRIPS-1))+2))+sizeof(dphrase)-1)/sizeof(dphrase)))
 
 typedef struct {
-/*   short int y; */
-/*   short int h; */
   int y;
   int offset;
 } strip;

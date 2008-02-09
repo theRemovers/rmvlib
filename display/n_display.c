@@ -66,80 +66,150 @@ void build_display_list_header(display *d,display_list_header *h, qphrase *list)
   stop->int_flag = 0;
 }
 
-// This is bad because it is hardcoded for 8 strips!!
-void build_display_strip_tree(display *d,qphrase *list) {
-  display_strip_tree *h = (display_strip_tree *)list;
-  list += sizeof(display_strip_tree)/sizeof(qphrase);
-  //
-  h->ob1.type = BRANCHOBJ;
-  h->ob1.ypos = d->strips[4].y<<1;
-  h->ob1.cc = O_BRGT;
-  h->ob1.link = (unsigned long)(&(h->ob8)) >> 3;
-  //
-  h->ob2.type = BRANCHOBJ;
-  h->ob2.ypos = d->strips[6].y<<1;
-  h->ob2.cc = O_BRGT;
-  h->ob2.link = (unsigned long)(&(h->ob6)) >> 3;
-  //
-  h->ob3.type = BRANCHOBJ;
-  h->ob3.ypos = d->strips[7].y<<1;
-  h->ob3.cc = O_BRGT;
-  h->ob3.link = (unsigned long)(list+d->strips[6].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob4.type = BRANCHOBJ;
-  h->ob4.ypos = d->strips[8].y<<1;
-  h->ob4.cc = O_BRGT;
-  h->ob4.link = (unsigned long)(list+d->strips[7].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob5.type = STOPOBJ;
-  h->ob5.int_flag = 0;
-  //
-  h->ob6.type = BRANCHOBJ;
-  h->ob6.ypos = d->strips[5].y<<1;
-  h->ob6.cc = O_BRGT;
-  h->ob6.link = (unsigned long)(list+d->strips[4].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob7.type = BRANCHOBJ;
-  h->ob7.ypos = 0x7ff;
-  h->ob7.cc = O_BREQ;
-  h->ob7.link = (unsigned long)(list+d->strips[5].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob8.type = BRANCHOBJ;
-  h->ob8.ypos = d->strips[2].y<<1;
-  h->ob8.cc = O_BRGT;
-  h->ob8.link = (unsigned long)(&(h->ob11)) >> 3;
-  //
-  h->ob9.type = BRANCHOBJ;
-  h->ob9.ypos = d->strips[3].y<<1;
-  h->ob9.cc = O_BRGT;
-  h->ob9.link = (unsigned long)(list+d->strips[2].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob10.type = BRANCHOBJ;
-  h->ob10.ypos = 0x7ff;
-  h->ob10.cc = O_BREQ;
-  h->ob10.link = (unsigned long)(list+d->strips[3].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob11.type = BRANCHOBJ;
-  h->ob11.ypos = (d->strips[1].y<<1) - 1;
-  h->ob11.cc = O_BRLT;
-  h->ob11.link = (unsigned long)(list+d->strips[1].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob12.type = BRANCHOBJ;
-  h->ob12.ypos = (d->strips[0].y<<1) - 1;
-  h->ob12.cc = O_BRLT;
-  h->ob12.link = (unsigned long)(list+d->strips[0].offset/sizeof(qphrase)) >> 3;
-  //
-  h->ob13.type = STOPOBJ;
-  h->ob13.int_flag = 0;
-  //
-  int i;
-  op_stop_object *stop;
-  for(i = 0; i < DISPLAY_NB_STRIPS; i++) {
-    stop = (void *)(list+d->strips[i].offset/sizeof(qphrase));
-    stop->type = STOPOBJ;
-    stop->int_flag = 0;
+phrase *gen_tree(display *d, char *base, phrase *tree, int i, int j, int n, phrase **stop) {
+  int len = j-i;
+  op_branch_object *ob;
+  if(len <= 1) {
+    if(i == 0) {
+      ob = (op_branch_object *)tree++;
+      ob->type = BRANCHOBJ;
+      ob->cc = O_BRGT;
+      ob->ypos = d->strips[i].y<<1;
+      ob->link = (unsigned long)(*stop) >> 3;
+      ob = (op_branch_object *)tree++;
+      ob->type = BRANCHOBJ;
+      ob->cc = O_BREQ;
+      ob->ypos = 0x7ff;
+      ob->link = (unsigned long)(base + d->strips[i].offset) >> 3;
+      return tree;
+    } else if (j == n) {
+      ob = (op_branch_object *)tree++;
+      ob->type = BRANCHOBJ;
+      ob->cc = O_BRGT;
+      ob->ypos = d->strips[j].y<<1;
+      ob->link = (unsigned long)(base + d->strips[i].offset) >> 3;
+      *stop = tree++;
+      op_stop_object *end = (op_stop_object *)*stop;
+      end->type = STOPOBJ;
+      end->int_flag = 0;
+      return tree;
+    } else {
+      ob = (op_branch_object *)tree++;
+      ob->type = BRANCHOBJ;
+      ob->cc = O_BREQ;
+      ob->ypos = 0x7ff;
+      ob->link = (unsigned long)(base + d->strips[i].offset) >> 3;
+      return tree;
+    }
+  } else {
+    int k = i + len/2;
+    if((k-i <= 1) && (i != 0)) {
+      ob = (op_branch_object *)tree++;
+      ob->type = BRANCHOBJ;
+      ob->cc = O_BRGT;
+      ob->ypos = d->strips[k].y<<1;
+      ob->link = (unsigned long)(base + d->strips[i].offset) >> 3;
+      return gen_tree(d,base,tree,k,j,n,stop);
+    } else {
+      ob = (op_branch_object *)tree++;
+      ob->type = BRANCHOBJ;
+      ob->cc = O_BRGT;
+      ob->ypos = d->strips[k].y<<1;
+      phrase *label = gen_tree(d,base,tree,k,j,n,stop);
+      ob->link = (unsigned long)(label) >> 3;
+      return gen_tree(d,base,label,i,k,n,stop);
+    }
   }
 }
+
+void build_display_strip_tree(display *d, qphrase *list) {
+  char *base = (char *)list;
+  base += DISPLAY_STRIP_TREE_SIZEOF;
+  phrase *stop = NULL;
+  gen_tree(d,base,(phrase *)list,0,DISPLAY_NB_STRIPS,DISPLAY_NB_STRIPS,&stop);
+  int i;
+  op_stop_object *stop_list;
+  for(i = 0; i < DISPLAY_NB_STRIPS; i++) {
+    stop_list = (op_stop_object *)(base + d->strips[i].offset);
+    stop_list->type = STOPOBJ;
+    stop_list->int_flag = 0;
+  }
+}
+
+/* // This is bad because it is hardcoded for 8 strips!! */
+/* void build_display_strip_tree(display *d,qphrase *list) { */
+/*   display_strip_tree *h = (display_strip_tree *)list; */
+/*   list += sizeof(display_strip_tree)/sizeof(qphrase); */
+/*   // */
+/*   h->ob1.type = BRANCHOBJ; */
+/*   h->ob1.ypos = d->strips[4].y<<1; */
+/*   h->ob1.cc = O_BRGT; */
+/*   h->ob1.link = (unsigned long)(&(h->ob8)) >> 3; */
+/*   // */
+/*   h->ob2.type = BRANCHOBJ; */
+/*   h->ob2.ypos = d->strips[6].y<<1; */
+/*   h->ob2.cc = O_BRGT; */
+/*   h->ob2.link = (unsigned long)(&(h->ob6)) >> 3; */
+/*   // */
+/*   h->ob3.type = BRANCHOBJ; */
+/*   h->ob3.ypos = d->strips[7].y<<1; */
+/*   h->ob3.cc = O_BRGT; */
+/*   h->ob3.link = (unsigned long)(list+d->strips[6].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob4.type = BRANCHOBJ; */
+/*   h->ob4.ypos = d->strips[8].y<<1; */
+/*   h->ob4.cc = O_BRGT; */
+/*   h->ob4.link = (unsigned long)(list+d->strips[7].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob5.type = STOPOBJ; */
+/*   h->ob5.int_flag = 0; */
+/*   // */
+/*   h->ob6.type = BRANCHOBJ; */
+/*   h->ob6.ypos = d->strips[5].y<<1; */
+/*   h->ob6.cc = O_BRGT; */
+/*   h->ob6.link = (unsigned long)(list+d->strips[4].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob7.type = BRANCHOBJ; */
+/*   h->ob7.ypos = 0x7ff; */
+/*   h->ob7.cc = O_BREQ; */
+/*   h->ob7.link = (unsigned long)(list+d->strips[5].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob8.type = BRANCHOBJ; */
+/*   h->ob8.ypos = d->strips[2].y<<1; */
+/*   h->ob8.cc = O_BRGT; */
+/*   h->ob8.link = (unsigned long)(&(h->ob11)) >> 3; */
+/*   // */
+/*   h->ob9.type = BRANCHOBJ; */
+/*   h->ob9.ypos = d->strips[3].y<<1; */
+/*   h->ob9.cc = O_BRGT; */
+/*   h->ob9.link = (unsigned long)(list+d->strips[2].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob10.type = BRANCHOBJ; */
+/*   h->ob10.ypos = 0x7ff; */
+/*   h->ob10.cc = O_BREQ; */
+/*   h->ob10.link = (unsigned long)(list+d->strips[3].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob11.type = BRANCHOBJ; */
+/*   h->ob11.ypos = (d->strips[1].y<<1) - 1; */
+/*   h->ob11.cc = O_BRLT; */
+/*   h->ob11.link = (unsigned long)(list+d->strips[1].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob12.type = BRANCHOBJ; */
+/*   h->ob12.ypos = (d->strips[0].y<<1) - 1; */
+/*   h->ob12.cc = O_BRLT; */
+/*   h->ob12.link = (unsigned long)(list+d->strips[0].offset/sizeof(qphrase)) >> 3; */
+/*   // */
+/*   h->ob13.type = STOPOBJ; */
+/*   h->ob13.int_flag = 0; */
+/*   // */
+/*   int i; */
+/*   op_stop_object *stop; */
+/*   for(i = 0; i < DISPLAY_NB_STRIPS; i++) { */
+/*     stop = (void *)(list+d->strips[i].offset/sizeof(qphrase)); */
+/*     stop->type = STOPOBJ; */
+/*     stop->int_flag = 0; */
+/*   } */
+/* } */
 
 mblock *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
   display *d;
@@ -149,11 +219,11 @@ mblock *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
     max_nb_sprites = DISPLAY_DFLT_MAX_SPRITE;
   }
   max_nb_sprites++; // for stop object
-  mblock *result = memalign(sizeof(qphrase),sizeof(display)+2*(sizeof(display_strip_tree)+DISPLAY_NB_STRIPS*max_nb_sprites*sizeof(qphrase)));
+  mblock *result = memalign(sizeof(qphrase),sizeof(display)+2*(DISPLAY_STRIP_TREE_SIZEOF+DISPLAY_NB_STRIPS*max_nb_sprites*sizeof(qphrase)));
   d = (display *)result->addr;
 
   d->phys = d->op_list;
-  d->log = d->op_list + sizeof(display_strip_tree) + DISPLAY_NB_STRIPS*max_nb_sprites;
+  d->log = d->op_list + DISPLAY_STRIP_TREE_SIZEOF + DISPLAY_NB_STRIPS*max_nb_sprites;
 
   d->x = 0;
   d->y = 0;
