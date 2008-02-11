@@ -19,11 +19,11 @@
 	include	"jaguar.inc"
 
 	.if	^^defined	DISPLAY_H
-	.print	"display_def.s already included"
+	.print	"display.s already included"
 	end
 	.endif
 DISPLAY_H	equ	1
-	.print	"including display_def.s"
+	.print	"including display.s"
 
 	include	"display_def.s"
 	

@@ -8,7 +8,7 @@ MACFLAGS=-fb -v
 CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float 
 SRCS=
 SRCC=
-SRCH=
+SRCH=routine.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 NASUBDIRS=interrupt display collision fb2d sound
 ASUBDIRS=sprite screen joypad blit memalign console
@@ -23,7 +23,7 @@ TARFILE=$(PROJECT)-$(PROJECT_NUMBER).tar
 
 DISTFILES=Makefile main.h jaguar.inc LICENSE build.sh
 
-INSTALLH=
+INSTALLH=routine.h
 INSTALLLIB=$(PROJECT).a
 
 TARGET=$(HOME)/tmp/rmvlib

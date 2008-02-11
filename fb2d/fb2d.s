@@ -22,6 +22,8 @@
 SINE_PREC	equ	4	; 128<<4 = 2048
 NB_PARAMS	equ	3
 
+	.include	"routine.s"
+	
 	.include	"risc.s"
 
 .macro	read_rom_table
@@ -673,6 +675,18 @@ _fb2d_copy_transformed:
 	rts
 		
 	.data
+	.globl	_fb2d_routine_info
+	.long
+_fb2d_routine_info:
+	dc.l	DSP_ROUTINE
+	dc.l	fb2d_manager
+	dc.l	FB2D_MANAGER_SIZE
+	dc.l	FB2D_PARAMS
+	dc.l	3
+	dc.l	FB2D_SET_ROTATION
+	dc.l	FB2D_MULT_MATRIX
+	dc.l	FB2D_MULT_MATRIX_VECTOR
+	
 	.phrase
 	dc.b	'Frame Buffer manager by Seb/The Removers'
 	.phrase

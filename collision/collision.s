@@ -18,13 +18,8 @@
 
 	include	"display_def.s"
 
-	.extern	GPU_SUBROUT_ADDR
-
-.macro	jsr_gpu
-	;; \1: address of the subroutine
-	move.l	\1,GPU_SUBROUT_ADDR
-.endm
-		
+	include	"routine.s"
+	
 	.text	
 	.68000
 			
@@ -420,6 +415,17 @@ _init_collision_routine:
 	rts
 
 	.data
+
+	.globl	_collision_routine_info
+	.long
+_collision_routine_info:
+	dc.l	DSP_ROUTINE|GPU_ROUTINE
+	dc.l	display_collision_routine
+	dc.l	COLLISION_ROUTINE_SIZE
+	dc.l	COLLISION_PARAMS
+	dc.l	1
+	dc.l	0
+	
 	.even
 	dc.b	"Collision Routine by Seb/The Removers"
 	.even
