@@ -317,7 +317,7 @@ _fb2d_set_matching_points:
 	rts
 
 	.globl	_fb2d_copy_straight
-;;; void fb2d_copy_straight(screen *src, screen *dst, int w, int h, int mode);
+;;; void fb2d_copy_straight(screen *src, screen *dst, int w, int h, int mode, ...);
 _fb2d_copy_straight:
 	movem.l	d2-d4,-(sp)
 	move.w	3*4+16+2(sp),d0	; h
@@ -410,21 +410,27 @@ _fb2d_copy_straight:
 	move.l	SCREEN_FLAGS(a1),d4
 	or.l	#XADDPIX,d4
 	move.l	d4,A2_FLAGS
-	;; if DEPTH < 2^3 then DSTEN
-	moveq	#0,d3
+	;; d4 is A2_FLAGS
+	move.l	#UPDA1|UPDA2|DSTA2,d3
+	or.l	3*4+20(sp),d3
+	;; if DEPTH < 2^3 then DSTEN unless BKGWREN
+;; 	btst.l	#28,d3		; bkgwren ?
+;; 	bne.s	.depth_ge_8
 	lsr.w	#3,d4
 	and.w	#%111,d4
 	cmp.w	#3,d4
 	bhs.s	.depth_ge_8
-	move.l	#DSTEN,d3
+	or.l	#DSTEN,d3
 .depth_ge_8:	
-	;;
-	or.l	#UPDA1|UPDA2|DSTA2,d3
-	or.l	3*4+20(sp),d3
 	btst.l	#27,d3		; data comparator?
 	beq.s	.no_dcompen
 	move.l	#0,B_PATD
-.no_dcompen:	
+.no_dcompen:
+	btst.l	#26,d3		; bit comparator?
+	beq.s	.no_bcompen
+	move.l	3*4+24(sp),B_PATD ; color when bit on
+	move.l	#0,B_DSTD	  ; color when bit off (not used)
+.no_bcompen:
 	move.l	d3,B_CMD
 	movem.l	(sp)+,d2-d4
 	wait_blitter	d0
@@ -432,7 +438,7 @@ _fb2d_copy_straight:
 .done:	
 	movem.l	(sp)+,d2-d4
 	rts
-
+	
 	.globl	_fb2d_compute_bounding_box
 ;;; fb2d_compute_bounding_box(linear_transform *m, int w1, int h1, int *w2, int *h2);
 _fb2d_compute_bounding_box:	
@@ -503,7 +509,7 @@ _fb2d_compute_bounding_box:
 	rts
 	
 	.globl	_fb2d_copy_transformed
-;;; void fb2d_copy_transformed(screen *src, screen *dst, affine_transform *t, int w, int h, int mode);
+;;; void fb2d_copy_transformed(screen *src, screen *dst, affine_transform *t, int w, int h, int mode, ...);
 _fb2d_copy_transformed:
 	movem.l	d2-d7,-(sp)
 	move.w	6*4+20+2(sp),d3	; h
@@ -653,20 +659,27 @@ _fb2d_copy_transformed:
 	move.w	d1,d3
 	move.l	d3,A1_STEP
 	;; d7 is A2_FLAGS
-	moveq	#0,d4
+ 	move.l	#UPDA1|UPDA1F|UPDA2|DSTA2|CLIP_A1,d3
+ 	or.l	6*4+24(sp),d3
+	;; if DEPTH < 2^3 then DSTEN unless BKGWREN
+;; 	btst.l	#28,d3		; bkgwren ?
+;; 	bne.s	.depth_ge_8
 	lsr.w	#3,d7
 	and.w	#%111,d7
 	cmp.w	#3,d7
 	bhs.s	.depth_ge_8
-	move.l	#DSTEN,d4
+	or.l	#DSTEN,d3
 .depth_ge_8:	
-	or.l	#UPDA1|UPDA1F|UPDA2|DSTA2|CLIP_A1,d4
-	or.l	6*4+24(sp),d4
-	btst.l	#27,d4		; data comparator?
+	btst.l	#27,d3		; data comparator?
 	beq.s	.no_dcompen
 	move.l	#0,B_PATD
-.no_dcompen:	
-	move.l	d4,B_CMD
+.no_dcompen:
+	btst.l	#26,d3		; bit comparator?
+	beq.s	.no_bcompen
+	move.l	6*4+28(sp),B_PATD 	; color when bit on
+	move.l	#0,B_DSTD	  	; color when bit off (not used)
+.no_bcompen:
+	move.l	d3,B_CMD
 	movem.l	(sp)+,d2-d7
 	wait_blitter	d0
 	rts

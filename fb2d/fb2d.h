@@ -97,7 +97,11 @@ typedef enum {
   /** All 1 */
   MODE_ONE = LFU_NAN|LFU_NA|LFU_AN|LFU_A,
   /** Transparent Source */
-  MODE_TRANSPARENT = SRCEN|LFU_AN|LFU_A|DCOMPEN
+  MODE_TRANSPARENT = SRCEN|LFU_AN|LFU_A|DCOMPEN,
+  /** Transparent Bit 2 Pixel Expansion */
+  MODE_EXPAND_TRANSPARENT = SRCEN|SRCENX|PATDSEL|BCOMPEN,
+  /** Transparent Bit 2 Pixel Expansion */
+  MODE_EXPAND = SRCEN|SRCENX|PATDSEL|BCOMPEN|BKGWREN
 } mode;
 
 /** Initialise the DSP 2D Frame Buffer manager. 
@@ -176,7 +180,9 @@ void fb2d_copy_straight(/** Source ::screen */
 			/** Height of box */
 			int h, 
 			/** Mode of copy */
-			mode m);
+			mode m,
+			/** Depends on mode */
+			...);
 
 /** Copy a transformed box of the source ::screen in the target ::screen 
  *
@@ -198,7 +204,9 @@ void fb2d_copy_transformed(/** Source ::screen */
 			   /** Height of box */
 			   int h, 
 			   /** Mode of copy */
-			   mode m);
+			   mode m,
+			   /** Depends on mode */
+			   ...);
 
 extern routine fb2d_routine_info;
 
