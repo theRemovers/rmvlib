@@ -437,9 +437,9 @@ gpu_display_driver:
 	jump	eq,(r23)	; jump eq,.non_scaled_sprite
 	shrq	#32-10,r7	; DWIDTH
 .scaled_sprite:
-	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
-	jump	eq,(r25)	; jump eq,.next_in_layer
-	nop
+;; 	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
+;; 	jump	eq,(r25)	; jump eq,.next_in_layer
+;; 	nop
 ;; 	.if	0
 ;; 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
 ;; 	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
@@ -466,9 +466,15 @@ gpu_display_driver:
 	shrq	#32-8,r16	; VSCALE
 	shlq	#32-8,r17	; HSCALE|0|0|0
 	move	r16,r18		; VSCALE
+	shrq	#5,r16
+	jr	ne,.scaled_sprite_height_fixed
+	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
+	jump	eq,(r25)	; jump eq,.next_in_layer
+.scaled_sprite_height_fixed:
+	move	r18,r16
 	subq	#1,r16
 	jump	mi,(r25)	; if VSCALE-1 < 0 then VSCALE = 0 so continue to .next_in_layer
-	moveq	#1,r13
+	moveq	#1,r13		; instead of nop
 	or	r16,r0		; VSCALE|HSCALE|0|REMAINDER
 	shlq	#5,r13		
 	shrq	#32-8,r17	; HSCALE
