@@ -310,8 +310,10 @@ dsp_sound_driver:
 	sharq	#6+4+LOG2_NB_VOICES-1,r17 ; 
 	sat16s	r16		; saturate
 	sat16s	r17		; idem
-	store	r16,(r15)	; write left channel
-	store	r17,(r15+1)	; write right channel
+*	store	r16,(r15)	; write left channel
+*	store	r17,(r15+1)	; write right channel
+	store	r16,(r15+1)	; write left channel (Zerosquare fix)
+	store	r17,(r15)	; write right channel (Zerosquare fix)
 	.if	DSP_BG
 	storew	r27,(r26)
 	.endif
@@ -367,7 +369,8 @@ DSP_SUBROUT_ADDR	equ	.dsp_sound_driver_param
 	movei	#SCLK,r10
 	movei	#SMODE,r11
 	movei	#.dsp_sound_driver_init_param,r12
-	movei	#%010101,r13	; SMODE
+*	movei	#%010101,r13	; SMODE
+	movei	#%001101,r13	; SMODE (Zerosquare fix)
 	load	(r12),r12	; SCLK
 	store	r12,(r10)
 	store	r13,(r11)
