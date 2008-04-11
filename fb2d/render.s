@@ -1,6 +1,7 @@
 	.include	"jaguar.inc"
 	.include	"screen_def.s"
-
+	.include 	"routine.s"
+	
 	.offset	0
 VERTEX_X:	ds.l	1
 VERTEX_Y:	ds.l	1
@@ -74,4 +75,69 @@ _draw_vertices:
 .end:
 	movem.l	(sp)+,d2-d3
 	rts
+
+NB_PARAMS	equ	1
 	
+	.phrase
+renderer:
+	.gpu
+	.org	0
+.renderer_begin:
+.renderer_line:
+	move	PC,r0
+	;; done
+	;; return from sub routine
+	load	(r31),r0	; return address
+	addq	#4,r31		; restore stack
+	jump	(r0)		; return
+	nop
+.renderer_params:
+	.rept	NB_PARAMS
+	dc.l	0
+	.endr
+	.long
+.renderer_end:	
+
+RENDERER_SIZE	equ	.renderer_end-.renderer_begin
+RENDERER_LINE	equ	.renderer_line-.renderer_begin
+RENDERER_PARAMS	equ	.renderer_params-.renderer_begin
+	
+	.print	"Renderer routine size: ",RENDERER_SIZE
+	
+	.68000
+	.text
+
+	.extern	_bcopy
+	.globl	_init_renderer
+
+;;; void *init_renderer(void *gpu_addr);
+_init_renderer:
+	pea	RENDERER_SIZE
+	move.l	4+4(sp),-(sp)
+	pea	renderer
+	jsr	_bcopy
+	lea	12(sp),sp
+	move.l	4(sp),d0
+	move.l	d0,renderer_gpu_address
+	add.l	#RENDERER_SIZE,d0
+	rts
+
+	.data
+	.globl	_renderer_routine_info
+	.long
+_renderer_routine_info:
+	dc.l	GPU_ROUTINE
+	dc.l	renderer
+	dc.l	RENDERER_SIZE
+	dc.l	RENDERER_PARAMS
+	dc.l	1
+	dc.l	RENDERER_LINE
+	
+	.phrase
+	dc.b	'Renderer by Seb/The Removers'
+	.phrase
+
+	.bss
+	.long
+renderer_gpu_address:
+	ds.l	1
