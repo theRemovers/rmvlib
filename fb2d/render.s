@@ -76,7 +76,7 @@ _draw_vertices:
 	movem.l	(sp)+,d2-d3
 	rts
 
-NB_PARAMS	equ	1
+NB_PARAMS	equ	2
 	
 	.phrase
 renderer:
@@ -85,6 +85,8 @@ renderer:
 .renderer_begin:
 .renderer_line:
 	move	PC,r0
+	movei	#.renderer_params-.renderer_line,r1
+	add	r0,r1
 	;; done
 	;; return from sub routine
 	load	(r31),r0	; return address
