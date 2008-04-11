@@ -24,7 +24,6 @@
 
 #include <jagdefs.h>
 #include <screen.h>
-#include <routine.h>
 
 /** A linear transform is defined by four coefficients, thus defining a 2x2 matrix */
 typedef struct {
@@ -207,7 +206,5 @@ void fb2d_copy_transformed(/** Source ::screen */
 			   mode m,
 			   /** Depends on mode */
 			   ...);
-
-extern routine fb2d_routine_info;
 
 #endif

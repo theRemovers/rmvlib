@@ -38,7 +38,6 @@ COLLISION_INTERSECT		equ	7
 display_collision_routine:
 	.gpu
 	.org	0
-
 .gpu_collision_begin:
 	move	PC,r16	; to relocate the sub routine
 	movei	#.gpu_collision_params+8-.gpu_collision_begin,r0
@@ -415,17 +414,6 @@ _init_collision_routine:
 	rts
 
 	.data
-
-	.globl	_collision_routine_info
-	.long
-_collision_routine_info:
-	dc.l	DSP_ROUTINE|GPU_ROUTINE
-	dc.l	display_collision_routine
-	dc.l	COLLISION_ROUTINE_SIZE
-	dc.l	COLLISION_PARAMS
-	dc.l	1
-	dc.l	0
-	
 	.even
 	dc.b	"Collision Routine by Seb/The Removers"
 	.even

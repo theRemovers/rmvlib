@@ -23,7 +23,6 @@
 #define _COLLISION_H
 
 #include <sprite.h>
-#include <routine.h>
 
 #define COLLISION_DONE 0x80000000
 /** The two sprites collide.
@@ -87,7 +86,5 @@ long get_collision_result(/** Y coordinate of the intersection box */
 			  short int *x, 
 			  /** Width of the intersection box */
 			  short int *w);
-
-extern routine collision_routine_info;
 
 #endif

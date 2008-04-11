@@ -123,16 +123,6 @@ _init_renderer:
 	rts
 
 	.data
-	.globl	_renderer_routine_info
-	.long
-_renderer_routine_info:
-	dc.l	GPU_ROUTINE
-	dc.l	renderer
-	dc.l	RENDERER_SIZE
-	dc.l	RENDERER_PARAMS
-	dc.l	1
-	dc.l	RENDERER_LINE
-	
 	.phrase
 	dc.b	'Renderer by Seb/The Removers'
 	.phrase
