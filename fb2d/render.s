@@ -76,7 +76,7 @@ _draw_vertices:
 	movem.l	(sp)+,d2-d3
 	rts
 
-NB_PARAMS	equ	2
+NB_PARAMS	equ	3
 	
 	.phrase
 renderer:
@@ -87,12 +87,23 @@ renderer:
 	move	PC,r0
 	movei	#.renderer_params-.renderer_line,r1
 	add	r0,r1
+	load	(r1),r3		; first vertex
+	addq	#4,r1
+	load	(r1),r5		; second vertex
+	addq	#4,r1		; on mutex
+	load	(r3),r2		; x1
+	addq	#4,r3
+	load	(r3),r3		; y1
+	load	(r5),r4		; x2
+	addq	#4,r5
+	load	(r5),r5		; y2
 	;; done
-	;; return from sub routine
+	;; return from sub routine and clear mutex
+	moveq	#0,r2
 	load	(r31),r0	; return address
 	addq	#4,r31		; restore stack
 	jump	(r0)		; return
-	nop
+	store	r2,(r1)		; clear mutex
 .renderer_params:
 	.rept	NB_PARAMS
 	dc.l	0
