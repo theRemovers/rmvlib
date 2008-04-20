@@ -21,7 +21,7 @@ PROJECT_NUMBER=1.1.6
 
 TARFILE=$(PROJECT)-$(PROJECT_NUMBER).tar
 
-DISTFILES=Makefile main.h jaguar.inc LICENSE build.sh
+DISTFILES=Makefile main.h jaguar.inc LICENSE build.sh routine.s
 
 INSTALLH=routine.h
 INSTALLLIB=$(PROJECT).a
