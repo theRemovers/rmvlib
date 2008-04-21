@@ -1,6 +1,5 @@
 	.include	"jaguar.inc"
 	.include	"screen_def.s"
-	.include 	"routine.s"
 	
 	.offset	0
 VERTEX_X:	ds.l	1
@@ -76,71 +75,3 @@ _draw_vertices:
 	movem.l	(sp)+,d2-d3
 	rts
 
-NB_PARAMS	equ	3
-	
-	.phrase
-renderer:
-	.gpu
-	.org	0
-.renderer_begin:
-.renderer_line:
-	move	PC,r0
-	movei	#.renderer_params-.renderer_line,r1
-	add	r0,r1
-	load	(r1),r3		; first vertex
-	addq	#4,r1
-	load	(r1),r5		; second vertex
-	addq	#4,r1		; on mutex
-	load	(r3),r2		; x1
-	addq	#4,r3
-	load	(r3),r3		; y1
-	load	(r5),r4		; x2
-	addq	#4,r5
-	load	(r5),r5		; y2
-	;; done
-	;; return from sub routine and clear mutex
-	moveq	#0,r2
-	load	(r31),r0	; return address
-	addq	#4,r31		; restore stack
-	jump	(r0)		; return
-	store	r2,(r1)		; clear mutex
-.renderer_params:
-	.rept	NB_PARAMS
-	dc.l	0
-	.endr
-	.long
-.renderer_end:	
-
-RENDERER_SIZE	equ	.renderer_end-.renderer_begin
-RENDERER_LINE	equ	.renderer_line-.renderer_begin
-RENDERER_PARAMS	equ	.renderer_params-.renderer_begin
-	
-	.print	"Renderer routine size: ",RENDERER_SIZE
-	
-	.68000
-	.text
-
-	.extern	_bcopy
-	.globl	_init_renderer
-
-;;; void *init_renderer(void *gpu_addr);
-_init_renderer:
-	pea	RENDERER_SIZE
-	move.l	4+4(sp),-(sp)
-	pea	renderer
-	jsr	_bcopy
-	lea	12(sp),sp
-	move.l	4(sp),d0
-	move.l	d0,renderer_gpu_address
-	add.l	#RENDERER_SIZE,d0
-	rts
-
-	.data
-	.phrase
-	dc.b	'Renderer by Seb/The Removers'
-	.phrase
-
-	.bss
-	.long
-renderer_gpu_address:
-	ds.l	1
