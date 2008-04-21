@@ -211,7 +211,7 @@ void build_display_strip_tree(display *d, qphrase *list) {
 /*   } */
 /* } */
 
-mblock *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
+display *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
   display *d;
   int i;
 
@@ -219,8 +219,7 @@ mblock *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
     max_nb_sprites = DISPLAY_DFLT_MAX_SPRITE;
   }
   max_nb_sprites++; // for stop object
-  mblock *result = memalign(sizeof(qphrase),sizeof(display)+2*(DISPLAY_STRIP_TREE_SIZEOF+DISPLAY_NB_STRIPS*max_nb_sprites*sizeof(qphrase)));
-  d = (display *)result->addr;
+  d = (display *)memalign(sizeof(qphrase),sizeof(display)+2*(DISPLAY_STRIP_TREE_SIZEOF+DISPLAY_NB_STRIPS*max_nb_sprites*sizeof(qphrase)));
 
   d->phys = d->op_list;
   d->log = d->op_list + DISPLAY_STRIP_TREE_SIZEOF + DISPLAY_NB_STRIPS*max_nb_sprites;
@@ -255,10 +254,10 @@ mblock *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
   build_display_strip_tree(d,d->phys);
   build_display_strip_tree(d,d->log);
 
-  return result;
+  return d;
 }
 
-mblock *new_display(unsigned int max_nb_sprites) {
+display *new_display(unsigned int max_nb_sprites) {
   int strips[DISPLAY_NB_STRIPS+1];
   int y_min = (a_vdb+1)/2;
   int y_max = a_vde/2;

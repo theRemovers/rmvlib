@@ -162,9 +162,7 @@
 * First you have to know that almost all the functions of my library
 * requires that the structures given as arguments should be aligned at
 * least on a long word (32 bits) boundary. The graphical data must
-* even be aligned on a phrase (64 bits) boundary. A display structure
-* must even be aligned on a quad phrase boundary (but this is
-* transparentally done with help of ::mblock structure).
+* even be aligned on a phrase (64 bits) boundary.
 *
 * Then you also have to know that some part of my library assumes that
 * you use the jlibc (Jaguar C library) I have also written.

@@ -36,7 +36,6 @@
 #define DISPLAY_NB_LAYER 4
 
 #include <op.h>
-#include <memalign.h>
 
 #define RGBCOLOR(r,g,b) (((((r) >> 3) & 0x1f) << 11) | ((((b) >> 3) & 0x1f) << 6) | (((g) >> 2) & 0x3f))
 #define CRYCOLOR(c,r,y) ((((c) & 0xf) << 12) | (((r) & 0xf) << 8) | ((y) & 0xff))
@@ -155,11 +154,8 @@ extern long _GPU_FREE_RAM;
 
 /** Creates a new ::display that can contain at most max_nb_sprites
  * ::sprite.
- *
- * The ::mblock returned has its _mblock::addr pointing to the
- * allocated display.
  */
-mblock *new_display(/** maximal number of sprites the ::display can contain. 
+display *new_display(/** maximal number of sprites the ::display can contain. 
 		     * If 0 then the default value of ::DISPLAY_DFLT_MAX_SPRITE is used. 
 		     */
 		    unsigned int max_nb_sprites);
