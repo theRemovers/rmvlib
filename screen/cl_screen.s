@@ -29,7 +29,7 @@ _clear_screen:
 	move.l	#0,B_PATD
 	move.l	#0,B_PATD+4
 	move.l	SCREEN_FLAGS(a0),d0
-	move.l	d0,d1
+	move.w	d0,d1
 	lsr.w	#3,d1
 	and.w	#%111,d1
 	cmp.w	#3,d1

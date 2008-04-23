@@ -138,4 +138,54 @@ sprite *sprite_of_screen(/** X coordinate of the ::sprite */
 void clear_screen(/** Address of the ::screen */ 
 		  screen *dst);
 
+/** Write a pixel to the specified position in the screen */
+void put_pixel(/** Address of the ::screen */
+	       screen *dst,
+	       /** X coordinate */
+	       int x,
+	       /** Y coordinate */
+	       int y,
+	       /** Color */
+	       int color);
+
+/** Type of pixel */
+typedef struct {
+  short int x;
+  short int y;
+} pixel;
+
+/** Write a serie of pixels in the screen */
+void put_pixels(/** Address of the ::screen */
+	       screen *dst,
+	       /** Color */
+	       int color,
+	       /** Number of pixels */
+	       int nb,
+	       /** Array of pixels */
+	       pixel pixels[]);
+
+/** Draw a horizontal line onto the screen, from point (xmin, y) to (xmax, y). */
+void hline(/** Address of the ::screen */
+	   screen *dst,
+	   /** Xmin */
+	   int xmin,
+	   /** Y */
+	   int y,
+	   /** Xmax */
+	   int xmax,
+	   /** Color */
+	   int color);
+
+/** Draw a vertical line onto the screen, from point (x, ymin) to (x, ymax). */
+void vline(/** Address of the ::screen */
+	   screen *dst,
+	   /** X */
+	   int x,
+	   /** Ymin */
+	   int ymin,
+	   /** Ymax */
+	   int ymax,
+	   /** Color */
+	   int color);
+
 #endif

@@ -8,8 +8,8 @@ MACFLAGS=-fb -v
 CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float 
 
 SRCC=
-SRCS=fb2d.s render.s
-SRCH=fb2d.h render.h
+SRCS=fb2d.s
+SRCH=fb2d.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
 DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS)
