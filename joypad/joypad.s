@@ -24,7 +24,7 @@
 JOYPAD_H	equ	1
 	.print	"including joypad.s"
 
-	include	"jaguar.inc"
+	include	"../jaguar.inc"
 		
 	;; xxxxxxxxOFCEBDAP369#2580147*RLDU
 

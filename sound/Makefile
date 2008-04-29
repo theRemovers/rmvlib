@@ -12,7 +12,7 @@ SRCS=sound.s
 SRCH=sound.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) pt-play.s jaguar.inc
+DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) pt-play.s 
 INSTALLH=sound.h
 INSTALLLIB=sound.o
 

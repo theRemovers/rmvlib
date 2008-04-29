@@ -14,7 +14,7 @@ SRCS=joypad.s
 SRCH=joypad.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCS) $(SRCH) jaguar.inc
+DISTFILES=Makefile $(SRCC) $(SRCS) $(SRCH)
 INSTALLH=joypad.h
 INSTALLLIB=
 

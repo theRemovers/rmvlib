@@ -108,8 +108,8 @@ typedef enum {
  * The given address must be an address in DSP ram where to load the
  * DSP routine.
  *
- * It returns the address of the end of the collision routine in DSP
- * ram (which is long aligned).
+ * It returns the address of the end of the Frame Buffer manager in
+ * DSP ram (which is long aligned).
  */
 void *init_fb2d_manager(/** Address where to load the DSP routine. It
 			 * should be long aligned. */

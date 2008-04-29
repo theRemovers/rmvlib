@@ -10,14 +10,14 @@ SRCS=
 SRCC=
 SRCH=routine.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
-NASUBDIRS=interrupt display collision fb2d sound
+NASUBDIRS=interrupt display collision fb2d sound render
 ASUBDIRS=sprite screen joypad blit console
 OSUBDIRS=doc
 SUBDIRS=$(NASUBDIRS) $(ASUBDIRS) $(OSUBDIRS)
 
 PROJECT=rmvlib
 # also change in Doxyfile!!!
-PROJECT_NUMBER=1.1.6
+PROJECT_NUMBER=1.1.7
 
 TARFILE=$(PROJECT)-$(PROJECT_NUMBER).tar
 

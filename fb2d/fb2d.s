@@ -16,13 +16,13 @@
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
-	include	"jaguar.inc"
-	include	"screen_def.s"
+	include	"../jaguar.inc"
+	include	"../screen/screen_def.s"
 
 SINE_PREC	equ	4	; 128<<4 = 2048
 NB_PARAMS	equ	3
 
-	.include	"routine.s"
+	.include	"../routine.s"
 	
 	.include	"risc.s"
 

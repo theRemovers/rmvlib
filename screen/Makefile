@@ -12,8 +12,7 @@ SRCS=cl_screen.s p_pixel.s p_pixels.s hline.s vline.s
 SRCH=screen.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCS) $(SRCH) screen_def.s screen_inline.c jaguar.inc
-
+DISTFILES=Makefile $(SRCC) $(SRCS) $(SRCH) screen_def.s screen_inline.c
 INSTALLH=screen.h
 INSTALLLIB=
 

@@ -16,9 +16,9 @@
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
-	include	"display_def.s"
+	include	"../display/display_def.s"
 
-	include	"routine.s"
+	include	"../routine.s"
 	
 	.text	
 	.68000

@@ -14,7 +14,7 @@ SRCS=interrupt.s
 SRCH=interrupt.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCS) $(SRCH) jaguar.inc
+DISTFILES=Makefile $(SRCC) $(SRCS) $(SRCH)
 INSTALLH=interrupt.h
 INSTALLLIB=interrupt.o
 

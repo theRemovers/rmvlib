@@ -13,7 +13,6 @@ SRCH=collision.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
 DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) 
-DISTFILES+=display_def.s routine.s jaguar.inc
 INSTALLH=collision.h
 INSTALLLIB=collision.o
 

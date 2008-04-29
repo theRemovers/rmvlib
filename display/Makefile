@@ -12,7 +12,7 @@ SRCS=display.s
 SRCH=display.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) display_def.s display_cfg.s jaguar.inc
+DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) display_def.s display_cfg.s
 INSTALLH=display.h
 INSTALLLIB=display.o
 

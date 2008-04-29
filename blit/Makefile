@@ -12,7 +12,7 @@ SRCS=blitset.s blitmove.s
 SRCH=blit.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) jaguar.inc
+DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS)
 INSTALLH=blit.h
 INSTALLLIB=
 
