@@ -24,7 +24,7 @@ NB_PARAMS	equ	3
 
 	.include	"../routine.s"
 	
-	.include	"risc.s"
+	.include	"../risc.s"
 
 .macro	read_rom_table
 	;; \1: integer which represent the precision (128 << \1)
