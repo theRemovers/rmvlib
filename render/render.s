@@ -32,16 +32,17 @@ renderer:
 .renderer_begin:
 .render_polygon:
 	move	PC,r0		; to relocate
-	movei	#.renderer_params-.renderer_begin,r1
+	movei	#.renderer_params+4-.renderer_begin,r1
 	add	r0,r1		; relocate
-	load	(r1),r2		; screen
-	addq	#4,r1
-	load	(r1),r3		; polygon
-	addq	#4,r1		; on mutex
+	load	(r1),r2		; polygon
+	subq	#4,r1
+	load	(r1),r1		; screen
 	;;
 	;; done
 	;; return from sub routine and clear mutex
+	movei	#.renderer_params+8-.renderer_begin,r1	
 	moveq	#0,r2
+	add	r0,r1
 	load	(r31),r0	; return address
 	addq	#4,r31		; restore stack
 	jump	(r0)		; return

@@ -16,41 +16,14 @@
 /* License along with this library; if not, write to the Free Software */
 /* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA */
 
-/** \file render.h
- * \brief Software renderer
- */
-#ifndef _RENDER_H
-#define _RENDER_H
-
-#include <jagdefs.h>
-#include <screen.h>
-
-typedef struct {
-  fixp x;
-  fixp y;
-} vertex;
-
-typedef struct polygon {
-  struct polygon *next;
-  short int size;
-  short int flags;
-  unsigned long param;
-  vertex vertices[];
-} polygon;
-
-/** Initialise the Software Renderer.
- *
- * The given address must be an address in GPU ram where to load the
- * GPU routine.
- *
- * It returns the address of the end of the renderer routine in GPU
- * ram (which is long aligned).
- */
-void *init_renderer(/** Address where to load the GPU routine. It
-		     * should be long aligned. */
-		    void *addr);
-
-void render_polygon(screen *target,
-		    polygon *p);
-
-#endif
+	.offset	0
+VERTEX_Y:	ds.l	1
+VERTEX_X:	ds.l	1
+VERTEX_SIZE:	ds.l	0
+	
+	.offset	0
+POLY_NEXT:	ds.l	1
+POLY_SIZE:	ds.w	1
+POLY_FLAGS:	ds.w	1
+POLY_PARAM:	ds.l	1
+POLY_VERTICES:	ds.l	0
