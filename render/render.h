@@ -32,9 +32,9 @@ typedef struct {
 
 typedef struct polygon {
   struct polygon *next;
-  short int size;
   short int flags;
-  unsigned long param;
+  short int size;
+  unsigned long params[2];
   vertex vertices[];
 } polygon;
 

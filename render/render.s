@@ -23,6 +23,8 @@ NB_PARAMS	equ	3
 	
 	.include	"../routine.s"
 
+	.include	"render_def.s"
+	
 	.text
 
 	.phrase
@@ -32,12 +34,31 @@ renderer:
 .renderer_begin:
 .render_polygon:
 	move	PC,r0		; to relocate
-	movei	#.renderer_params+4-.renderer_begin,r1
+	movei	#.renderer_params+4-.render_polygon,r1
 	add	r0,r1		; relocate
-	load	(r1),r2		; polygon
+	load	(r1),r14	; polygon list (not null)
 	subq	#4,r1
-	load	(r1),r1		; screen
-	;;
+	load	(r1),r15	; target screen
+	movei	#A2_BASE,r1
+	load	(r15+(SCREEN_DATA/4)),r2 ; screen address
+	load	(r15+(SCREEN_FLAGS/4)),r3 ; flags
+	store	r2,(r1)			  ; A2_BASE
+	addq	#A2_FLAGS-A2_BASE,r1
+	store	r3,(r1)
+.render_one_polygon:
+	load	(r14+(POLY_FLAGS/4)),r2		; load flags and size
+	moveq	#VERTEX_SIZEOF,r3
+	addq	#POLY_VERTICES,r14
+	mult	r2,r3		; size of vertices in bytes
+	shrq	#16,r2		; flags
+	;; next polygon
+	subq	#POLY_VERTICES,r14
+	movei	#.render_one_polygon-.render_polygon,r1
+	load	(r14),r14
+	add	r0,r1
+	cmpq	#0,r14
+	jump	ne,(r1)
+	nop
 	;; done
 	;; return from sub routine and clear mutex
 	movei	#.renderer_params+8-.renderer_begin,r1	
