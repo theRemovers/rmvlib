@@ -82,16 +82,16 @@ RISC_H	equ	1
 	;; result goes in \4
 	moveq	#0,\7
 	abs	\1
-	addc	\5,\5		; will be odd if \1 is negative
+	addc	\5,\5		; will be odd iff \1 is negative
 	abs	\2
-	addc	\5,\7		; will be odd iff \1 and \3 have oppositive sign
+	addc	\5,\7		; will be odd iff \1 and \3 have opposite signs
 	move	\1,\3
 	move	\2,\4
 	; fractionnal part 1 in \1 (lower word)
 	; fractionnal part 2 in \2 (lower word)
 	shrq	#16,\3		; integer part 1
 	shrq	#16,\4		; integer part 2
-	;; \7 is the sign of the result (0 = positive, 1 = negative)
+	;; parity of \7 is the sign of the result
 	;; \3.\1 * \4.\2 = \3*\4.(\1*\4 + \2*\3 + (\1*\2 >> 16))
 	move	\1,\5
 	move	\2,\6
