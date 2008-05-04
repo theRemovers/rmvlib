@@ -26,8 +26,8 @@
 #include <screen.h>
 
 typedef struct {
-  fixp x;
   fixp y;
+  fixp x;
 } vertex;
 
 typedef struct polygon {

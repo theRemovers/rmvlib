@@ -47,11 +47,31 @@ renderer:
 	store	r3,(r1)
 .render_one_polygon:
 	load	(r14+(POLY_FLAGS/4)),r2		; load flags and size
-	moveq	#VERTEX_SIZEOF,r3
+	moveq	#VERTEX_SIZEOF,r6
 	addq	#POLY_VERTICES,r14
-	mult	r2,r3		; size of vertices in bytes
+	mult	r2,r6		
 	shrq	#16,r2		; flags
+	move	r6,r3		; size of array in bytes
+	subq	#VERTEX_SIZEOF,r6 ; i = n-1 (last index)
+	jr	.update_ymin
+.search_ymin:
+	load	(r14+r6),r7	; y (initialise y_min at first step)
+	cmp	r5,r7		; compare y to y_min
+	jr	pl,.loop_ymin
+.update_ymin:
+	subq	#VERTEX_SIZEOF,r6 ; previous vertex (instead of nop)
+	move	r6,r4		; i_min = i (does not change flags)
+	move	r7,r5		; y_min = y (does not change flags)
+.loop_ymin:
+	jr	pl,.search_ymin	; test r6
+	nop
+	;; r2 = flags
+	;; r3 = size of array in bytes
+	;; r4 = i_min
+	;; r5 = y_min
+	
 	;; next polygon
+.render_next_polygon:
 	subq	#POLY_VERTICES,r14
 	movei	#.render_one_polygon-.render_polygon,r1
 	load	(r14),r14
