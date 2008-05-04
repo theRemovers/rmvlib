@@ -45,6 +45,9 @@ renderer:
 	store	r2,(r1)			  ; A2_BASE
 	addq	#A2_FLAGS-A2_BASE,r1
 	store	r3,(r1)
+	movei	#1<<15,r20	; 1/2
+	movei	#1<<16,r21	; 1
+	movei	#$ffff0000,r22	; mask to get integer part
 .render_one_polygon:
 	load	(r14+(POLY_FLAGS/4)),r2		; load flags and size
 	moveq	#VERTEX_SIZEOF,r8
@@ -71,12 +74,9 @@ renderer:
 	;; r4 = y_min
 	;; r5 = i_min = left index
 	;; r6 = i_min = right index
-	movei	#1<<15,r7	; 1/2
 	subq	#1,r4
-	movei	#$ffff0000,r9	; mask to compute floor and ceil values	
-	add	r7,r4
-	movei	#1<<16,r8	; 1
-	and	r9,r4		; r4 = ceil(y_min - 1/2)
+	add	r20,r4		; y_min+1/2
+	and	r22,r4		; r4 = ceil(y_min - 1/2) = (y_min+1/2-1) & 0xffff0000
 	;; next polygon
 .render_next_polygon:
 	subq	#POLY_VERTICES,r14
