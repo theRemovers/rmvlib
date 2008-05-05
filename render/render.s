@@ -49,7 +49,9 @@ renderer:
 	movei	#1<<16,r21	; 1
 	movei	#$ffff0000,r22	; mask to get integer part
 .render_one_polygon:
+	movei	#.render_next_polygon-.render_polygon,r1
 	load	(r14+(POLY_FLAGS/4)),r2		; load flags and size
+	add	r0,r1
 	moveq	#VERTEX_SIZEOF,r8
 	addq	#POLY_VERTICES,r14
 	mult	r2,r8		
@@ -75,25 +77,42 @@ renderer:
 	;; r5 = i_min = left index
 	;; r6 = i_min = right index
 	subq	#1,r4		;
+	movei	#.get_left_edge-.render_polygon,r18
+	movei	#.get_right_edge-.render_polygon,r19
 	add	r20,r4		; y_min+1/2-1/65536
+	add	r0,r18		; relocate .get_left_edge
 	and	r22,r4		; r4 = ceil(y_min - 1/2)
-				; = (y_min+1/2-1/65536) & 0xffff0000 
+				; = (y_min+1/2-1/65536) & 0xffff0000
+	add	r0,r19		; relocate .get_right_edge
 	move	r4,r7		; left_y
 	move	r4,r8		; right_y
 	;; r7 = left_y
 	;; r8 = right_y
 .get_left_edge:
 	cmp	r7,r4		; left_y > y
-	jr	mi,.get_right_edge ; yes
+	jump	mi,(r19)	; yes -> .get_right_edge
 	move	r5,r9		   ; save left index
 	subq	#VERTEX_SIZEOF,r5  ; li--
 	jr	pl,.ok_left_index  ; li >= 0 ?
 	nop
 	add	r3,r5		; li < 0 (ie li = -1) -> li = n-1
 .ok_left_index:
+	load	(r14+r5),r11	; y(new_li)	
 	load	(r14+r9),r10	; y(old_li)
-	load	(r14+r5),r11	; y(new_li)
-	jr	.get_left_edge
+	move	r11,r7		; left_y = y(new_li)
+	sub	r10,r11		; y(new_li)-y(old_li)
+	jump	mi,(r1)		; -> .render_next_polygon
+	move	r4,r12		; y
+	jr	ne,.ok_left_dy
+	add	r20,r12		; y+1/2
+	move	r21,r11		; dy = 1
+.ok_left_dy:
+	move	r21,r13		; 1
+	sub	r10,r12		; frac = y+1/2-y(old_li)
+	div	r11,r13		; 1/dy
+	add	r20,r7		; left_y = y(new_li) + 1/2
+	and	r22,r7		; left_y = floor(y(new_li)+1/2)
+	jump	(r18)		; -> .get_left_edge
 	nop
 .get_right_edge:
 	;; next polygon
