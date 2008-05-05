@@ -80,6 +80,22 @@ renderer:
 				; = (y_min+1/2-1/65536) & 0xffff0000 
 	move	r4,r7		; left_y
 	move	r4,r8		; right_y
+	;; r7 = left_y
+	;; r8 = right_y
+.get_left_edge:
+	cmp	r7,r4		; left_y > y
+	jr	mi,.get_right_edge ; yes
+	move	r5,r9		   ; save left index
+	subq	#VERTEX_SIZEOF,r5  ; li--
+	jr	pl,.ok_left_index  ; li >= 0 ?
+	nop
+	add	r3,r5		; li < 0 (ie li = -1) -> li = n-1
+.ok_left_index:
+	load	(r14+r9),r10	; y(old_li)
+	load	(r14+r5),r11	; y(new_li)
+	jr	.get_left_edge
+	nop
+.get_right_edge:
 	;; next polygon
 .render_next_polygon:
 	subq	#POLY_VERTICES,r14
