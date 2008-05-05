@@ -74,9 +74,12 @@ renderer:
 	;; r4 = y_min
 	;; r5 = i_min = left index
 	;; r6 = i_min = right index
-	subq	#1,r4
-	add	r20,r4		; y_min+1/2
-	and	r22,r4		; r4 = ceil(y_min - 1/2) = (y_min+1/2-1) & 0xffff0000
+	subq	#1,r4		;
+	add	r20,r4		; y_min+1/2-1/65536
+	and	r22,r4		; r4 = ceil(y_min - 1/2)
+				; = (y_min+1/2-1/65536) & 0xffff0000 
+	move	r4,r7		; left_y
+	move	r4,r8		; right_y
 	;; next polygon
 .render_next_polygon:
 	subq	#POLY_VERTICES,r14
