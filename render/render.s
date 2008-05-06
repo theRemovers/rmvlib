@@ -24,6 +24,40 @@ NB_PARAMS	equ	3
 	.include	"../routine.s"
 
 	.include	"render_def.s"
+
+	.macro	compute_values
+	;; input
+	;; r23 = inv_dw (>= 0)
+	;; r24 = frac (>= 0)
+	;; r25 = v1
+	;; r26 = v2
+	;; r27, r28, r29, r30 : temporary registers
+	;; output
+	;; r23, r24 unchanged
+	;; r25 = v1 + dv * frac
+	;; r26 = dv = (v2 - v1) * inv_dw
+	sub	r25,r26		; v2-v1
+	move	r23,r27
+	abs	r26		; |v2-v1|
+	addc	r30,r30		; bit 0 is sign of (v2-v1)
+	move	r26,r28
+	shrq	#16,r27		; int(inv_dw)
+	move	r26,r29
+	shrq	#16,r28		; int(|v2-v1|)
+	mult	r27,r29		; int(inv_dw)*frac(|v2-v1|)
+	move	r26,r27
+	mult	r23,r28		; frac(inv_dw)*int(|v2-v1|)
+	mult	r23,r27		; frac(inv_dw)*frac(|v2-v1|)
+	rorq	#16,r23
+	rorq	#16,r26
+	shrq	#16,r27		; frac(inv_dw)*frac(|v2-v1|)>>16
+	mult	r23,r26		; int(inv_dw)*int(|v2-v1|)<<16
+	add	r29,r28		; int(inv_dw)*frac(|v2-v1|)+frac(inv_dw)*int(|v2-v1|)
+	shlq	#16,r26
+	rorq	#16,r23		; restore inv_dw
+	add	r28,r26		; int(inv_dw)*int(|v2-v1|)<<16+int(inv_dw)*frac(|v2-v1|)+frac(inv_dw)*int(|v2-v1|)
+	add	r27,r26		; |v2-v1|*inv_dw
+	.endm
 	
 	.text
 
