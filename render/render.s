@@ -21,6 +21,8 @@
 
 NB_PARAMS	equ	3
 	
+	.include	"../risc.s"
+	
 	.include	"../routine.s"
 
 	.include	"render_def.s"
@@ -137,8 +139,10 @@ renderer:
 	;; r5 = i_min = left index
 	;; r6 = i_min = right index
 	subq	#1,r4		;
+	movei	#.render_incrementalize-.render_polygon,r17
 	movei	#.get_left_edge-.render_polygon,r18
 	movei	#.get_right_edge-.render_polygon,r19
+	add	r0,r17		; relocate .render_incrementalize
 	add	r20,r4		; y_min+1/2-1/65536
 	add	r0,r18		; relocate .get_left_edge
 	and	r22,r4		; r4 = ceil(y_min - 1/2)
@@ -151,29 +155,37 @@ renderer:
 .get_left_edge:
 	cmp	r7,r4		; left_y > y
 	jump	mi,(r19)	; yes -> .get_right_edge
-	move	r5,r9		   ; save left index
+	move	r5,r16		   ; save left index
 	subq	#VERTEX_SIZEOF,r5  ; li--
 	jr	pl,.ok_left_index  ; li >= 0 ?
 	nop
 	add	r3,r5		; li < 0 (ie li = -1) -> li = n-1
 .ok_left_index:
-	load	(r14+r5),r11	; y(new_li)	
-	load	(r14+r9),r10	; y(old_li)
-	move	r11,r7		; left_y = y(new_li)
-	sub	r10,r11		; y(new_li)-y(old_li)
+	load	(r14+r5),r28	; y(new_li)	
+	load	(r14+r16),r27	; y(old_li)
+	move	r28,r7		; left_y = y(new_li)
+	sub	r27,r28		; y(new_li)-y(old_li)
 	jump	mi,(r1)		; -> .render_next_polygon
-	move	r4,r12		; y
+	move	r4,r24		; y
 	jr	ne,.ok_left_dy
-	add	r20,r12		; y+1/2
-	move	r21,r11		; dy = 1
+	add	r20,r24		; y+1/2
+	move	r21,r28		; dy = 1
 .ok_left_dy:
-	move	r21,r13		; 1
-	sub	r10,r12		; frac = y+1/2-y(old_li)
-	div	r11,r13		; 1/dy
+	move	r21,r23		; 1
+	sub	r27,r24		; frac = y+1/2-y(old_li)
+	div	r28,r23		; 1/dy
 	add	r20,r7		; left_y = y(new_li) + 1/2
+	addq	#VERTEX_X-VERTEX_Y,r14
 	and	r22,r7		; left_y = floor(y(new_li)+1/2)
+	load	(r14+r16),r25	; x(old_li)
+	load	(r14+r5),r26	; x(new_li)
+	subq	#VERTEX_X-VERTEX_Y,r14
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	move	r25,r9		; left_x
 	jump	(r18)		; -> .get_left_edge
-	nop
+	move	r26,r10		; left_dx
+	;; r9 = left_x
+	;; r10 = left_dx
 .get_right_edge:
 	;; next polygon
 .render_next_polygon:
@@ -193,6 +205,18 @@ renderer:
 	addq	#4,r31		; restore stack
 	jump	(r0)		; return
 	store	r2,(r1)		; clear mutex
+.render_incrementalize:
+	;; input
+	;; r23 = 1/dw
+	;; r24 = frac
+	;; r25 = v1
+	;; r26 = v2
+	;; r30 = return address (31 bits)
+	;; output
+	;; r23, r24, r30 unchanged
+	;; r25 = v1 + frac*dv
+	;; r26 = dv = (v2-v1)*1/dw
+	compute_values	r23,r24,r25,r26,r27,r28,r29,r30
 	.long
 .renderer_params:
 	.rept	NB_PARAMS
