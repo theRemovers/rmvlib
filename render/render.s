@@ -141,20 +141,20 @@ renderer:
 	subq	#1,r4		;
 	movei	#.render_incrementalize-.render_polygon,r17
 	movei	#.get_left_edge-.render_polygon,r18
-	movei	#.get_right_edge-.render_polygon,r19
+	movei	#.ok_left_edge-.render_polygon,r19
 	add	r0,r17		; relocate .render_incrementalize
 	add	r20,r4		; y_min+1/2-1/65536
 	add	r0,r18		; relocate .get_left_edge
 	and	r22,r4		; r4 = ceil(y_min - 1/2)
 				; = (y_min+1/2-1/65536) & 0xffff0000
-	add	r0,r19		; relocate .get_right_edge
+	add	r0,r19		; relocate .ok_left_edge
 	move	r4,r7		; left_y
 	move	r4,r8		; right_y
 	;; r7 = left_y
 	;; r8 = right_y
 .get_left_edge:
 	cmp	r7,r4		; left_y > y
-	jump	mi,(r19)	; yes -> .get_right_edge
+	jump	mi,(r19)	; yes -> .ok_left_edge
 	move	r5,r16		   ; save left index
 	subq	#VERTEX_SIZEOF,r5  ; li--
 	jr	pl,.ok_left_index  ; li >= 0 ?
@@ -186,7 +186,55 @@ renderer:
 	move	r26,r10		; left_dx
 	;; r9 = left_x
 	;; r10 = left_dx
+.ok_left_edge:
+	movei	#.get_right_edge-.render_polygon,r18
+	movei	#.ok_right_edge-.render_polygon,r19
+	add	r0,r18		; relocate .get_right_edge
+	add	r0,r19		; relocate .ok_right_edge
 .get_right_edge:
+	cmp	r8,r4		; right_y > y
+	jump	mi,(r19)	; yes -> .ok_right_edge
+	move	r6,r16		   ; save right index
+	addq	#VERTEX_SIZEOF,r6  ; ri++
+	cmp	r3,r6
+	jr	ne,.ok_right_index  ; ri >= n ?
+	nop
+	moveq	#0,r6		; ri = 0
+.ok_right_index:
+	load	(r14+r6),r28	; y(new_li)	
+	load	(r14+r16),r27	; y(old_li)
+	move	r28,r8		; right_y = y(new_li)
+	sub	r27,r28		; y(new_li)-y(old_li)
+	jump	mi,(r1)		; -> .render_next_polygon
+	move	r4,r24		; y
+	jr	ne,.ok_right_dy
+	add	r20,r24		; y+1/2
+	move	r21,r28		; dy = 1
+.ok_right_dy:
+	move	r21,r23		; 1
+	sub	r27,r24		; frac = y+1/2-y(old_li)
+	div	r28,r23		; 1/dy
+	add	r20,r8		; right_y = y(new_li) + 1/2
+	addq	#VERTEX_X-VERTEX_Y,r14
+	and	r22,r8		; right_y = floor(y(new_li)+1/2)
+	load	(r14+r16),r25	; x(old_li)
+	load	(r14+r6),r26	; x(new_li)
+	subq	#VERTEX_X-VERTEX_Y,r14
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	move	r25,r11		; right_x
+	jump	(r18)		; -> .get_left_edge
+	move	r26,r12		; right_dx
+	;; r11 = right_x
+	;; r12 = right_dx
+.ok_right_edge:
+	movei	#_render_trace,r15
+	store	r4,(r15)	; y
+	store	r7,(r15+1)	; left_y
+	store	r9,(r15+2)	; left_x
+	store	r10,(r15+3)	; left_dx
+	store	r8,(r15+4)	; right_y
+	store	r11,(r15+5)	; right_x
+	store	r12,(r15+6)	; right_dx
 	;; next polygon
 .render_next_polygon:
 	subq	#POLY_VERTICES,r14
@@ -275,3 +323,8 @@ _render_polygon:
 	.long
 renderer_gpu_address:
 	ds.l	1
+
+	.long
+	.globl	_render_trace
+_render_trace:
+	ds.l	7

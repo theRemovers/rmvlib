@@ -53,4 +53,6 @@ void *init_renderer(/** Address where to load the GPU routine. It
 void render_polygon(screen *target,
 		    polygon *p);
 
+unsigned long render_trace[7];
+
 #endif
