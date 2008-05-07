@@ -96,29 +96,33 @@ renderer:
 .renderer_begin:
 .render_polygon:
 	move	PC,r0		; to relocate
-	movei	#.renderer_params+4-.render_polygon,r1
+	movei	#.renderer_params-.render_polygon,r1
 	add	r0,r1		; relocate
-	load	(r1),r14	; polygon list (not null)
-	subq	#4,r1
 	load	(r1),r15	; target screen
+	addq	#4,r1
+	load	(r1),r14	; polygon list (not null)
 	movei	#A2_BASE,r1
 	load	(r15+(SCREEN_DATA/4)),r2 ; screen address
-	load	(r15+(SCREEN_FLAGS/4)),r3 ; flags
+	load	(r15+(SCREEN_FLAGS/4)),r13 ; flags
 	store	r2,(r1)			  ; A2_BASE
-	addq	#A2_FLAGS-A2_BASE,r1
-	store	r3,(r1)
+	movei	#A2_FLAGS,r1
+	store	r13,(r1)	; A2_FLAGS (will depend on poly flags)
 	movei	#1<<15,r20	; 1/2
 	movei	#1<<16,r21	; 1
 	movei	#$ffff0000,r22	; mask to get integer part
 .render_one_polygon:
 	movei	#.render_next_polygon-.render_polygon,r1
 	load	(r14+(POLY_FLAGS/4)),r2		; load flags and size
-	add	r0,r1
 	moveq	#VERTEX_SIZEOF,r8
-	addq	#POLY_VERTICES,r14
-	mult	r2,r8		
+	add	r0,r1			; relocate .render_next_polygon
+	mult	r2,r8
 	shrq	#16,r2		; flags
 	move	r8,r3		; size of array in bytes
+	load	(r14+(POLY_PARAM/4)),r9 ; load color (will depend on poly flags)
+	movei	#B_PATD,r15
+	addq	#POLY_VERTICES,r14
+	store	r9,(r15)	; set color
+	store	r9,(r15+1)	; set color
 	subq	#VERTEX_SIZEOF,r8 ; i = n-1 (last index)
 	jr	.update_ymin
 .search_ymin:
@@ -228,16 +232,6 @@ renderer:
 	;; r11 = right_x
 	;; r12 = right_dx
 .ok_right_edge:
-	.if	1
-	movei	#_render_trace,r15
-	store	r4,(r15)	; y
-	store	r7,(r15+1)	; left_y
-	store	r9,(r15+2)	; left_x
-	store	r10,(r15+3)	; left_dx
-	store	r8,(r15+4)	; right_y
-	store	r11,(r15+5)	; right_x
-	store	r12,(r15+6)	; right_dx
-	.endif
 	movei	#.do_scanlines-.render_polygon,r18
 	movei	#.loop_render-.render_polygon,r19
 	add	r0,r18		; relocate .do_scanlines
@@ -253,10 +247,26 @@ renderer:
 	add	r20,r27		; lx+1/2
 	sub	r20,r28		; rx-1/2
 	subq	#1,r27		; lx+1/2-1/65536
-	and	r22,r28		; x2 = floor(rx-1/2)
-	and	r22,r27		; x1 = ceil(lx-1/2) = floor(lx+1/2-1/65536) 
+	shrq	#16,r28		; x2 = floor(rx-1/2)
+	shrq	#16,r27		; x1 = ceil(lx-1/2) = floor(lx+1/2-1/65536)
+	sub	r27,r28		; x2-x1
+	movei	#A2_PIXEL,r17
+	or	r4,r27		; y|x1
+	addq	#1,r28		; w = x2-x1+1
+	store	r27,(r17)	; A2_PIXEL
+	or	r21,r28		; 1|w
+	movei	#B_COUNT,r17
+	store	r28,(r17)	; B_COUNT
+	movei	#B_CMD,r17
+	movei	#DSTA2|PATDSEL,r28
+	store	r28,(r17)	; B_CMD
 	add	r10,r9		; lx += ldx
 	add	r12,r11		; rx += rdx
+.wait_blitter:
+	load	(r17),r28
+	btst	#0,r28
+	jr	eq,.wait_blitter
+	nop
 	jump	(r18)
 	add	r21,r4		; y++
 	;; next polygon
@@ -348,7 +358,3 @@ _render_polygon:
 renderer_gpu_address:
 	ds.l	1
 
-	.long
-	.globl	_render_trace
-_render_trace:
-	ds.l	7

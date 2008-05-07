@@ -25,5 +25,5 @@ VERTEX_SIZEOF:	ds.l	0
 POLY_NEXT:	ds.l	1
 POLY_FLAGS:	ds.w	1
 POLY_SIZE:	ds.w	1
-POLY_PARAMS:	ds.l	2
+POLY_PARAM:	ds.l	1
 POLY_VERTICES:	ds.l	0

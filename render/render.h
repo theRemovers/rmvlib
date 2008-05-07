@@ -34,7 +34,7 @@ typedef struct polygon {
   struct polygon *next;
   short int flags;
   short int size;
-  unsigned long params[2];
+  unsigned long param;
   vertex vertices[];
 } polygon;
 
@@ -52,7 +52,5 @@ void *init_renderer(/** Address where to load the GPU routine. It
 
 void render_polygon(screen *target,
 		    polygon *p);
-
-unsigned long render_trace[7];
 
 #endif
