@@ -80,11 +80,10 @@ RISC_H	equ	1
 	;; \3, \4, \5, \6, \7: temporary registers
 	;; \8: if defined, return address
 	;; result goes in \4
-	moveq	#0,\7
+	move	\1,\7
 	abs	\1
-	addc	\5,\5		; will be odd iff \1 is negative
+	xor	\2,\7		; get sign of product in bit 31
 	abs	\2
-	addc	\5,\7		; will be odd iff \1 and \3 have opposite signs
 	move	\1,\3
 	move	\2,\4
 	; fractionnal part 1 in \1 (lower word)
@@ -103,7 +102,7 @@ RISC_H	equ	1
 	shlq	#16,\4		; \3*\4
 	shrq	#16,\2
 	add	\5,\4
-	btst	#0,\7
+	btst	#31,\7
 	.if	\?8
 	jump	eq,(\8)
 	.else

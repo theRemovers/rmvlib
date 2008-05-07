@@ -139,19 +139,20 @@ renderer:
 	;; r5 = i_min = left index
 	;; r6 = i_min = right index
 	subq	#1,r4		;
-	movei	#.render_incrementalize-.render_polygon,r17
-	movei	#.get_left_edge-.render_polygon,r18
-	movei	#.ok_left_edge-.render_polygon,r19
-	add	r0,r17		; relocate .render_incrementalize
 	add	r20,r4		; y_min+1/2-1/65536
-	add	r0,r18		; relocate .get_left_edge
 	and	r22,r4		; r4 = ceil(y_min - 1/2)
 				; = (y_min+1/2-1/65536) & 0xffff0000
-	add	r0,r19		; relocate .ok_left_edge
 	move	r4,r7		; left_y
 	move	r4,r8		; right_y
 	;; r7 = left_y
 	;; r8 = right_y
+.loop_render:
+	movei	#.render_incrementalize-.render_polygon,r17
+	movei	#.get_left_edge-.render_polygon,r18
+	movei	#.ok_left_edge-.render_polygon,r19
+	add	r0,r17		; relocate .render_incrementalize
+	add	r0,r18		; relocate .get_left_edge
+	add	r0,r19		; relocate .ok_left_edge
 .get_left_edge:
 	cmp	r7,r4		; left_y > y
 	jump	mi,(r19)	; yes -> .ok_left_edge
@@ -227,6 +228,7 @@ renderer:
 	;; r11 = right_x
 	;; r12 = right_dx
 .ok_right_edge:
+	.if	1
 	movei	#_render_trace,r15
 	store	r4,(r15)	; y
 	store	r7,(r15+1)	; left_y
@@ -235,6 +237,28 @@ renderer:
 	store	r8,(r15+4)	; right_y
 	store	r11,(r15+5)	; right_x
 	store	r12,(r15+6)	; right_dx
+	.endif
+	movei	#.do_scanlines-.render_polygon,r18
+	movei	#.loop_render-.render_polygon,r19
+	add	r0,r18		; relocate .do_scanlines
+	add	r0,r19		; relocate .loop_render
+.do_scanlines:
+	cmp	r7,r4		; y < left_y
+	jump	pl,(r19)	; no -> .loop_render
+	cmp	r8,r4		; y < right_y
+	jump	pl,(r19)	; no -> .loop_render
+	nop
+	move	r9,r27		; lx
+	move	r11,r28		; rx
+	add	r20,r27		; lx+1/2
+	sub	r20,r28		; rx-1/2
+	subq	#1,r27		; lx+1/2-1/65536
+	and	r22,r28		; x2 = floor(rx-1/2)
+	and	r22,r27		; x1 = ceil(lx-1/2) = floor(lx+1/2-1/65536) 
+	add	r10,r9		; lx += ldx
+	add	r12,r11		; rx += rdx
+	jump	(r18)
+	add	r21,r4		; y++
 	;; next polygon
 .render_next_polygon:
 	subq	#POLY_VERTICES,r14
