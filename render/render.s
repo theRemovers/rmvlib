@@ -232,6 +232,7 @@ renderer:
 	;; r11 = right_x
 	;; r12 = right_dx
 .ok_right_edge:
+	movei	#B_CMD,r17
 	movei	#.do_scanlines-.render_polygon,r18
 	movei	#.loop_render-.render_polygon,r19
 	add	r0,r18		; relocate .do_scanlines
@@ -250,6 +251,11 @@ renderer:
 	shrq	#16,r28		; x2 = floor(rx-1/2)
 	shrq	#16,r27		; x1 = ceil(lx-1/2) = floor(lx+1/2-1/65536)
 	sub	r27,r28		; x2-x1
+.wait_blitter:
+	load	(r17),r29
+	btst	#0,r29
+	jr	eq,.wait_blitter
+	nop
 	movei	#A2_PIXEL,r17
 	or	r4,r27		; y|x1
 	addq	#1,r28		; w = x2-x1+1
@@ -262,11 +268,6 @@ renderer:
 	store	r28,(r17)	; B_CMD
 	add	r10,r9		; lx += ldx
 	add	r12,r11		; rx += rdx
-.wait_blitter:
-	load	(r17),r28
-	btst	#0,r28
-	jr	eq,.wait_blitter
-	nop
 	jump	(r18)
 	add	r21,r4		; y++
 	;; next polygon
