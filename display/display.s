@@ -38,6 +38,9 @@ DISPLAY_H	equ	1
 	;; 0 = 32 bits
 	;; 1 = 16.16 bits
 GPU_DIV_FRAC	equ	1
+
+	;; save registers
+DISPLAY_IT_SAVE_REGS	equ	1
 	
 	include	"display_cfg.s"
 

@@ -28,6 +28,10 @@
 typedef struct {
   fixp y;
   fixp x;
+  fixp i;
+  fixp z;
+  fixp u;
+  fixp v;
 } vertex;
 
 typedef struct polygon {
@@ -35,6 +39,7 @@ typedef struct polygon {
   short int flags;
   short int size;
   unsigned long param;
+  screen *texture;
   vertex vertices[];
 } polygon;
 
@@ -52,5 +57,10 @@ void *init_renderer(/** Address where to load the GPU routine. It
 
 void render_polygon(screen *target,
 		    polygon *p);
+
+#define FLTSHADING 0x0
+#define GRDSHADING 0x1
+#define TXTMAPPING 0x2
+#define ZBUFFERING 0x4
 
 #endif
