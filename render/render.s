@@ -491,6 +491,7 @@ renderer:
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;; 
 	add	r10,r9		; lx += ldx
 	add	r12,r11		; rx += rdx
 	jump	(r18)		; -> .do_scanlines
@@ -528,21 +529,22 @@ renderer:
 	sat24	r25
 	sub	r26,r30
 	subq	#1,r29
-	store	r25,(r15+((B_I3-A1_BASE)/4))
+	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_Ix with 1 <= x <= 3
 	addqt	#4,r15
 	jr	ne,.gouraud_set_intensities
 	move	r30,r25
 	shlq	#10,r26		; 4 * di
 	sat24	r25
 	shrq	#8,r26		; clear high bits
-	store	r25,(r15+((B_I3-A1_BASE)/4))
+	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_I0
 	subq	#12,r15
 	;; 
 	movei	#DSTA2|PATDSEL|GOURD,r29
-	store	r26,(r15+((B_IINC-A1_BASE)/4))
+	store	r26,(r15+((B_IINC-A1_BASE)/4))		; IINC
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;; 
 	add	r10,r9		; lx += ldx
 	add	r12,r11		; rx += rdx
 	jump	(r18)		; -> .do_scanlines
@@ -610,6 +612,51 @@ renderer:
 	add	r12,r11		; rx += rdx
 	jump	(r18)		; -> .do_scanlines
 	add	r21,r4		; y++
+.flat_zbuffer:
+	moveta	r28,r27		; save w
+	moveta	r27,r26		; save y|x1
+	;; 
+	moveq	#3,r29
+	moveq	#3,r30
+	and	r27,r29		; x1%4
+	sub	r29,r30		; (3-x1)%4
+	shlq	#16,r30		; 16.16
+	add	r30,r24		; adjust frac
+	;; 
+	movefa	r4,r25		; z1
+	movefa	r6,r26		; z2
+	movefa	r5,r27		; dz1
+	movefa	r7,r28		; dz2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r4		; z1'
+	moveta	r28,r6		; z2'
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	movefa	r26,r27		; restore y|x1
+	movefa	r27,r28		; restore w
+	wait_blitter_gpu	r15,r29
+ 	or	r21,r28		; 1|w (executed during wait loop)
+	;;
+	addq	#32,r15
+	store	r25,(r15+((B_Z3-(A1_BASE+32))/4))
+	sub	r26,r25
+	store	r25,(r15+((B_Z2-(A1_BASE+32))/4))
+	sub	r26,r25
+	store	r25,(r15+((B_Z1-(A1_BASE+32))/4))
+	sub	r26,r25
+	store	r25,(r15+((B_Z0-(A1_BASE+32))/4))
+	subq	#32,r15
+	shlq	#2,r26		; dz * 4
+ 	movei	#DSTA2|PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+	store	r26,(r15+((B_ZINC-A1_BASE)/4))
+	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;; 
+	add	r10,r9		; lx += ldx
+	add	r12,r11		; rx += rdx
+	jump	(r18)		; -> .do_scanlines
+	add	r21,r4		; y++
 .render_incrementalize:
 	;; input
 	;; r23 = 1/dw
@@ -633,7 +680,7 @@ renderer:
 	;; texture + gouraud (invalid mode)
 	dc.l	.texture_mapping-.render_polygon
 	;; flat + z
-	dc.l	.skip_hline-.render_polygon
+	dc.l	.flat_zbuffer-.render_polygon
 	;; gouraud + z
 	dc.l	.skip_hline-.render_polygon
 	;; texture + z
