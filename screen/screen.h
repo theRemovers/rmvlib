@@ -138,6 +138,12 @@ sprite *sprite_of_screen(/** X coordinate of the ::sprite */
 void clear_screen(/** Address of the ::screen */ 
 		  screen *dst);
 
+/** Clear the given Z-buffered screen (fill with color 0 and Z = 0). 
+    Will only work on 16bpp screens.
+ */
+void clear_zbuffered_screen(/** Address of the ::screen */ 
+			    screen *dst);
+
 /** Write a pixel to the specified position in the screen */
 void put_pixel(/** Address of the ::screen */
 	       screen *dst,
