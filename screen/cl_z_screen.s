@@ -45,7 +45,7 @@ _clear_zbuffered_screen:
 	swap	d0
 	neg.w	d0
 	move.l	d0,A2_STEP	; y++, x -= w
-	move.l	#PATDSEL|DSTA2|DSTWRZ|ZBUFF,B_CMD
+	move.l	#PATDSEL|DSTA2|UPDA2|DSTWRZ|ZBUFF,B_CMD
 	wait_blitter	d0
 	rts
 
