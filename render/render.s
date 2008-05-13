@@ -216,7 +216,7 @@ renderer:
 	subq	#VERTEX_SIZEOF,r8 ; previous vertex 
 	jr	pl,.search_ymin	; finished?
 	move	r5,r6
-	cmpq	#0,r10
+	cmpq	#0,r10		; is it an horizontal line?
 	jump	eq,(r1)		; next_polygon
 	;; r2 = flags
 	;; r3 = size of array in bytes

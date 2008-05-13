@@ -28,13 +28,10 @@ _clear_zbuffered_screen:
 	move.l	4+0(sp),a0
 	move.l	#0,B_PATD
 	move.l	#0,B_PATD+4
-	move.l	#0,B_DSTZ
-	move.l	#0,B_DSTZ+4
 	move.l	#0,B_Z0
 	move.l	#0,B_Z1
 	move.l	#0,B_Z2
 	move.l	#0,B_Z3
-	move.l	#0,B_ZINC
 	move.l	SCREEN_FLAGS(a0),A2_FLAGS
 	move.l	SCREEN_DATA(a0),A2_BASE
 	move.l	SCREEN_H(a0),d0	; screen size w*h (H | W)
@@ -45,7 +42,7 @@ _clear_zbuffered_screen:
 	swap	d0
 	neg.w	d0
 	move.l	d0,A2_STEP	; y++, x -= w
-	move.l	#PATDSEL|DSTA2|UPDA2|DSTWRZ|ZBUFF,B_CMD
+	move.l	#PATDSEL|DSTA2|UPDA2|DSTWRZ,B_CMD
 	wait_blitter	d0
 	rts
 
