@@ -135,7 +135,7 @@ renderer:
 	;; r20: .renderer_params
 	;; r21: render inner loop
 	;; r22: A2_FLAGS (phrase mode)
-	;; r25, r26, r27: temporary registers
+	;; r24, r25, r26, r27: temporary registers
 	;; 
 	;; register allocation for current bank
 	;; 
@@ -518,6 +518,7 @@ renderer:
 	moveta	r27,r0		; i1'
 	moveta	r28,r2		; i2'
 	fast_jsr	r17,r30	; jsr .render_incrementalize
+	;; 
 	movefa	r26,r27		; restore y|x1
 	movefa	r27,r28		; restore w
 	wait_blitter_gpu	r15,r29
@@ -636,8 +637,86 @@ renderer:
 	movefa	r27,r28		; restore w
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
-	;;
+	;; set z
 	addq	#32,r15
+	store	r25,(r15+((B_Z3-(A1_BASE+32))/4)) ; Z3
+	sub	r26,r25
+	store	r25,(r15+((B_Z2-(A1_BASE+32))/4)) ; Z2
+	sub	r26,r25
+	store	r25,(r15+((B_Z1-(A1_BASE+32))/4)) ; Z1
+	sub	r26,r25
+	store	r25,(r15+((B_Z0-(A1_BASE+32))/4)) ; Z0
+	subq	#32,r15
+	shlq	#2,r26		; dz * 4
+ 	movei	#DSTA2|PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+	store	r26,(r15+((B_ZINC-A1_BASE)/4))		; ZINC
+	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;; 
+	add	r10,r9		; lx += ldx
+	add	r12,r11		; rx += rdx
+	jump	(r18)		; -> .do_scanlines
+	add	r21,r4		; y++
+.gouraud_zbuffer:
+	moveta	r28,r27		; save w
+	moveta	r27,r26		; save y|x1
+	;; 
+	moveq	#3,r29
+	moveq	#3,r30
+	and	r27,r29		; x1%4
+	sub	r29,r30		; (3-x1)%4
+	shlq	#16,r30		; 16.16
+	add	r30,r24		; adjust frac
+	;; compute z
+	movefa	r4,r25		; z1
+	movefa	r6,r26		; z2
+	movefa	r5,r27		; dz1
+	movefa	r7,r28		; dz2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r4		; z1'
+	moveta	r28,r6		; z2'
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	moveta	r25,r24		; save z
+	moveta	r26,r25		; save dz
+	;; compute i
+	movefa	r0,r25		; i1
+	movefa	r2,r26		; i2
+	sat24	r25
+	sat24	r26
+	movefa	r1,r27		; di1
+	movefa	r3,r28		; di2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r0		; i1'
+	moveta	r28,r2		; i2'
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	;; 
+	movefa	r26,r27		; restore y|x1
+	movefa	r27,r28		; restore w
+	wait_blitter_gpu	r15,r29
+ 	or	r21,r28		; 1|w (executed during wait loop)
+	;; set intensities
+	moveq	#3,r29
+	move	r25,r30
+.gouraud_zbuffer_set_intensities:
+	sat24	r25
+	sub	r26,r30
+	subq	#1,r29
+	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_Ix with 1 <= x <= 3
+	addqt	#4,r15
+	jr	ne,.gouraud_zbuffer_set_intensities
+	move	r30,r25
+	shlq	#10,r26		; 4 * di
+	sat24	r25
+	shrq	#8,r26		; clear high bits
+	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_I0
+	addq	#32-12,r15
+	;; set z
+	movefa	r24,r25		; restore z
+	store	r26,(r15+((B_IINC-(A1_BASE+32))/4))	; IINC
+	movefa	r25,r26		; restore dz
 	store	r25,(r15+((B_Z3-(A1_BASE+32))/4))
 	sub	r26,r25
 	store	r25,(r15+((B_Z2-(A1_BASE+32))/4))
@@ -647,8 +726,9 @@ renderer:
 	store	r25,(r15+((B_Z0-(A1_BASE+32))/4))
 	subq	#32,r15
 	shlq	#2,r26		; dz * 4
- 	movei	#DSTA2|PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
-	store	r26,(r15+((B_ZINC-A1_BASE)/4))
+	;; 
+ 	movei	#DSTA2|PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+	store	r26,(r15+((B_ZINC-A1_BASE)/4))		; ZINC
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
@@ -682,7 +762,7 @@ renderer:
 	;; flat + z
 	dc.l	.flat_zbuffer-.render_polygon
 	;; gouraud + z
-	dc.l	.skip_hline-.render_polygon
+	dc.l	.gouraud_zbuffer-.render_polygon
 	;; texture + z
 	dc.l	.skip_hline-.render_polygon
 	;; texture + gouraud + z (invalid mode)
