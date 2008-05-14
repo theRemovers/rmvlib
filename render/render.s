@@ -257,21 +257,13 @@ renderer:
 	load	(r13),r27			; texture base address
 	moveta	r25,r20				; save texture flags
 	moveta	r27,r19				; save texture base address
+	movei	#.renderer_buffer-.render_polygon,r10
 	shrq	#8,r9				; intensity increment
+	add	r0,r10				; relocate .render_buffer
 	moveta	r26,r21				; save texture window
 	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
-	movefa	r17,r25				; dest base address
-	movefa	r18,r26				; dest flags
-	movefa	r19,r27				; texture base address
-	movefa	r20,r28				; texture flags
-	movefa	r21,r29				; texture clipping window
-	bset	#XADDPIX_BIT,r26
-	store	r25,(r15+((A2_BASE-A1_BASE)/4))		; A2_BASE
-	store	r26,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
-	store	r27,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
-	store	r28,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	jr	.loop_render
-	store	r29,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP
+	store	r10,(r15+((A2_BASE-A1_BASE)/4)) ; render buffer
 .phrase_mode:
 	shlq	#16,r9
 	movefa	r17,r29				; dest base address
@@ -592,8 +584,11 @@ renderer:
 	moveta	r27,r8		; u1'
 	moveta	r28,r12		; u2'
 	fast_jsr	r17,r30	; jsr .render_incrementalize
-	moveta	r25,r24		; save u1
-	moveta	r26,r25		; save du1
+	sub	r26,r25		; u -= du
+	sub	r26,r25		; u -= du
+	sub	r26,r25		; u -= du
+	moveta	r25,r24		; save u
+	moveta	r26,r25		; save du
 	movefa	r10,r25		; v1
 	movefa	r14,r26		; v2
 	movefa	r11,r27		; dv1
@@ -604,6 +599,9 @@ renderer:
 	moveta	r28,r14		; v2'
 	fast_jsr	r17,r30	; jsr .render_incrementalize
 	;; compute A1_PIXEL, A1_FPIXEL, A1_INC, A1_FINC
+	sub	r26,r25		; v -= dv
+	sub	r26,r25		; v -= dv
+	sub	r26,r25		; v -= dv
 	move	r25,r27		; save Y
 	shlq	#16,r25		; A1_FPIXEL(y)
 	and	r22,r27		; A1_PIXEL(y)
@@ -628,15 +626,47 @@ renderer:
 	movefa	r27,r30		; restore w
 	wait_blitter_gpu	r15,r29
  	or	r21,r30		; 1|w (executed during wait loop)
-	movefa	r26,r29		; restore y|x1
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r25,(r15+((A1_FPIXEL-A1_BASE)/4))	; A1_FPIXEL
 	store	r28,(r15+((A1_INC-A1_BASE)/4))		; A1_INC
 	store	r26,(r15+((A1_FINC-A1_BASE)/4))		; A1_FINC
-	store	r29,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
-	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r29
-	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	movefa	r19,r25					; texture base address
+	movefa	r20,r26					; texture blitter flags
+	movefa	r21,r27					; texture clipping window
+	store	r25,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
+	store	r26,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP
+	movefa	r26,r29		; restore y|x1
+	moveq	#3,r28
+	addq	#1,r30		; w should be even
+	and	r29,r28		; x1 % 4 (will be A2_PIXEL next blit)
+	moveq	#0,r27		; A2_PIXEL
+	add	r28,r30		; 1 | (w + x1 % 4)
+	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
+	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+ 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+ 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+ 	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;;
+	movefa	r27,r25		; restore w
+	wait_blitter_gpu	r15,r29
+ 	or	r21,r25		; 1|w (executed during wait loop)
+	movefa	r26,r29		; restore y|x1
+	bclr	#XADDPIX_BIT,r27			; turn to phrase mode
+	store	r28,(r15+((A2_PIXEL-A1_BASE)/4)) 	; A2_PIXEL
+	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+	store	r25,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	store	r29,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
+	movefa	r17,r27					; destination base address
+	movefa	r18,r28					; destination blitter flags
+	moveq	#0,r29
+	movei	#SRCEN|LFU_REPLACE,r26
+	store	r29,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
+	store	r27,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
+	store	r28,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 	add	r10,r9		; lx += ldx
 	add	r12,r11		; rx += rdx
@@ -771,10 +801,8 @@ renderer:
 	;; gouraud
 	dc.l	.gouraud_rendering-.render_polygon
 	;; texture
-*	dc.l	.skip_hline-.render_polygon
 	dc.l	.texture_mapping-.render_polygon
 	;; texture + gouraud (invalid mode)
-*	dc.l	.skip_hline-.render_polygon
 	dc.l	.texture_mapping-.render_polygon
 	;; flat + z
 	dc.l	.flat_zbuffer-.render_polygon
