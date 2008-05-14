@@ -645,7 +645,11 @@ renderer:
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+*	movei	#$0080,r26
+*	store	r26,(r15+((B_DSTD+4-A1_BASE)/4))
  	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+* 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2,r26	
+* 	movei	#SRCEN|CLIP_A1|LFU_XOR|DSTA2,r26	
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
  	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
