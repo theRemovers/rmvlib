@@ -107,6 +107,9 @@ OPT_FLAT	equ	1
 	
 	.text
 
+	;; the following code assume that DIV_OFFSET is set
+	;; (ie that divisions are operating in 16.16 mode)
+
 	.phrase
 renderer:
 	.gpu
@@ -154,7 +157,7 @@ renderer:
 	;; r12: right dx
 	;; r14: polygon
 	;; r15: A1_BASE
-	;; r16: temporary register
+	;; r16: temporary register & inner loop render routine address
 	;; r17: .render_incrementalize
 	;; r18: temporary register
 	;; r19: temporary register
@@ -251,8 +254,10 @@ renderer:
 	jr	.set_blitter
 	store	r27,(r15+((A1_BASE-A1_BASE)/4)) 	; A1_BASE
 .phrase_mode:
+	moveq	#0,r10
 	store	r9,(r15+((B_PATD-A1_BASE)/4))	; set color
 	store	r9,(r15+((B_PATD+4-A1_BASE)/4))	; set color
+	store	r10,(r15+((A1_CLIP-A1_BASE)/4))	; A1_CLIP workaround
 .set_blitter:
 	store	r30,(r15+((A2_FLAGS-A1_BASE)/4)) ; A2_FLAGS
 	;; r7 = left_y
