@@ -510,7 +510,7 @@ renderer:
 	addq	#4,r31		; restore stack
 	jump	(r0)		; return
 	store	r2,(r1)		; clear mutex
-.flat_rendering:
+.flat_shading:
 	;; r27: y|x1 (start of blit)
 	;; r28: w (almost width)
 	wait_blitter_gpu	r15,r29
@@ -524,7 +524,7 @@ renderer:
 	add	r12,r11		; rx += rdx
 	jump	(r18)		; -> .do_scanlines
 	add	r21,r4		; y++
-.gouraud_rendering:
+.gouraud_shading:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
 	;; 
@@ -645,11 +645,7 @@ renderer:
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
-*	movei	#$0080,r26
-*	store	r26,(r15+((B_DSTD+4-A1_BASE)/4))
  	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
-* 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2,r26	
-* 	movei	#SRCEN|CLIP_A1|LFU_XOR|DSTA2,r26	
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
  	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
@@ -786,6 +782,134 @@ renderer:
 	add	r12,r11		; rx += rdx
 	jump	(r18)		; -> .do_scanlines
 	add	r21,r4		; y++
+.texture_zbuffer:
+	moveta	r28,r27		; save w
+	moveta	r27,r26		; save y|x1
+	;;
+	movefa	r8,r25		; u1
+	movefa	r12,r26		; u2
+	movefa	r9,r27		; du1
+	movefa	r13,r28		; du2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r8		; u1'
+	moveta	r28,r12		; u2'
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	sub	r26,r25		; u -= du
+	sub	r26,r25		; u -= du
+	sub	r26,r25		; u -= du
+	moveta	r25,r24		; save u
+	moveta	r26,r25		; save du
+	movefa	r10,r25		; v1
+	movefa	r14,r26		; v2
+	movefa	r11,r27		; dv1
+	movefa	r15,r28		; dv2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r10		; v1'
+	moveta	r28,r14		; v2'
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	;; compute A1_PIXEL, A1_FPIXEL, A1_INC, A1_FINC
+	sub	r26,r25		; v -= dv
+	sub	r26,r25		; v -= dv
+	sub	r26,r25		; v -= dv
+	move	r25,r27		; save Y
+	shlq	#16,r25		; A1_FPIXEL(y)
+	and	r22,r27		; A1_PIXEL(y)
+	move	r26,r28		; save dY
+	shlq	#16,r26		; A1_FINC(y)
+	and	r22,r28		; A1_INC(y)
+	movefa	r24,r29		; X
+	movefa	r25,r30		; dX
+	shrq	#16,r29		; A1_PIXEL(x)
+	shrq	#16,r30		; A1_INC(x)
+	or	r29,r27		; A1_PIXEL
+	or	r30,r28		; A1_INC
+	movefa	r24,r29		; X
+	movefa	r25,r30		; dX
+	shlq	#16,r29
+	shlq	#16,r30
+	shrq	#16,r29		; A1_FPIXEL(x)
+	shrq	#16,r30		; A1_FINC(x)
+	or	r29,r25		; A1_FPIXEL
+	or	r30,r26		; A1_FINC
+	;; 
+	movefa	r27,r30		; restore w
+	wait_blitter_gpu	r15,r29
+ 	or	r21,r30		; 1|w (executed during wait loop)
+	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
+	store	r25,(r15+((A1_FPIXEL-A1_BASE)/4))	; A1_FPIXEL
+	store	r28,(r15+((A1_INC-A1_BASE)/4))		; A1_INC
+	store	r26,(r15+((A1_FINC-A1_BASE)/4))		; A1_FINC
+	movefa	r19,r25					; texture base address
+	movefa	r20,r26					; texture blitter flags
+	movefa	r21,r27					; texture clipping window
+	store	r25,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
+	store	r26,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP
+	movefa	r26,r29		; restore y|x1
+	moveq	#3,r28
+	addq	#1,r30		; w should be even
+	and	r29,r28		; x1 % 4 (will be A2_PIXEL next blit)
+	moveq	#0,r27		; A2_PIXEL
+	add	r28,r30		; 1 | (w + x1 % 4)
+	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
+	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+ 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+ 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+ 	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;; compute z
+	movefa	r4,r25		; z1
+	movefa	r6,r26		; z2
+	movefa	r5,r27		; dz1
+	movefa	r7,r28		; dz2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r4		; z1'
+	moveta	r28,r6		; z2'
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	moveta	r25,r24		; save z
+	moveta	r26,r25		; save dz
+	;;
+	movefa	r26,r27		; restore y|x1
+	movefa	r27,r28		; restore w
+	wait_blitter_gpu	r15,r29
+ 	or	r21,r28		; 1|w (executed during wait loop)
+	;; set z
+	addq	#32,r15
+	store	r25,(r15+((B_Z3-(A1_BASE+32))/4))
+	sub	r26,r25
+	store	r25,(r15+((B_Z2-(A1_BASE+32))/4))
+	sub	r26,r25
+	store	r25,(r15+((B_Z1-(A1_BASE+32))/4))
+	sub	r26,r25
+	store	r25,(r15+((B_Z0-(A1_BASE+32))/4))
+	subq	#32,r15
+	shlq	#2,r26		; dz * 4
+	;;
+ 	movei	#SRCEN|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+	store	r26,(r15+((B_ZINC-A1_BASE)/4))		; ZINC
+	moveq	#3,r25
+	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
+	and	r27,r25
+	moveq	#0,r27
+	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	movefa	r17,r28					; destination base address
+	store	r25,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	movefa	r18,r25					; destination blitter flags
+	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
+	movei	#XADDPHR|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+	store	r28,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
+	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;; 
+	add	r10,r9		; lx += ldx
+	add	r12,r11		; rx += rdx
+	jump	(r18)		; -> .do_scanlines
+	add	r21,r4		; y++
 .render_incrementalize:
 	;; input
 	;; r23 = 1/dw
@@ -801,9 +925,9 @@ renderer:
 	.long
 .render_table:
 	;; flat
-	dc.l	.flat_rendering-.render_polygon
+	dc.l	.flat_shading-.render_polygon
 	;; gouraud
-	dc.l	.gouraud_rendering-.render_polygon
+	dc.l	.gouraud_shading-.render_polygon
 	;; texture
 	dc.l	.texture_mapping-.render_polygon
 	;; texture + gouraud (invalid mode)
@@ -813,7 +937,7 @@ renderer:
 	;; gouraud + z
 	dc.l	.gouraud_zbuffer-.render_polygon
 	;; texture + z
-	dc.l	.skip_hline-.render_polygon
+	dc.l	.texture_zbuffer-.render_polygon
 	;; texture + gouraud + z (invalid mode)
 	dc.l	.skip_hline-.render_polygon
 	.long
