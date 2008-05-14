@@ -110,6 +110,8 @@ OPT_FLAT	equ	1
 	;; the following code assume that DIV_OFFSET is set
 	;; (ie that divisions are operating in 16.16 mode)
 
+	;; it should be loaded on a phrase boundary in GPU ram
+	;; (the texture buffer should be correctly aligned)
 	.phrase
 renderer:
 	.gpu
@@ -135,9 +137,12 @@ renderer:
 	;; r13: right du
 	;; r14: right v
 	;; r15: right dv
-	;; r20: .renderer_params
-	;; r21: render inner loop
-	;; r22: A2_FLAGS (phrase mode)
+	;; r16: render inner loop address
+	;; r17: dest base address
+	;; r18: dest blitter flags (phrase mode)
+	;; r19: texture base address
+	;; r20: texture blitter flags (increment mode)
+	;; r21: texture clipping window (h|w)
 	;; r24, r25, r26, r27: temporary registers
 	;; 
 	;; register allocation for current bank
@@ -155,6 +160,7 @@ renderer:
 	;; r10: left dx
 	;; r11: right x
 	;; r12: right dx
+	;; r13: temporary register
 	;; r14: polygon
 	;; r15: A1_BASE
 	;; r16: temporary register & inner loop render routine address
@@ -170,15 +176,15 @@ renderer:
 	movei	#.render_incrementalize-.render_polygon,r17
 	add	r0,r1		; relocate .renderer_params
 	add	r0,r17		; relocate .render_incrementalize
-	moveta	r1,r20		; .renderer_params
 	load	(r1),r15	; target screen
 	addq	#4,r1
 	load	(r1),r14	; polygon list (not null)
 	load	(r15+(SCREEN_DATA/4)),r2 ; screen address
-	load	(r15+(SCREEN_FLAGS/4)),r13 ; flags
+	load	(r15+(SCREEN_FLAGS/4)),r3 ; flags
 	movei	#A1_BASE,r15
+	moveta	r2,r17					; dest base address
 	store	r2,(r15+((A2_BASE-A1_BASE)/4))	  	; A2_BASE
-	moveta	r13,r22					; A2_FLAGS
+	moveta	r3,r18					; dest blitter flags (phrase mode)
 	movei	#1<<15,r20	; 1/2
 	movei	#1<<16,r21	; 1
 	movei	#$ffff0000,r22	; mask to get integer part
@@ -203,7 +209,7 @@ renderer:
 	subq	#VERTEX_SIZEOF,r8	; i = n-1 (last index)
 	add	r0,r29			; relocate
 	moveq	#0,r10			; to check that polygon is not an horizontal line (otherwise, infinite loop afterwards!)
-	moveta	r29,r21		; render inner loop
+	moveta	r29,r16		; render inner loop
 	jr	.update_ymin
 .search_ymin:
 	load	(r14+r8),r7	; y (initialise y_min at first step)
@@ -232,34 +238,51 @@ renderer:
 	subq	#POLY_VERTICES-POLY_TEXTURE,r13	; pointer on texture param
 	and	r22,r4		; r4 = ceil(y_min - 1/2)
 				; = (y_min + 1/2 - 1/65536) & 0xffff0000
-	movefa	r22,r30		; A2_FLAGS (phrase mode)
+	movei	#.phrase_mode-.render_polygon,r10
 	move	r4,r7		; left_y
+	add	r0,r10		; relocate .phrase_mode
 	wait_blitter_gpu	r15,r29
 	btst	#TXTMAPPING,r2	; texture? (executed during wait loop)
-	jr	eq,.phrase_mode
+	jump	eq,(r10)	; -> .phrase_mode
 	move	r4,r8		; right_y
 .pixel_mode:
 	load	(r13),r13			; read texture screen address
-	bset	#XADDPIX_BIT,r30		; pixel mode
+	shlq	#8,r9				; clear color part
 	load	(r13),r25			; get texture flags
 	addq	#SCREEN_H,r13
-	store	r9,(r15+((B_IINC-A1_BASE)/4))	; set shading
-	load	(r13),r26			; get texture size (clipping)
 	bset	#XADDPIX_BIT,r25		; set pixel mode
+	load	(r13),r26			; clipping window
 	addq	#SCREEN_DATA-SCREEN_H,r13
 	bset	#XADDINC_BIT,r25		; set increment mode
-	load	(r13),r27			; get texture address
-	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
-	store	r26,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP
-	jr	.set_blitter
-	store	r27,(r15+((A1_BASE-A1_BASE)/4)) 	; A1_BASE
+	load	(r13),r27			; texture base address
+	moveta	r25,r20				; save texture flags
+	moveta	r27,r19				; save texture base address
+	shrq	#8,r9				; intensity increment
+	moveta	r26,r21				; save texture window
+	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
+	movefa	r17,r25				; dest base address
+	movefa	r18,r26				; dest flags
+	movefa	r19,r27				; texture base address
+	movefa	r20,r28				; texture flags
+	movefa	r21,r29				; texture clipping window
+	bset	#XADDPIX_BIT,r26
+	store	r25,(r15+((A2_BASE-A1_BASE)/4))		; A2_BASE
+	store	r26,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+	store	r27,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
+	store	r28,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	jr	.loop_render
+	store	r29,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP
 .phrase_mode:
-	moveq	#0,r10
+	shlq	#16,r9
+	movefa	r17,r29				; dest base address
+	move	r9,r10
+	movefa	r18,r30				; dest blitter flags (phrase mode)
+	shrq	#16,r9
+	store	r29,(r15+((A2_BASE-A1_BASE)/4)) ; A2_BASE
+	or	r10,r9				; color
+	store	r30,(r15+((A2_FLAGS-A1_BASE)/4)) ; A2_FLAGS
 	store	r9,(r15+((B_PATD-A1_BASE)/4))	; set color
 	store	r9,(r15+((B_PATD+4-A1_BASE)/4))	; set color
-	store	r10,(r15+((A1_CLIP-A1_BASE)/4))	; A1_CLIP workaround
-.set_blitter:
-	store	r30,(r15+((A2_FLAGS-A1_BASE)/4)) ; A2_FLAGS
 	;; r7 = left_y
 	;; r8 = right_y
 .loop_render:
@@ -432,7 +455,7 @@ renderer:
 	movei	#.loop_render-.render_polygon,r19
 	add	r0,r18		; relocate .do_scanlines
 	add	r0,r19		; relocate .loop_render
-	movefa	r21,r16		; rendering routine
+	movefa	r16,r16		; render inner loop
 .do_scanlines:
 	cmp	r7,r4		; y < left_y
 	jump	pl,(r19)	; no -> .loop_render
@@ -467,8 +490,16 @@ renderer:
 	add	r20,r24		; x1+1/2
 	move	r21,r23		; 1
 	sub	r9,r24		; frac = x1+1/2-lx = ceil(lx-1/2)-(lx-1/2)
-	jump	(r16)		; render line
 	div	r29,r23		; 1/dx	
+	;; adjust frac
+	moveq	#3,r29
+	moveq	#3,r30
+	and	r27,r29		; x1%4
+	sub	r29,r30		; (3-x1)%4
+	shlq	#16,r30		; 16.16
+	;;
+	jump	(r16)		; render line
+	add	r30,r24		; adjust frac
 	;; next polygon
 .render_next_polygon:
 	subq	#POLY_VERTICES,r14
@@ -480,9 +511,9 @@ renderer:
 	nop
 	;; done
 	;; return from sub routine and clear mutex
-	movefa	r20,r1		; .renderer_params
+	movei	#.renderer_params+8-.render_polygon,r1
 	moveq	#0,r2
-	addq	#8,r1		; .renderer_params+8
+	add	r0,r1		; relocate .renderer_params+8
 	load	(r31),r0	; return address
 	addq	#4,r31		; restore stack
 	jump	(r0)		; return
@@ -504,13 +535,6 @@ renderer:
 .gouraud_rendering:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
-	;; 
-	moveq	#3,r29
-	moveq	#3,r30
-	and	r27,r29		; x1%4
-	sub	r29,r30		; (3-x1)%4
-	shlq	#16,r30		; 16.16
-	add	r30,r24		; adjust frac
 	;; 
 	movefa	r0,r25		; i1
 	movefa	r2,r26		; i2
@@ -622,13 +646,6 @@ renderer:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
 	;; 
-	moveq	#3,r29
-	moveq	#3,r30
-	and	r27,r29		; x1%4
-	sub	r29,r30		; (3-x1)%4
-	shlq	#16,r30		; 16.16
-	add	r30,r24		; adjust frac
-	;; 
 	movefa	r4,r25		; z1
 	movefa	r6,r26		; z2
 	movefa	r5,r27		; dz1
@@ -666,13 +683,6 @@ renderer:
 .gouraud_zbuffer:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
-	;; 
-	moveq	#3,r29
-	moveq	#3,r30
-	and	r27,r29		; x1%4
-	sub	r29,r30		; (3-x1)%4
-	shlq	#16,r30		; 16.16
-	add	r30,r24		; adjust frac
 	;; compute z
 	movefa	r4,r25		; z1
 	movefa	r6,r26		; z2
@@ -761,8 +771,10 @@ renderer:
 	;; gouraud
 	dc.l	.gouraud_rendering-.render_polygon
 	;; texture
+*	dc.l	.skip_hline-.render_polygon
 	dc.l	.texture_mapping-.render_polygon
 	;; texture + gouraud (invalid mode)
+*	dc.l	.skip_hline-.render_polygon
 	dc.l	.texture_mapping-.render_polygon
 	;; flat + z
 	dc.l	.flat_zbuffer-.render_polygon
@@ -777,6 +789,8 @@ renderer:
 	.rept	NB_PARAMS
 	dc.l	0
 	.endr
+	.phrase
+.renderer_buffer:
 	.long
 .renderer_end:	
 
@@ -796,12 +810,15 @@ RENDERER_PARAMS equ	.renderer_params-.renderer_begin
 ;;; void *init_renderer(void *gpu_addr);
 _init_renderer:
 	pea	RENDERER_SIZE
-	move.l	4+4(sp),-(sp)
+	move.l	4+4(sp),d0	; gpu_addr
+	addq.l	#7,d0
+	and.w	#$fffc,d0	; align on phrase boundary
+	move.l	d0,-(sp)
+	move.l	d0,renderer_gpu_address
 	pea	renderer
 	jsr	_bcopy
 	lea	12(sp),sp
-	move.l	4(sp),d0
-	move.l	d0,renderer_gpu_address
+	move.l	renderer_gpu_address,d0
 	add.l	#RENDERER_SIZE,d0
 	rts
 
