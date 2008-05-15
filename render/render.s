@@ -21,6 +21,7 @@
 
 NB_PARAMS	equ	3
 
+SRCENX_BIT	equ	2
 XADDPIX_BIT	equ	16
 XADDINC_BIT	equ	17
 	
@@ -760,47 +761,23 @@ renderer:
 	add	r28,r30		; 1 | (w + x1 % 4)
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
-	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
-	btst	#GRDSHADING,r2
-	jr	ne,.texture_gouraud_shading
+*	btst	#GRDSHADING,r2
+*	jr	ne,.texture_gouraud_shading
 	movefa	r22,r13					; get finish routine
 .texture_flat_shading:
  	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	jump	(r13)
  	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
-.texture_gouraud_shading:
-	movei	#$00800080,r28
- 	movei	#SRCEN|CLIP_A1|LFU_XOR|DSTA2,r26
- 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	moveta	r30,r25					; save modified B_COUNT for gouraud shading
-	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
-	store	r28,(r15+((B_DSTD-A1_BASE)/4))		; adjust texture intensities for gouraud shading
-	store	r28,(r15+((B_DSTD+4-A1_BASE)/4))	; adjust texture intensities for gouraud shading
- 	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
-	;; compute i
-	movefa	r0,r25		; i1
-	movefa	r2,r26		; i2
-	sat24	r25
-	sat24	r26
-	movefa	r1,r27		; di1
-	movefa	r3,r28		; di2
-	add	r25,r27
-	add	r26,r28
-	moveta	r27,r0		; i1'
-	moveta	r28,r2		; i2'
-	fast_jsr	r17,r30	; jsr .render_incrementalize
-	;; 
-	jump	(r13)
-	nop
 .texture_nozbuffer:
 	movefa	r26,r27		; restore y|x1
 	movefa	r27,r28		; restore w
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
 	;; 
- 	movei	#SRCEN|LFU_REPLACE,r29
+ 	movei	#SRCEN|SRCENX|LFU_REPLACE,r29
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	and	r27,r25
@@ -850,7 +827,7 @@ renderer:
 	subq	#32,r15
 	shlq	#2,r26		; dz * 4
 	;;
- 	movei	#SRCEN|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+ 	movei	#SRCEN|SRCENX|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
 	store	r26,(r15+((B_ZINC-A1_BASE)/4))		; ZINC
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL

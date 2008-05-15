@@ -26,6 +26,7 @@
 	.globl	_clear_zbuffered_screen
 _clear_zbuffered_screen:
 	move.l	4+0(sp),a0
+	move.l	#0,A1_CLIP
 	move.l	#0,B_PATD
 	move.l	#0,B_PATD+4
 	move.l	#0,B_Z0
