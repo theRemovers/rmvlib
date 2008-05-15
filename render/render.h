@@ -60,7 +60,8 @@ void render_polygon(screen *target,
 
 #define FLTSHADING 0x0
 #define GRDSHADING 0x1
-#define TXTMAPPING 0x2
-#define ZBUFFERING 0x4
+#define ZBUFFERING 0x2
+#define TXTMAPPING 0x4
+
 
 #endif
