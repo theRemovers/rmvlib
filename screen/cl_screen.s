@@ -53,6 +53,7 @@ _clear_screen:
 	swap	d0
 	neg.w	d0
 	move.l	d0,A2_STEP	; y++, x -= w
+*	illegal
 	move.l	d1,B_CMD
 	wait_blitter	d0
 	rts

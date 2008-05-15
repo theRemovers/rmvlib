@@ -285,9 +285,11 @@ renderer:
 	;; r7 = left_y
 	;; r8 = right_y
 .loop_render:
-	movei	#.get_left_edge-.render_polygon,r18
+*	movei	#.get_left_edge-.render_polygon,r18
+	move	PC,r18
 	movei	#.ok_left_edge-.render_polygon,r19
-	add	r0,r18		; relocate .get_left_edge
+*	add	r0,r18		; relocate .get_left_edge
+	addq	#.get_left_edge-.loop_render,r18 ; .get_left_edge
 	add	r0,r19		; relocate .ok_left_edge
 .get_left_edge:
 	cmp	r7,r4		; left_y > y
@@ -367,9 +369,11 @@ renderer:
 	;; r9 = left_x
 	;; r10 = left_dx
 .ok_left_edge:
-	movei	#.get_right_edge-.render_polygon,r18
+*	movei	#.get_right_edge-.render_polygon,r18
+	move	PC,r18
 	movei	#.ok_right_edge-.render_polygon,r19
-	add	r0,r18		; relocate .get_right_edge
+*	add	r0,r18		; relocate .get_right_edge
+	addq	#.get_right_edge-.ok_left_edge,r18 ; .get_right_edge
 	add	r0,r19		; relocate .ok_right_edge
 .get_right_edge:
 	cmp	r8,r4		; right_y > y
@@ -450,9 +454,11 @@ renderer:
 	;; r11 = right_x
 	;; r12 = right_dx
 .ok_right_edge:
-	movei	#.do_scanlines-.render_polygon,r18
+*	movei	#.do_scanlines-.render_polygon,r18
+	move	PC,r18
 	movei	#.loop_render-.render_polygon,r19
-	add	r0,r18		; relocate .do_scanlines
+*	add	r0,r18		; relocate .do_scanlines
+	addq	#.do_scanlines-.ok_right_edge,r18 ; .do_scanlines
 	add	r0,r19		; relocate .loop_render
 	movefa	r16,r16		; render inner loop
 .do_scanlines:
