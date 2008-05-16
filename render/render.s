@@ -771,7 +771,8 @@ renderer:
 *	jr	ne,.texture_gouraud_shading
 	movefa	r22,r13					; get finish routine
 .texture_flat_shading:
- 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+* 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+ 	movei	#SRCEN|DSTEN|DSTA2|ADDDSEL,r26	
 	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS

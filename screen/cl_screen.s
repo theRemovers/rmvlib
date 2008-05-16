@@ -37,23 +37,22 @@ _clear_screen:
 	bhs.s	.depth_ge_8
 .depth_lt_8:
 	or.l	#XADDPIX,d0
-	move.l	#DSTEN|PATDSEL|DSTA2|UPDA2,d1
+	move.l	#DSTEN|PATDSEL|UPDA1,d1
 	bra.s	.depth_ok
 .depth_ge_8:
 	or.l	#XADDPHR,d0
-	move.l	#PATDSEL|DSTA2|UPDA2,d1
+	move.l	#PATDSEL|UPDA1,d1
 .depth_ok:	
-	move.l	d0,A2_FLAGS
-	move.l	SCREEN_DATA(a0),A2_BASE
+	move.l	d0,A1_FLAGS
+	move.l	SCREEN_DATA(a0),A1_BASE
 	move.l	SCREEN_H(a0),d0	; screen size w*h (H | W)
-	move.l	#0,A2_PIXEL
+	move.l	#0,A1_PIXEL
 	move.l	d0,B_COUNT
 	swap	d0
 	move.w	#1,d0
 	swap	d0
 	neg.w	d0
-	move.l	d0,A2_STEP	; y++, x -= w
-*	illegal
+	move.l	d0,A1_STEP	; y++, x -= w
 	move.l	d1,B_CMD
 	wait_blitter	d0
 	rts
