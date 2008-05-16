@@ -207,10 +207,8 @@ dsp_sound_driver:
 	moveq	#NB_VOICES,r21		; mix all voices
 	move	r22,r25
 	addq	#.sound_mixing-.sound_dma_same,r22	; .sound_mixing
-*	movei	#.sound_mixing,r22
-	movei	#.sound_mix_next,r23
+	movei	#.sound_mix_next,r23			; .sound_mix_next
 	addq	#.sound_loop-.sound_dma_same,r25	; .sound_loop 
-*	movei	#.sound_loop,r25
 .sound_mixing:
 	;; r14:	sound_dma address
 	;; r15:	current voice address
@@ -345,8 +343,9 @@ SOUND_VOICES	equ	.sound_voices
 	.endr
 	.endr	
 .dsp_sound_driver_loop:
-	movei	#.dsp_sound_driver_param,r0
-	movei	#.dsp_sound_driver_loop,r1
+	move	PC,r0		; .dsp_sound_driver_loop
+	move	r0,r1		; .dsp_sound_driver_loop
+	addq	#.dsp_sound_driver_param-.dsp_sound_driver_loop,r0 ; .dsp_sound_driver_param
 	load	(r0),r2		; read SUBROUT_ADDR
 	moveq	#0,r3
 	cmpq	#0,r2		; SUBROUT_ADDR != null

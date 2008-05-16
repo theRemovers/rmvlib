@@ -29,7 +29,9 @@ OPT_FLAT	equ	1
 
 	;; 1/z condition
 ZCOND	equ	ZMODELT|ZMODEEQ	
-		
+
+TRIVIAL_CLIPPING	equ	0
+	
 	.include	"../risc.s"
 	
 	.include	"../routine.s"
@@ -148,6 +150,7 @@ renderer:
 	;; r20: texture blitter flags (increment mode)
 	;; r21: texture clipping window (h|w)
 	;; r22: texture mapping finish routine
+	;; r23: dest clipping window (h|w) (if TRIVIAL_CLIPPING)
 	;; r24, r25, r26, r27: temporary registers
 	;; 
 	;; register allocation for current bank
@@ -179,17 +182,19 @@ renderer:
 	move	PC,r0		; to relocate
 	movei	#.renderer_params-.render_polygon,r1
 	movei	#.render_incrementalize-.render_polygon,r17
-	movei	#.renderer_buffer-.render_polygon,r10
 	add	r0,r1		; relocate .renderer_params
 	add	r0,r17		; relocate .render_incrementalize
-; 	move	r1,r10
-; 	addq	#.renderer_buffer-.renderer_params,r10
-	add	r0,r10		; relocate .renderer_buffer (should be phrase aligned)
+ 	move	r1,r10
 	load	(r1),r15	; target screen
+ 	addq	#.renderer_buffer-.renderer_params,r10 ; .renderer_buffer
 	addq	#4,r1
 	load	(r1),r14	; polygon list (not null)
-	load	(r15+(SCREEN_DATA/4)),r2 ; screen address
-	load	(r15+(SCREEN_FLAGS/4)),r3 ; flags
+	load	(r15+(SCREEN_DATA/4)),r2	; screen address
+	load	(r15+(SCREEN_FLAGS/4)),r3 	; flags
+	.if	TRIVIAL_CLIPPING
+	load	(r15+(SCREEN_H/4)),r4	  	; size of screen (trivial clipping)
+	moveta	r4,r23
+	.endif
 	movei	#A1_BASE,r15
 	moveta	r2,r17				; dest base address
 	store	r10,(r15+((A2_BASE-A1_BASE)/4)) ; .renderer_buffer is A2_BASE
@@ -291,10 +296,8 @@ renderer:
 	;; r7 = left_y
 	;; r8 = right_y
 .loop_render:
-*	movei	#.get_left_edge-.render_polygon,r18
 	move	PC,r18
 	movei	#.ok_left_edge-.render_polygon,r19
-*	add	r0,r18		; relocate .get_left_edge
 	addq	#.get_left_edge-.loop_render,r18 ; .get_left_edge
 	add	r0,r19		; relocate .ok_left_edge
 .get_left_edge:
@@ -375,10 +378,8 @@ renderer:
 	;; r9 = left_x
 	;; r10 = left_dx
 .ok_left_edge:
-*	movei	#.get_right_edge-.render_polygon,r18
 	move	PC,r18
 	movei	#.ok_right_edge-.render_polygon,r19
-*	add	r0,r18		; relocate .get_right_edge
 	addq	#.get_right_edge-.ok_left_edge,r18 ; .get_right_edge
 	add	r0,r19		; relocate .ok_right_edge
 .get_right_edge:
@@ -460,10 +461,8 @@ renderer:
 	;; r11 = right_x
 	;; r12 = right_dx
 .ok_right_edge:
-*	movei	#.do_scanlines-.render_polygon,r18
 	move	PC,r18
 	movei	#.loop_render-.render_polygon,r19
-*	add	r0,r18		; relocate .do_scanlines
 	addq	#.do_scanlines-.ok_right_edge,r18 ; .do_scanlines
 	add	r0,r19		; relocate .loop_render
 	movefa	r16,r16		; render inner loop
@@ -477,8 +476,28 @@ renderer:
 	add	r20,r27		; lx+1/2
 	sub	r20,r28		; rx-1/2
 	subq	#1,r27		; lx+1/2-1/65536
-	shrq	#16,r28		; x2 = floor(rx-1/2)
-	shrq	#16,r27		; x1 = ceil(lx-1/2) = floor(lx+1/2-1/65536)
+	sharq	#16,r28		; x2 = floor(rx-1/2)
+	sharq	#16,r27		; x1 = ceil(lx-1/2) = floor(lx+1/2-1/65536)
+	.if	TRIVIAL_CLIPPING
+	jr	pl,.ok_x1
+	movefa	r23,r29		; get screen size
+	moveq	#0,r27		; x1 = 0
+.ok_x1:
+	move	r29,r30
+	shlq	#16,r29
+	shrq	#16,r30		; height
+	shrq	#16,r29		; width
+	shlq	#16,r30		; height << 16
+	cmp	r29,r28		; compare x2 to width
+	jr	mi,.ok_x2
+	cmpq	#0,r4		; check y
+	move	r29,r28
+	subq	#1,r28		; x2 = width-1
+.ok_x2:
+	jr	mi,.skip_hline	; y < 0
+	cmp	r30,r4		; compare y to height
+	jump	pl,(r1)		; if y >= h -> .render_next_polygon
+	.endif
 	sub	r27,r28		; x2-x1
 	jr	pl,.go_hline	; x2-x1 < 0 -> .skip_hline
 	addq	#1,r28		; w = x2-x1+1

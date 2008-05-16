@@ -836,8 +836,9 @@ gpu_display_driver:
 	endr
 	dc.l	0		; for y_max
 .gpu_display_driver_loop:
-	movei	#.gpu_display_driver_param,r0
-	movei	#.gpu_display_driver_loop,r1
+	move	PC,r0		; .gpu_display_driver_loop
+	move	r0,r1		; .gpu_display_driver_loop
+	addq	#.gpu_display_driver_param-.gpu_display_driver_loop,r0	; .gpu_display_param
 	load	(r0),r2		; read SUBROUT_ADDR
 	moveq	#0,r3
 	cmpq	#0,r2		; SUBROUT_ADDR != null
