@@ -4,5 +4,12 @@
 -----
 	Addition of this ChangeLog file.
 
+	Removal of memalign since Jaguar C Library now includes a powerful
+	memory allocator.
+
+	Clean up of several sources. Reorganisation of the source tree (no
+	more symbolic links!)
+	
 	Addition of a software renderer. 
+	
 
