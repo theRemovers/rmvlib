@@ -203,10 +203,14 @@ dsp_sound_driver:
 	store	r19,(r14+DMA_STATE/4)	; save state
 .sound_dma_same:	
 	;; start mixing
+	move	PC,r22
 	moveq	#NB_VOICES,r21		; mix all voices
-	movei	#.sound_mixing,r22
+	move	r22,r25
+	addq	#.sound_mixing-.sound_dma_same,r22	; .sound_mixing
+*	movei	#.sound_mixing,r22
 	movei	#.sound_mix_next,r23
-	movei	#.sound_loop,r25
+	addq	#.sound_loop-.sound_dma_same,r25	; .sound_loop 
+*	movei	#.sound_loop,r25
 .sound_mixing:
 	;; r14:	sound_dma address
 	;; r15:	current voice address
@@ -267,8 +271,8 @@ dsp_sound_driver:
 	shlq	#8,r12		; put on 16 bits
 .sound_sample_ok:
 	add	r3,r4		; add fractionnal increment
-	store	r4,(r15+VOICE_FRAC/4) ; store fractionnal increment (no scoreboard failure since ALU operation for r4)
 	addc	r5,r1		; add integer increment with carry
+	store	r4,(r15+VOICE_FRAC/4) ; store fractionnal increment (no scoreboard failure since ALU operation for r4)
 	move	r2,r4		; get balance
 	shlq	#16-7,r2	; to get volume
 	shlq	#16-13,r4	; 5 bits
