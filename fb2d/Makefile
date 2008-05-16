@@ -13,7 +13,6 @@ SRCH=fb2d.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
 DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS)
-DISTFILES+=risc.s
 INSTALLH=fb2d.h
 INSTALLLIB=fb2d.o
 
