@@ -290,14 +290,14 @@ dsp_sound_driver:
 	sub	r4,r3		; left balance = 16 - right balance
 	mult	r2,r4		; get left volume
 	mult	r2,r3		; get right volume
-	imult	r3,r12		; signed multiply by left volume
 	imult	r4,r13		; signed multiply by right volume
+	imult	r3,r12		; signed multiply by left volume
 .sound_mix_next:
-	add	r12,r16		; add left channel
+	add	r13,r17		; add right channel
 	subq	#1,r21		; one channel less
 	addqt	#VOICE_SIZEOF,r15	; next voice (flags unaffected)
 	jump	ne,(r22)		; .sound_mixing
-	add	r13,r17		; add right channel
+	add	r12,r16		; add left channel
 .sound_end_mixing:	 
 	;; mix finished!
 	cmpq	#0,r24			; was control = 0?
