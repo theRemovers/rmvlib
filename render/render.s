@@ -26,7 +26,10 @@ XADDPIX_BIT	equ	16
 XADDINC_BIT	equ	17
 	
 OPT_FLAT	equ	1
-	
+
+	;; 1/z condition
+ZCOND	equ	ZMODELT|ZMODEEQ	
+		
 	.include	"../risc.s"
 	
 	.include	"../routine.s"
@@ -176,17 +179,21 @@ renderer:
 	move	PC,r0		; to relocate
 	movei	#.renderer_params-.render_polygon,r1
 	movei	#.render_incrementalize-.render_polygon,r17
+	movei	#.renderer_buffer-.render_polygon,r10
 	add	r0,r1		; relocate .renderer_params
 	add	r0,r17		; relocate .render_incrementalize
+; 	move	r1,r10
+; 	addq	#.renderer_buffer-.renderer_params,r10
+	add	r0,r10		; relocate .renderer_buffer (should be phrase aligned)
 	load	(r1),r15	; target screen
 	addq	#4,r1
 	load	(r1),r14	; polygon list (not null)
 	load	(r15+(SCREEN_DATA/4)),r2 ; screen address
 	load	(r15+(SCREEN_FLAGS/4)),r3 ; flags
 	movei	#A1_BASE,r15
-	moveta	r2,r17					; dest base address
-	store	r2,(r15+((A2_BASE-A1_BASE)/4))	  	; A2_BASE
-	moveta	r3,r18					; dest blitter flags (phrase mode)
+	moveta	r2,r17				; dest base address
+	store	r10,(r15+((A2_BASE-A1_BASE)/4)) ; .renderer_buffer is A2_BASE
+	moveta	r3,r18				; dest blitter flags (phrase mode)
 	movei	#1<<15,r20	; 1/2
 	movei	#1<<16,r21	; 1
 	movei	#$ffff0000,r22	; mask to get integer part
@@ -264,24 +271,23 @@ renderer:
 	load	(r13),r27			; texture base address
 	moveta	r25,r20				; save texture flags
 	moveta	r27,r19				; save texture base address
-	movei	#.renderer_buffer-.render_polygon,r10
 	shrq	#8,r9				; intensity increment
-	add	r0,r10				; relocate .render_buffer
 	moveta	r26,r21				; save texture window
-	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
 	jr	.loop_render
-	store	r10,(r15+((A2_BASE-A1_BASE)/4)) ; render buffer
+	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
 .phrase_mode:
 	shlq	#16,r9
 	movefa	r17,r29				; dest base address
 	move	r9,r10
 	movefa	r18,r30				; dest blitter flags (phrase mode)
 	shrq	#16,r9
-	store	r29,(r15+((A2_BASE-A1_BASE)/4)) ; A2_BASE
+	store	r29,(r15+((A1_BASE-A1_BASE)/4)) ; A1_BASE
 	or	r10,r9				; color
-	store	r30,(r15+((A2_FLAGS-A1_BASE)/4)) ; A2_FLAGS
+	moveq	#0,r10
+	store	r30,(r15+((A1_FLAGS-A1_BASE)/4)) ; A1_FLAGS
 	store	r9,(r15+((B_PATD-A1_BASE)/4))	; set color
 	store	r9,(r15+((B_PATD+4-A1_BASE)/4))	; set color
+	store	r10,(r15+((A1_CLIP-A1_BASE)/4)) ; A1_CLIP workaround
 	;; r7 = left_y
 	;; r8 = right_y
 .loop_render:
@@ -528,8 +534,8 @@ renderer:
 	;; r28: w (almost width)
 	wait_blitter_gpu	r15,r29
 	or	r21,r28					; 1|w	(executed during wait loop)
- 	movei	#DSTA2|PATDSEL,r29
-	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+ 	movei	#PATDSEL,r29
+	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
@@ -574,9 +580,9 @@ renderer:
 	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_I0
 	subq	#12,r15
 	;; 
-	movei	#DSTA2|PATDSEL|GOURD,r29
+	movei	#PATDSEL|GOURD,r29
 	store	r26,(r15+((B_IINC-A1_BASE)/4))		; IINC
-	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
@@ -612,9 +618,9 @@ renderer:
 	store	r25,(r15+((B_Z0-(A1_BASE+32))/4)) ; Z0
 	subq	#32,r15
 	shlq	#2,r26		; dz * 4
- 	movei	#DSTA2|PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+ 	movei	#PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29
 	store	r26,(r15+((B_ZINC-A1_BASE)/4))		; ZINC
-	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
@@ -684,9 +690,9 @@ renderer:
 	subq	#32,r15
 	shlq	#2,r26		; dz * 4
 	;; 
- 	movei	#DSTA2|PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+ 	movei	#PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29
 	store	r26,(r15+((B_ZINC-A1_BASE)/4))		; ZINC
-	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
+	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
@@ -833,7 +839,7 @@ renderer:
 	subq	#32,r15
 	shlq	#2,r26		; dz * 4
 	;;
- 	movei	#SRCEN|SRCENX|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZMODELT|ZMODEEQ,r29
+ 	movei	#SRCEN|SRCENX|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29
 	store	r26,(r15+((B_ZINC-A1_BASE)/4))		; ZINC
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
