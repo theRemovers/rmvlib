@@ -16,6 +16,12 @@
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
+	.if	^^defined	__SCREEN_H
+	.print	"screen_def.s already included"
+	end
+	.endif
+__SCREEN_H	equ	1
+	
 .macro  wait_blitter
 .wait_\~:
 	move.l  B_CMD,\1
@@ -38,4 +44,4 @@ SCREEN_CLUT_SIZE:	ds.w	1
 SCREEN_CLUT:	ds.l	1
 
 	.text
-	
+

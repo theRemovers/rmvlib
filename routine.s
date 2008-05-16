@@ -17,14 +17,3 @@ ROUTINE_H	equ	1
 	move.l	\1,GPU_SUBROUT_ADDR
 .endm
 
-	.offset	0
-ROUTINE_KIND:	ds.l	1
-ROUTINE_ADDR:	ds.l	1
-ROUTINE_LENGTH:	ds.l	1
-ROUTINE_PARAMS:	ds.l	1
-ROUTINE_NB_SUBROUTS:	ds.l	1
-	
-	.text
-GPU_ROUTINE	equ	(1<<0)
-DSP_ROUTINE	equ	(1<<1)
-

@@ -18,13 +18,8 @@
 
 	include	"../jaguar.inc"
 
-	.if	^^defined	SOUND_H
-	.print	"sound.s already included"
-	end
-	.endif
-SOUND_H	equ	1
-	.print	"including sound.s"
-
+	include	"../risc.s"
+	
 DSP_BG	equ	0
 	
 DSP_STACK_SIZE	equ	32	; long words
@@ -106,42 +101,6 @@ LOG2_NB_VOICES	equ	3
 NB_VOICES	equ	(1<<LOG2_NB_VOICES)
 
 	.extern	_bcopy
-
-.macro	padding_nop
-	.print	"adding ",\1/2," padding nop"
-	.rept	(\1 / 2)
-	nop
-	.endr
-.endm
-
-.macro	push
-	;; push \1 on stack
-	subqt	#4,r31
-	store	\1,(r31)
-.endm
-
-.macro	pop
-	;; pop \1 from stack
-	load	(r31),\1
-	addqt	#4,r31
-.endm
-
-.macro	fast_jsr_cond
-	;; \1: cc
-	;; \2: jump address
-	;; \3: return address
-	move	PC,\3
-	jump	\1,(\2)
-	addqt	#6,\3
-.endm
-
-.macro	fast_jsr
-	;; \1: jump address
-	;; \2: return address
-	move	PC,\2
-	jump	(\1)
-	addqt	#6,\2
-.endm
 	
 ;;; the DSP sound driver
 ;;; for sake of simplicity, it clears the interrupt handlers

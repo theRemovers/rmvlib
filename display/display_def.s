@@ -16,6 +16,12 @@
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
+	.if	^^defined	__DISPLAY_H
+	.print	"display_def.s already included"
+	end
+	.endif
+__DISPLAY_H	equ	1
+	
 	.offset	0
 	;; these two fields must be at the beginning in this order (see hashtbl)
 	;; an attached sprite has always previous != NULL

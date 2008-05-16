@@ -16,11 +16,11 @@
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
-	.if	^^defined	RISC_H
+	.if	^^defined	__RISC_H
 	.print	"risc.s already included"
 	end
 	.endif
-RISC_H	equ	1
+__RISC_H	equ	1
 
 ;; .macro	mulf
 ;; 	;; \1, \2: fixp integers
@@ -185,6 +185,34 @@ RISC_H	equ	1
 	.endif
 .endm
 	
+.macro	padding_nop
+	.print	"adding ",\1/2," padding nop"
+	.rept	(\1 / 2)
+	nop
+	.endr
+.endm
+
+.macro	push
+	;; push \1 on stack
+	subqt	#4,r31
+	store	\1,(r31)
+.endm
+
+.macro	pop
+	;; pop \1 from stack
+	load	(r31),\1
+	addqt	#4,r31
+.endm
+
+.macro	fast_jsr_cond
+	;; \1: cc
+	;; \2: jump address
+	;; \3: return address
+	move	PC,\3
+	jump	\1,(\2)
+	addqt	#6,\3
+.endm
+
 .macro	fast_jsr
 	;; \1: jump address
 	;; \2: return address
@@ -192,4 +220,3 @@ RISC_H	equ	1
 	jump	(\1)
 	addqt	#6,\2
 .endm
-

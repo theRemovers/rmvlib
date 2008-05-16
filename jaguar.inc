@@ -13,6 +13,13 @@
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+	.if	^^defined	__JAGUAR_H
+	.print	"jaguar.inc already included"
+	end
+	.endif
+__JAGUAR_H	equ	1
+
+	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      GENERIC DEFINES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

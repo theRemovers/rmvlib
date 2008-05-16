@@ -18,13 +18,8 @@
 
 	include	"../jaguar.inc"
 
-	.if	^^defined	DISPLAY_H
-	.print	"display.s already included"
-	end
-	.endif
-DISPLAY_H	equ	1
-	.print	"including display.s"
-
+	include	"../risc.s"
+	
 	include	"display_def.s"
 	
 	.extern	_a_vdb
@@ -58,25 +53,6 @@ GPU_ISP	equ	(GPU_USP-(4*GPU_STACK_SIZE))
 			
 	.text
 	.68000
-
-.macro	padding_nop
-	.print	"adding ",\1/2," padding nop"
-	.rept	(\1 / 2)
-	nop
-	.endr
-.endm
-
-.macro	push
-	;; push \1 on stack
-	subqt	#4,r31
-	store	\1,(r31)
-.endm
-
-.macro	pop
-	;; pop \1 from stack
-	load	(r31),\1
-	addqt	#4,r31
-.endm
 
 .macro	display_save_first_regs
 	push	r1
