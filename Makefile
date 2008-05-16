@@ -8,7 +8,7 @@ MACFLAGS=-fb -v
 CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float 
 SRCS=
 SRCC=
-SRCH=routine.h
+SRCH=
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 NASUBDIRS=interrupt display collision fb2d sound render
 ASUBDIRS=sprite screen joypad blit console
