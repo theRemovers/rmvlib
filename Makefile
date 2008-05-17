@@ -24,7 +24,7 @@ TARFILE=$(PROJECT)-$(PROJECT_NUMBER).tar
 DISTFILES=Makefile main.h jaguar.inc routine.s
 DISTFILES+=ChangeLog LICENSE build.sh 
 
-INSTALLH=routine.h
+INSTALLH=
 INSTALLLIB=$(PROJECT).a
 
 TARGET=$(HOME)/tmp/rmvlib
