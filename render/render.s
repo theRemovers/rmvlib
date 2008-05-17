@@ -808,7 +808,8 @@ renderer:
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
 	;; 
- 	movei	#SRCEN|SRCENX|LFU_REPLACE,r29
+* 	movei	#SRCEN|SRCENX|LFU_REPLACE,r29
+ 	movei	#SRCEN|LFU_REPLACE,r29	
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	and	r27,r25
