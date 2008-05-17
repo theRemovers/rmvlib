@@ -55,8 +55,13 @@ void *init_renderer(/** Address where to load the GPU routine. It
 		     * should be long aligned. */
 		    void *addr);
 
-void render_polygon(screen *target,
-		    polygon *p);
+void render_polygon_list_and_wait(screen *target,
+				  polygon *p);
+
+void render_polygon_list(screen *target,
+			 polygon *p);
+
+void wait_renderer_completion();
 
 #define FLTSHADING 0x0
 #define GRDSHADING 0x1

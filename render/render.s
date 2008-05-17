@@ -949,9 +949,9 @@ _init_renderer:
 	add.l	#RENDERER_SIZE,d0
 	rts
 
-	.globl	_render_polygon
-;;; void render_polygon(screen *target, polygon *p)
-_render_polygon:
+	.globl	_render_polygon_list_and_wait
+;;; void render_polygon_list_and_wait(screen *target, polygon *p)
+_render_polygon_list_and_wait:
 	move.l	renderer_gpu_address,a0
 	lea	RENDERER_PARAMS(a0),a1
 	move.l	4(sp),(a1)+
@@ -966,6 +966,29 @@ _render_polygon:
 	wait_blitter	d0
 	rts
 	
+	.globl	_render_polygon_list
+;;; void render_polygon_list(screen *target, polygon *p)
+_render_polygon_list:
+	move.l	renderer_gpu_address,a0
+	lea	RENDERER_PARAMS(a0),a1
+	move.l	4(sp),(a1)+
+	move.l	8(sp),(a1)+
+	move.l	#$80000000,(a1)
+	lea	RENDERER_RENDER(a0),a1
+	jsr_gpu	a1
+	rts
+
+	.globl	_wait_renderer_completion
+;;; void wait_renderer_completion
+_wait_renderer_completion:	
+	move.l	renderer_gpu_address,a0
+	lea	RENDERER_PARAMS+8(a0),a0
+.wait:
+	tst.l	(a0)
+	bmi.s	.wait
+	wait_blitter	d0
+	rts
+
 	.data
 	.phrase
 	dc.b	'Software Renderer by Seb/The Removers'
