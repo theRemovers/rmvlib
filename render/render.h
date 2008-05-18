@@ -67,6 +67,6 @@ void wait_renderer_completion();
 #define GRDSHADING 0x1
 #define ZBUFFERING 0x2
 #define TXTMAPPING 0x4
-
+#define TXTTRANSPARENT 0x8
 
 #endif

@@ -117,9 +117,6 @@ ENABLE_TEXTURE_GOURAUD	equ	0
 
 	;; the following code assume that DIV_OFFSET is set
 	;; (ie that divisions are operating in 16.16 mode)
-
-	;; it should be loaded on a phrase boundary in GPU ram
-	;; (the texture buffer should be correctly aligned)
 	.phrase
 renderer:
 	.gpu
@@ -183,12 +180,15 @@ renderer:
 	;; r23-r30: used by .render_incrementalize or temporary registers
 	move	PC,r0		; to relocate
 	movei	#.renderer_params-.render_polygon,r1
+	movei	#.renderer_buffer+7-.render_polygon,r10
 	movei	#.render_incrementalize-.render_polygon,r17
 	add	r0,r1		; relocate .renderer_params
+	moveq	#7,r11
+	add	r0,r10		; relocate .renderer_buffer+7
+	not	r11
 	add	r0,r17		; relocate .render_incrementalize
- 	move	r1,r10
+	and	r11,r10		; align on phrase boundary
 	load	(r1),r15	; target screen
- 	addq	#.renderer_buffer-.renderer_params,r10 ; .renderer_buffer
 	addq	#4,r1
 	load	(r1),r14	; polygon list (not null)
 	load	(r15+(SCREEN_DATA/4)),r2	; screen address
@@ -211,16 +211,15 @@ renderer:
 	mult	r2,r8
 	add	r0,r1		; relocate .render_next_polygon
 	shrq	#16,r2		; flags
-	moveq	#$7,r3
+	moveq	#$7,r10
 	load	(r14+(POLY_PARAM/4)),r9 ; load poly param
-	and	r3,r2			; mask flags
+	and	r2,r10			; mask flags
 	movei	#.render_table-.render_polygon,r29
-	move	r8,r3		; size of array in bytes
+	shlq	#2,r10		; flags*4
 	add	r0,r29		; relocate .render_table
-	shlq	#2,r2		; flags*4
+	move	r8,r3		; size of array in bytes
+	add	r10,r29
 	addq	#POLY_VERTICES,r14
-	add	r2,r29
-	shrq	#2,r2			; flags
 	load	(r29),r29
 	subq	#VERTEX_SIZEOF,r8	; i = n-1 (last index)
 	add	r0,r29			; relocate
@@ -280,7 +279,7 @@ renderer:
 	moveta	r27,r19				; save texture base address
 	shrq	#8,r9				; intensity increment
 	moveta	r26,r21				; save texture window
-	.if	ENABLE_TEXTURE_GOURAUD
+ 	.if	ENABLE_TEXTURE_GOURAUD
 	moveq	#0,r10				; no color
 	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
 	store	r10,(r15+((B_PATD-A1_BASE)/4))	; set color for gouraud shading
@@ -858,7 +857,7 @@ renderer:
 	moveq	#0,r28
 	wait_blitter_gpu	r15,r29
 	movefa	r25,r30					; restore B_COUNT (executed during wait loop)
-	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26	; DCOMPEN?
+	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26	
 	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	store	r28,(r15+((A2_PIXEL-A1_BASE)/4)) 	; A2_PIXEL
@@ -980,7 +979,7 @@ renderer:
 	.rept	NB_PARAMS
 	dc.l	0
 	.endr
-	.phrase
+	.long
 .renderer_buffer:
 	.long
 .renderer_end:	
@@ -1001,15 +1000,12 @@ RENDERER_PARAMS equ	.renderer_params-.renderer_begin
 ;;; void *init_renderer(void *gpu_addr);
 _init_renderer:
 	pea	RENDERER_SIZE
-	move.l	4+4(sp),d0	; gpu_addr
-	addq.l	#7,d0
-	and.w	#$fffc,d0	; align on phrase boundary
-	move.l	d0,-(sp)
-	move.l	d0,renderer_gpu_address
+	move.l	4+4(sp),-(sp)
 	pea	renderer
 	jsr	_bcopy
 	lea	12(sp),sp
-	move.l	renderer_gpu_address,d0
+	move.l	4(sp),d0
+	move.l	d0,renderer_gpu_address
 	add.l	#RENDERER_SIZE,d0
 	rts
 
