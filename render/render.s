@@ -31,6 +31,8 @@ OPT_FLAT	equ	1
 ZCOND	equ	ZMODELT|ZMODEEQ	
 
 TRIVIAL_CLIPPING	equ	0
+
+ENABLE_TEXTURE_GOURAUD	equ	0
 	
 	.include	"../risc.s"
 	
@@ -278,8 +280,16 @@ renderer:
 	moveta	r27,r19				; save texture base address
 	shrq	#8,r9				; intensity increment
 	moveta	r26,r21				; save texture window
+	.if	ENABLE_TEXTURE_GOURAUD
+	moveq	#0,r10				; no color
+	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
+	store	r10,(r15+((B_PATD-A1_BASE)/4))	; set color for gouraud shading
+	jr	.loop_render
+	store	r10,(r15+((B_PATD+4-A1_BASE)/4)); set color for gouraud shading
+	.else
 	jr	.loop_render
 	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
+	.endif
 .phrase_mode:
 	shlq	#16,r9
 	movefa	r17,r29				; dest base address
@@ -792,8 +802,10 @@ renderer:
 	add	r28,r30		; 1 | (w + x1 % 4)
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
-*	btst	#GRDSHADING,r2
-*	jr	ne,.texture_gouraud_shading
+	.if	ENABLE_TEXTURE_GOURAUD
+	btst	#GRDSHADING,r2
+	jr	ne,.texture_gouraud_shading
+	.endif
 	movefa	r22,r13					; get finish routine
 .texture_flat_shading:
  	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
@@ -802,6 +814,58 @@ renderer:
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	jump	(r13)
  	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	.if	ENABLE_TEXTURE_GOURAUD
+.texture_gouraud_shading:
+	moveta	r30,r25					; save (modified) B_COUNT
+ 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	;; 
+	movefa	r0,r25		; i1
+	movefa	r2,r26		; i2
+	sat24	r25
+	sat24	r26
+	movefa	r1,r27		; di1
+	movefa	r3,r28		; di2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r0		; i1'
+	moveta	r28,r2		; i2'
+	fast_jsr	r17,r30	; jsr .render_incrementalize
+	;; 
+	wait_blitter_gpu	r15,r29
+	move	r25,r30		; executed during wait loop
+	;; set intensities
+	moveq	#3,r29
+.texture_gouraud_set_intensities:
+	sat24	r25
+	sub	r26,r30
+	subq	#1,r29
+	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_Ix with 1 <= x <= 3
+	addqt	#4,r15
+	jr	ne,.texture_gouraud_set_intensities
+	move	r30,r25
+	shlq	#10,r26		; 4 * di
+	sat24	r25
+	shrq	#8,r26		; clear high bits
+	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_I0
+	subq	#12,r15
+	;; 
+	movei	#XADDPHR|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+	movei	#PATDSEL|DSTA2|GOURD,r28
+	store	r26,(r15+((B_IINC-A1_BASE)/4))		; IINC
+	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+ 	store	r28,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;;
+	moveq	#0,r28
+	wait_blitter_gpu	r15,r29
+	movefa	r25,r30					; restore B_COUNT (executed during wait loop)
+	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26	; DCOMPEN?
+	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+	store	r28,(r15+((A2_PIXEL-A1_BASE)/4)) 	; A2_PIXEL
+	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	jump	(r13)
+	store	r26,(r15+((B_CMD-A1_BASE)/4)) 		; B_CMD
+	.endif
 .texture_nozbuffer:
 	movefa	r26,r27		; restore y|x1
 	movefa	r27,r28		; restore w
