@@ -1020,7 +1020,9 @@ _init_renderer:
 	lea	12(sp),sp
 	move.l	4(sp),d0
 	move.l	d0,renderer_gpu_address
-	add.l	#RENDERER_SIZE,d0
+	add.l	#RENDERER_SIZE+(2*BUFFER_WIDTH),d0
+	addq.l	#7,d0
+	and.l	#~7,d0
 	rts
 
 	.globl	_render_polygon_list_and_wait
