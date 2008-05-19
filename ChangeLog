@@ -11,5 +11,18 @@
 	more symbolic links!)
 	
 	Addition of a software renderer. 
-	
 
+1.2.1
+-----
+	Correction of a small bug in rendering routine.
+	
+	The texture gouraud shading code has been added but it is disabled at
+	compilation.
+
+1.2.2
+-----
+	I finally decided to enable the texture gouraud shading since it
+	seems to work well. Beware that textures should be modified so
+	that it works (intensities should be XORed with 0x80).
+
+	I also enabled the trivial clipping algorithm by default.

@@ -30,9 +30,9 @@ OPT_FLAT	equ	1
 	;; 1/z condition
 ZCOND	equ	ZMODELT|ZMODEEQ	
 
-TRIVIAL_CLIPPING	equ	0
+TRIVIAL_CLIPPING	equ	1
 
-ENABLE_TEXTURE_GOURAUD	equ	0
+ENABLE_TEXTURE_GOURAUD	equ	1
 	
 	.include	"../risc.s"
 	
