@@ -30,6 +30,8 @@ OPT_FLAT	equ	1
 	;; 1/z condition
 ZCOND	equ	ZMODELT|ZMODEEQ	
 
+WIDBUFFER	equ	WID384
+	
 TRIVIAL_CLIPPING	equ	1
 
 ENABLE_TEXTURE_GOURAUD	equ	1
@@ -52,7 +54,6 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	.print	"beware of GPU pipeline after jr"
 	.endm
 
-	
 	.macro	compute_values
 	;; input
 	;; \1 = inv_dw (>= 0)
@@ -808,7 +809,7 @@ renderer:
 	movefa	r22,r13					; get finish routine
 .texture_flat_shading:
  	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
-	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	jump	(r13)
@@ -848,17 +849,17 @@ renderer:
 	store	r25,(r15+((B_I3-A1_BASE)/4)) ; B_I0
 	subq	#12,r15
 	;; 
-	movei	#XADDPHR|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	movei	#PATDSEL|DSTA2|GOURD,r28
 	store	r26,(r15+((B_IINC-A1_BASE)/4))		; IINC
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
  	store	r28,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;;
+	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26	
+	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	moveq	#0,r28
 	wait_blitter_gpu	r15,r29
 	movefa	r25,r30					; restore B_COUNT (executed during wait loop)
-	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26	
-	movei	#XADDPIX|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	store	r28,(r15+((A2_PIXEL-A1_BASE)/4)) 	; A2_PIXEL
 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
@@ -882,7 +883,7 @@ renderer:
 	store	r25,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	movefa	r18,r25					; destination blitter flags
 	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
-	movei	#XADDPHR|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r28,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
 	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
@@ -934,7 +935,7 @@ renderer:
 	store	r25,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	movefa	r18,r25					; destination blitter flags
 	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
-	movei	#XADDPHR|WID384|PIXEL16|PITCH1,r27	; GPU buffer flags
+	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r28,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
 	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
@@ -979,7 +980,7 @@ renderer:
 	.rept	NB_PARAMS
 	dc.l	0
 	.endr
-	.long
+	.phrase
 .renderer_buffer:
 	.long
 .renderer_end:	
@@ -989,6 +990,11 @@ RENDERER_RENDER	equ	.render_polygon-.renderer_begin
 RENDERER_PARAMS equ	.renderer_params-.renderer_begin
 	
 	.print	"Renderer routine size: ", RENDERER_SIZE
+MANTISSA	equ	$4|((WIDBUFFER>>9) & $3)
+EXPONENT	equ	(WIDBUFFER>>11) & $f
+BUFFER_WIDTH	equ	(MANTISSA*(1<<EXPONENT))>>2
+	.print	"Renderer buffer size: ", 2*BUFFER_WIDTH
+	.print	"Renderer total size: ", RENDERER_SIZE+(2*BUFFER_WIDTH)
 	.print	"Render: ",RENDERER_RENDER
 
 	.68000
