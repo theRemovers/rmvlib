@@ -35,11 +35,17 @@ typedef struct {
 } vertex;
 
 typedef struct polygon {
+  /* Next polygon or NULL */
   struct polygon *next;
+  /* Rendering flags */
   short int flags;
+  /* Number of vertices */
   short int size;
+  /* Rendering parameter. Color or pure intensity. */
   unsigned long param;
+  /* Texture address if TXTMAPPING */
   screen *texture;
+  /* Vertices are given in clockwise order (on screen) */
   vertex vertices[];
 } polygon;
 
@@ -55,14 +61,19 @@ void *init_renderer(/** Address where to load the GPU routine. It
 		     * should be long aligned. */
 		    void *addr);
 
+/** Asynchronous rendering. Of course the blitter is not available for
+    other tasks since it is drawing polygons. */
 void render_polygon_list_and_wait(screen *target,
 				  polygon *p);
 
+/** Synchronous rendering. */
 void render_polygon_list(screen *target,
 			 polygon *p);
 
+/** Wait completion of the renderer. */
 void wait_renderer_completion();
 
+/** Any combination of these will work. */
 #define FLTSHADING 0x0
 #define GRDSHADING 0x1
 #define ZBUFFERING 0x2

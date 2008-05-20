@@ -30,10 +30,13 @@ OPT_FLAT	equ	1
 	;; 1/z condition
 ZCOND	equ	ZMODELT|ZMODEEQ	
 
+	;; size of buffer in GPU ram
 WIDBUFFER	equ	WID384
-	
+
+	;; inefficient clipping
 TRIVIAL_CLIPPING	equ	1
 
+	;; this finally works!
 ENABLE_TEXTURE_GOURAUD	equ	1
 	
 	.include	"../risc.s"
@@ -43,8 +46,8 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	.include	"render_def.s"
 
 	.macro	wait_blitter_gpu
-	;; beware, the instruction that will follow
-	;; is executed after each loop
+	;; beware, the instruction that follows
+	;; is executed after each loop (GPU pipeline)
 	;; \1: base register (r14 or r15) set to A1_BASE
 	;; \2: temporary register
 .gwait_\~:
@@ -257,6 +260,7 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 
 	;; the following code assume that DIV_OFFSET is set
 	;; (ie that divisions are operating in 16.16 mode)
+	;; this code is self-relocatable!
 	.phrase
 renderer:
 	.gpu
@@ -318,6 +322,7 @@ renderer:
 	;; r21: 1 (one)
 	;; r22: $ffff0000 (to compute ceil and floor, and mask values)
 	;; r23-r30: used by .render_incrementalize or temporary registers
+	;;
 	move	PC,r0		; to relocate
 	movei	#.renderer_params-.render_polygon,r1
 	movei	#.renderer_buffer+7-.render_polygon,r10
@@ -694,7 +699,7 @@ renderer:
 	add	r30,r24		; adjust frac
 	.if	TRIVIAL_CLIPPING
 .skip_hline_clipping:
-	;; very innefficient clipping when y < 0
+	;; very inefficient clipping when y < 0
 	;; update i
 	movefa	r0,r25		; i1
 	movefa	r2,r26		; i2
