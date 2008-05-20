@@ -655,10 +655,19 @@ renderer:
 	jr	pl,.go_hline	; x2-x1 < 0 -> .skip_hline
 	addq	#1,r28		; w = x2-x1+1
 .skip_hline:
+	.if	TRIVIAL_CLIPPING
+	move	PC,r30
+	add	r10,r9		; lx += ldx
+	addq	#.skip_hline_clipping-.skip_hline,r30
+	add	r12,r11		; rx += rdx
+	jump	(r30)
+	add	r21,r4		; y++
+	.else
 	add	r10,r9		; lx += ldx
 	add	r12,r11		; rx += rdx
 	jump	(r18)		; -> .do_scanlines
 	add	r21,r4		; y++
+	.endif
 .go_hline:
 	cmpq	#0,r2		; check flags
 	jump	eq,(r16)	; if flat rendering, then skip computation of 1/dx and frac
@@ -683,6 +692,51 @@ renderer:
 	;;
 	jump	(r16)		; render line
 	add	r30,r24		; adjust frac
+	.if	TRIVIAL_CLIPPING
+.skip_hline_clipping:
+	;; very innefficient clipping when y < 0
+	;; update i
+	movefa	r0,r25		; i1
+	movefa	r2,r26		; i2
+	sat24	r25
+	sat24	r26
+	movefa	r1,r27		; di1
+	movefa	r3,r28		; di2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r0		; i1'
+	moveta	r28,r2		; i2'
+	;; update z
+	movefa	r4,r25		; z1
+	movefa	r6,r26		; z2
+	movefa	r5,r27		; dz1
+	movefa	r7,r28		; dz2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r4		; z1'
+	moveta	r28,r6		; z2'
+	;; update u
+	movefa	r8,r25		; u1
+	movefa	r12,r26		; u2
+	movefa	r9,r27		; du1
+	movefa	r13,r28		; du2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r8		; u1'
+	moveta	r28,r12		; u2'
+	;; update v
+	movefa	r10,r25		; v1
+	movefa	r14,r26		; v2
+	movefa	r11,r27		; dv1
+	movefa	r15,r28		; dv2
+	add	r25,r27
+	add	r26,r28
+	moveta	r27,r10		; v1'
+; 	moveta	r28,r14		; v2'
+	;; 
+	jump	(r18)		; -> .do_scanlines
+	moveta	r28,r14		; v2'
+	.endif
 	;; next polygon
 .render_next_polygon:
 	subq	#POLY_VERTICES,r14
