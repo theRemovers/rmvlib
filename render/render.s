@@ -114,66 +114,6 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	add	\5,\3		; v1 + dv * frac
 	.endm
 	
-;; 	.macro	compute_values
-;; 	;; input
-;; 	;; \1 = inv_dw (>= 0)
-;; 	;; \2 = frac (>= 0)
-;; 	;; \3 = v1
-;; 	;; \4 = v2
-;; 	;; \5, \6, \7 = temporary registers
-;; 	;; \8 = return address (31 bits)
-;; 	;; output
-;; 	;; \1, \2 unchanged
-;; 	;; \3 = v1 + dv * frac
-;; 	;; \4 = dv = (v2 - v1) * inv_dw
-;; 	sub	\3,\4		; v2-v1
-;; 	move	\1,\5
-;; 	abs	\4		; |v2-v1|
-;; 	addc	\8,\8		; bit 0 is sign of (v2-v1)
-;; 	move	\4,\6
-;; 	shrq	#16,\5		; int(inv_dw)
-;; 	move	\4,\7
-;; 	shrq	#16,\6		; int(|v2-v1|)
-;; 	mult	\5,\7		; int(inv_dw)*frac(|v2-v1|)
-;; 	move	\4,\5
-;; 	mult	\1,\6		; frac(inv_dw)*int(|v2-v1|)
-;; 	mult	\1,\5		; frac(inv_dw)*frac(|v2-v1|)
-;; 	rorq	#16,\1
-;; 	rorq	#16,\4
-;; 	shrq	#16,\5		; frac(inv_dw)*frac(|v2-v1|)>>16
-;; 	mult	\1,\4		; int(inv_dw)*int(|v2-v1|)<<16
-;; 	add	\7,\6		; int(inv_dw)*frac(|v2-v1|)+frac(inv_dw)*int(|v2-v1|)
-;; 	shlq	#16,\4
-;; 	rorq	#16,\1		; restore inv_dw
-;; 	add	\6,\4		; int(inv_dw)*int(|v2-v1|)<<16+int(inv_dw)*frac(|v2-v1|)+frac(inv_dw)*int(|v2-v1|)
-;; 	move	\2,\6
-;; 	add	\5,\4		; |v2-v1|*inv_dw = |dv|
-;; 	move	\2,\5
-;; 	mult	\4,\6		; frac(|dv|)*frac(frac)
-;; 	shrq	#16,\5		; int(frac)
-;; 	move	\2,\7
-;; 	mult	\4,\5		; frac(|dv|)*int(frac)
-;; 	rorq	#16,\4
-;; 	mult	\4,\7		; int(|dv|)*frac(frac)
-;; 	rorq	#16,\2
-;; 	add	\7,\5		; int(|dv|)*frac(frac)+frac(|dv|)*int(frac)
-;; 	move	\2,\7
-;; 	rorq	#16,\2		; restore frac
-;; 	mult	\4,\7		; int(|dv|)*int(frac)
-;; 	rorq	#16,\4		; restore |dv|
-;; 	shlq	#16,\7
-;; 	shrq	#16,\6		; frac(|dv|)*frac(frac)>>16
-;; 	add	\5,\7		; int(|dv|)*frac(frac)+frac(|dv|)*int(frac)+int(|dv|)*int(frac)
-;; 	shrq	#1,\8		; test sign and restore return address
-;; 	jr	cc,.pos\~
-;; 	add	\7,\6		; |dv|*frac
-;; 	neg	\4		; dv = -|dv|
-;; 	neg	\6		; dv*frac = -|dv|*frac
-;; .pos\~:
-;; 	jump	(\8)		; return
-;; 	add	\6,\3		; v1+dv*frac
-;; 	.endm
-
 	.macro	compute_i
 	movefa	r0,r25		; i1
 	movefa	r2,r26		; i2
