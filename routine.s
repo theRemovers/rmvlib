@@ -1,8 +1,8 @@
-	.if	^^defined	ROUTINE_H
+	.if	^^defined	__ROUTINE_H
 	.print	"routine.s already included"
 	end
 	.endif
-ROUTINE_H	equ	1
+__ROUTINE_H	equ	1
 	.print	"including routine.s"
 
  	.extern	DSP_SUBROUT_ADDR
