@@ -661,9 +661,9 @@ renderer:
 	addq	#1,r28		; w = x2-x1+1
 .skip_hline:
 	.if	TRIVIAL_CLIPPING
-	move	PC,r30
+	movei	#.skip_hline_clipping-.render_polygon,r30
 	add	r10,r9		; lx += ldx
-	addq	#.skip_hline_clipping-.skip_hline,r30
+	add	r0,r30		; relocate .skip_hline_clipping
 	add	r12,r11		; rx += rdx
 	jump	(r30)
 	add	r21,r4		; y++

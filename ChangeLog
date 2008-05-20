@@ -26,3 +26,10 @@
 	that it works (intensities should be XORed with 0x80).
 
 	I also enabled the trivial clipping algorithm by default.
+
+1.2.3
+-----
+	The trivial clipping algorithm was so trivial that it was buggy on
+	textured/gouraud shaded/Zbuffered polygons... now this problem is
+	fixed. But this clipping algorithm should be seen as no more than
+	a provisional solution.
