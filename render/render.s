@@ -164,6 +164,50 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	fast_jsr	r17,r30	; jsr .render_incrementalize
 	.endm
 
+	.macro	fix_gouraud_mode
+	;; x1%4 is used to compute the target code address
+	;; it is assumed that code starting at \1 begins with
+	;; a call to begin_gouraud_pixel
+	;;
+	;; check whether 4*IINC fits in 24 bits
+	;; and whether sat24 is needed or not
+	;; 
+	move	r26,r30		; copy IINC
+	move	r25,r27		; copy I3
+	shlq	#10,r30		; check overflow of 4*IINC
+	add	r26,r27		; I3+IINC
+	shlq	#2,r26		; 4*IINC (theoretical value)
+	sharq	#8,r30		; 4*IINC (practical value)
+	sub	r26,r27		; I3-3*IINC
+	sub	r26,r30		; compare theoretical and practical value of 4*IINC
+	or	r25,r27		; (I3-3*IINC) | I3
+	sharq	#2,r26		; restore IINC
+	shrq	#24,r27		; check overflow in top 8 bits
+	movefa	r18,r29		; get blitter flags
+	or	r27,r30
+	movefa	r26,r27		; get y|x1
+	jr	eq,.phrase_mode\~
+	bclr	#XADDPIX_BIT,r29 ; set phrase mode
+.pixel_mode\~:
+	move	PC,r30
+	addq	#.fix_mode\~-.pixel_mode\~,r30
+	moveq	#3,r28
+	bset	#XADDPIX_BIT,r29; set pixel mode
+	and	r28,r27		; x1 % 4
+	add	r27,r30
+	sub	r27,r28		; (3 - x1) % 4
+	add	r27,r30
+	shlq	#16,r28
+	jump	(r30)
+	sub	r28,r24		; fix frac
+.fix_mode\~:
+	sub	r26,r25		; x1 % 4 = 0
+	sub	r26,r25		; x1 % 4 = 1
+	sub	r26,r25		; x1 % 4 = 2
+	sat24	r25		; x1 % 4 = 3
+.phrase_mode\~:	
+	.endm
+	
 	.macro	detect_gouraud_mode
 	;; x1%4 is used to compute the target code address
 	;; it is assumed that code starting at \1 begins with
@@ -904,7 +948,6 @@ renderer:
 	sub	r30,r24		; adjust frac
 	;;
 	compute_z
-	;; 
 	;; 
 	movefa	r26,r27		; restore y|x1
 	movefa	r27,r28		; restore w
