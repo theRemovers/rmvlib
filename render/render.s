@@ -31,7 +31,7 @@ OPT_FLAT	equ	1
 ZCOND	equ	ZMODELT|ZMODEEQ	
 
 	;; size of buffer in GPU ram
-WIDBUFFER	equ	WID384
+WIDBUFFER	equ	WID320
 
 	;; inefficient clipping
 TRIVIAL_CLIPPING	equ	1
@@ -168,7 +168,8 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	;; x1%4 is used to detect the good place to jump!!
 	;; it is assumed that code starting at \1 begins with
 	;; a call to begin_gouraud_pixel
-	;; 
+	;;
+	sat24	r25
 	move	r26,r30
 	shlq	#2,r26
 	shlq	#10,r30
@@ -186,24 +187,28 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	sub	r26,r27
 	or	r27,r28
 	shrq	#24,r28
-	jr	eq,.good_phrase\~
+	jr	eq,.good\~
 .bad_di\~:
 	movefa	r26,r27		; restore y|x1
 	moveq	#3,r29
 	movei	#\1-.render_polygon,r30
 	and	r27,r29		; x1%4
 	add	r0,r30		; relocate .gouraud_shading_pixel
-	add	r29,r30
+	shlq	#2,r29
 	add	r29,r30
 	jump	(r30)
-.good_phrase\~:
+.good\~:
 	movefa	r27,r28		; restore w
 	.endm
 
 	.macro	begin_gouraud_pixel
 	sub	r26,r25		; x % 4 = 0
+	sat24	r25
 	sub	r26,r25		; x % 4 = 1
+	sat24	r25
 	sub	r26,r25		; x % 4 = 2
+	sat24	r25
+	nop
 	sat24	r25		; x % 4 = 3
 	.endm
 	
