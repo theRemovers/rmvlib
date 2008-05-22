@@ -33,3 +33,10 @@
 	textured/gouraud shaded/Zbuffered polygons... now this problem is
 	fixed. But this clipping algorithm should be seen as no more than
 	a provisional solution.
+
+1.2.4
+-----
+	Gouraud shading has been fixed so that now the renderer try to use
+	phrase mode of the blitter and if it cannot, it uses pixel mode
+	instead. This should solve several issues due to limitation of
+	phrase mode that was always used before this fix.
