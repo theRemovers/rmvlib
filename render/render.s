@@ -182,7 +182,7 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	sub	r26,r30		; compare theoretical and practical value of 4*IINC
 	or	r25,r27		; (I3-3*IINC) | I3
 	sharq	#2,r26		; restore IINC
-	shrq	#24,r27		; check overflow in 8 top bits
+	shrq	#24,r27		; check overflow in top 8 bits
 	movefa	r27,r28		; restore w
 	or	r27,r30
 	jr	eq,.gouraud_phrase_mode\~
