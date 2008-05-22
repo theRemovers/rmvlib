@@ -167,7 +167,7 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	.macro	fix_gouraud_mode
 	;; check whether 4*IINC fits in 24 bits
 	;; and whether sat24 is needed or not
-	;; \1: fix also frac value
+	;; if \1 then fix also frac value else no
 	move	r26,r29		; copy IINC
 	move	r25,r27		; copy I3
 	shlq	#10,r29		; check overflow of 4*IINC
@@ -179,16 +179,15 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	or	r25,r27		; (I3-3*IINC) | I3
 	sharq	#2,r26		; restore IINC
 	shrq	#24,r27		; check overflow in top 8 bits
-	movefa	r18,r30		; get blitter flags
+	movefa	r18,r13		; get blitter flags
 	or	r27,r29
 	movefa	r26,r27		; get y|x1
 	jr	eq,.phrase_mode\~
-	bclr	#XADDPIX_BIT,r30 ; set phrase mode
+	moveq	#3,r28
 .pixel_mode\~:
 	move	PC,r29
-	moveq	#3,r28
+	bset	#XADDPIX_BIT,r13; set pixel mode
 	addq	#.fix_mode\~-.pixel_mode\~,r29
-	bset	#XADDPIX_BIT,r30; set pixel mode
 	and	r28,r27		; x1 % 4
 	add	r27,r29
 	sub	r27,r28		; (3 - x1) % 4
@@ -196,8 +195,10 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	shlq	#16,r28
 	jump	(r29)
 	.if	\1
+	.print	"Fixing frac value"
 	sub	r28,r24		; fix frac
 	.else
+	.print	"Frac value has not been fixed"
 	nop
 	.endif
 .fix_mode\~:
@@ -206,48 +207,6 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	sub	r26,r25		; x1 % 4 = 2
 	sat24	r25		; x1 % 4 = 3
 .phrase_mode\~:	
-	.endm
-	
-	.macro	detect_gouraud_mode
-	;; x1%4 is used to compute the target code address
-	;; it is assumed that code starting at \1 begins with
-	;; a call to begin_gouraud_pixel
-	;;
-	;; check whether 4*IINC fits in 24 bits
-	;; and whether sat24 is needed or not
-	;; 
-	move	r26,r30		; copy IINC
-	move	r25,r27		; copy I3
-	shlq	#10,r30		; check overflow of 4*IINC
-	add	r26,r27		; I3+IINC
-	shlq	#2,r26		; 4*IINC (theoretical value)
-	sharq	#8,r30		; 4*IINC (practical value)
-	sub	r26,r27		; I3-3*IINC
-	sub	r26,r30		; compare theoretical and practical value of 4*IINC
-	or	r25,r27		; (I3-3*IINC) | I3
-	sharq	#2,r26		; restore IINC
-	shrq	#24,r27		; check overflow in top 8 bits
-	movefa	r27,r28		; restore w
-	or	r27,r30
-	jr	eq,.gouraud_phrase_mode\~
-	movefa	r26,r27		; restore y|x1
-	moveq	#3,r29
-	movei	#\1-.render_polygon,r30
-	and	r27,r29		; x1%4
-	add	r0,r30		; relocate .gouraud_shading_pixel
-	shlq	#1,r29
-	add	r29,r30
-	not	r29
-	jump	(r30)
-	shrq	#1,r29
-.gouraud_phrase_mode\~:	
-	.endm
-
-	.macro	begin_gouraud_pixel
-	sub	r26,r25		; x % 4 = 0
-	sub	r26,r25		; x % 4 = 1
-	sub	r26,r25		; x % 4 = 2
-	sat24	r25		; x % 4 = 3
 	.endm
 	
 	.macro	set_i
@@ -269,30 +228,6 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	store	r26,(r15+((B_IINC-(A1_BASE+12))/4))	; B_IINC
 	.endm
 
-	.macro	set_i_phrase
-	;; r15 is A1_BASE+32
-	;; r15 equals A1_BASE at the end
-	store	r25,(r15+((B_I3-(A1_BASE+32))/4))
-	sub	r26,r25
-	store	r25,(r15+((B_I2-(A1_BASE+32))/4))
-	sub	r26,r25	
-	store	r25,(r15+((B_I1-(A1_BASE+32))/4))
-	sub	r26,r25
-	shlq	#10,r26
-	store	r25,(r15+((B_I0-(A1_BASE+32))/4))
-	shrq	#8,r26
-	subq	#32,r15
-	store	r26,(r15+((B_IINC-A1_BASE)/4))
-	.endm
-
-	.macro	set_i_pixel
-	;; r15 is A1_BASE
-	shlq	#8,r26
-	shrq	#8,r26
-	store	r25,(r15+((B_I3-A1_BASE)/4)) 	; B_I3
-	store	r26,(r15+((B_IINC-A1_BASE)/4)) 	; B_IINC
-	.endm
-	
 	.macro	set_z_phrase
 	;; r15 is A1_BASE+32
 	store	r25,(r15+((B_Z3-(A1_BASE+32))/4)) 	; B_Z3
@@ -306,12 +241,6 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	store	r26,(r15+((B_ZINC-(A1_BASE+32))/4))	; B_ZINC
 	.endm
 
-	.macro	set_z_pixel
-	;; r15 is A1_BASE+32
-	store	r25,(r15+((B_Z3-(A1_BASE+32))/4))	; B_Z3  
-	store	r26,(r15+((B_ZINC-(A1_BASE+32))/4))	; B_ZINC 
-	.endm
-	
 	.text
 
 	;; the following code assume that DIV_OFFSET is set
@@ -835,40 +764,37 @@ renderer:
 	;; compute i
 	compute_i
 	;;
-	detect_gouraud_mode	.gouraud_shading_pixel_mode
+	fix_gouraud_mode	0
+	movefa	r26,r27		; restore y|x1
+	movefa	r27,r28		; restore w
 	;; 
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
 	;; set intensities
-	addq	#32,r15
-	set_i_phrase
+	btst	#XADDPIX_BIT,r13 ; pixel mode or phrase mode?
+	addqt	#32,r15
+	jr	eq,.gouraud_phrase_mode
+	store	r25,(r15+((B_I3-(A1_BASE+32))/4)) ; B_I3
+.gouraud_pixel_mode:
+	jr	.gouraud_go_blit
+	shlq	#8,r26
+.gouraud_phrase_mode:
+	sub	r26,r25
+	store	r25,(r15+((B_I2-(A1_BASE+32))/4)) ; B_I2
+	sub	r26,r25	
+	store	r25,(r15+((B_I1-(A1_BASE+32))/4)) ; B_I1
+	sub	r26,r25
+	shlq	#10,r26
+	store	r25,(r15+((B_I0-(A1_BASE+32))/4)) ; B_I0
+.gouraud_go_blit:
+	shrq	#8,r26
+	subq	#32,r15
+	store	r26,(r15+((B_IINC-A1_BASE)/4)) 		; B_IINC
 	;; 
-	movefa	r18,r30					; blitter flags
 	movei	#PATDSEL|GOURD,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	store	r30,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
-	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
-	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
-.gouraud_shading_pixel_mode:
-	;; mandatory!
-	begin_gouraud_pixel
-	;; 
-	wait_blitter_gpu	r15,r29
- 	or	r21,r28		; 1|w (executed during wait loop)
-	;; set intensities
-	set_i_pixel
-	;; 
-	movefa	r18,r30					; blitter flags
-	movei	#PATDSEL|GOURD,r29
-	bset	#XADDPIX_BIT,r30			; pixel mode
-	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
-	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	store	r30,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 	add	r10,r9		; lx += ldx
@@ -905,7 +831,7 @@ renderer:
 	;; compute i
 	compute_i
 	;;
-	detect_gouraud_mode	.gouraud_zbuffer_pixel_mode
+	fix_gouraud_mode	1 ; fix also frac
 	;;
 	moveta	r25,r24		; save i
 	moveta	r26,r25		; save di
@@ -916,59 +842,50 @@ renderer:
 	movefa	r27,r28		; restore w
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
-	;; set z
-	addq	#32,r15
-	set_z_phrase
-	;; 
-	movefa	r24,r25		; restore i
-	movefa	r25,r26		; restore di
-	;; set intensities
-	set_i_phrase
-	;;
-	movefa	r18,r30					; blitter flags 
- 	movei	#PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29
-	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
-	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	store	r30,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS 
-	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
-	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
+	;; set i & z
+	btst	#XADDPIX_BIT,r13
+	addqt	#32,r15
+	jr	eq,.gouraud_zbuffer_phrase_mode
+	store	r25,(r15+((B_Z3-(A1_BASE+32))/4)) 	; B_Z3
 .gouraud_zbuffer_pixel_mode:
-	;; mandatory!
-	begin_gouraud_pixel
-	;;
-	moveq	#3,r30
-	moveta	r25,r24		; save i
-	and	r29,r30		; 3 - x1%4
-	moveta	r26,r25		; save di
-	shlq	#16,r30
-	sub	r30,r24		; adjust frac
-	;;
-	compute_z
-	;; 
-	movefa	r26,r27		; restore y|x1
-	movefa	r27,r28		; restore w
-	wait_blitter_gpu	r15,r29
- 	or	r21,r28		; 1|w (executed during wait loop)
-	;; set z
-	addq	#32,r15
-	set_z_pixel
-	;; 
-	movefa	r24,r25		; restore i
-	movefa	r25,r26		; restore di
-	;; set intensities
+	store	r26,(r15+((B_ZINC-(A1_BASE+32))/4)) 	; B_ZINC
+	movefa	r24,r25				    	; restore i
+	movefa	r25,r26				    	; restore di
+	jr	.gouraud_zbuffer_go_blit_aux
+	store	r25,(r15+((B_I3-(A1_BASE+32))/4))   	; B_I3
+.gouraud_zbuffer_phrase_mode:
+	sub	r26,r25
+	store	r25,(r15+((B_Z2-(A1_BASE+32))/4)) 	; B_Z2
+	sub	r26,r25
+	store	r25,(r15+((B_Z1-(A1_BASE+32))/4)) 	; B_Z1
+	sub	r26,r25
+	shlq	#2,r26					; 4*z_inc
+	store	r25,(r15+((B_Z0-(A1_BASE+32))/4)) 	; B_Z0
+	movefa	r24,r25				    	; restore i
+	store	r26,(r15+((B_ZINC-(A1_BASE+32))/4))	; B_ZINC
+	movefa	r25,r26				    	; restore di
+	store	r25,(r15+((B_I3-(A1_BASE+32))/4))	; B_I3
+	jr	.gouraud_zbuffer_phrase_mode_continue
+	sub	r26,r25
+.gouraud_zbuffer_go_blit_aux:
+	jr	.gouraud_zbuffer_go_blit
+	shlq	#8,r26
+.gouraud_zbuffer_phrase_mode_continue:
+	store	r25,(r15+((B_I2-(A1_BASE+32))/4))	; B_I2
+	sub	r26,r25
+	store	r25,(r15+((B_I1-(A1_BASE+32))/4))	; B_I1
+	sub	r26,r25
+	shlq	#10,r26					; 4*i_inc
+	store	r25,(r15+((B_I0-(A1_BASE+32))/4))	; B_I0
+.gouraud_zbuffer_go_blit:
+	shrq	#8,r26
 	subq	#32,r15
-	set_i_pixel
+	store	r26,(r15+((B_IINC-A1_BASE)/4))		; B_IINC	
 	;;
-	movefa	r18,r30					; blitter flags 
  	movei	#PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29
-	bset	#XADDPIX_BIT,r30
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	store	r30,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS 
+	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS 
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 	add	r10,r9		; lx += ldx
