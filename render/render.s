@@ -169,7 +169,9 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	;; it is assumed that code starting at \1 begins with
 	;; a call to begin_gouraud_pixel
 	;;
-	sat24	r25		; saturate I3
+	;; check whether 4*IINC fits in 24 bits
+	;; and whether sat24 is needed or not
+	;; 
 	move	r26,r30		; copy IINC
 	move	r25,r27		; copy I3
 	shlq	#10,r30		; check overflow of 4*IINC
@@ -178,31 +180,28 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	sharq	#8,r30		; 4*IINC (practical value)
 	sub	r26,r27		; I3-3*IINC
 	sub	r26,r30		; compare theoretical and practical value of 4*IINC
-	shrq	#24,r27		; check overflow
+	or	r25,r27		; (I3-3*IINC) | I3
 	sharq	#2,r26		; restore IINC
-	or	r27,r30
+	shrq	#24,r27		; check overflow
 	movefa	r27,r28		; restore w
+	or	r27,r30
 	jr	eq,.gouraud_phrase_mode\~
 	movefa	r26,r27		; restore y|x1
 	moveq	#3,r29
 	movei	#\1-.render_polygon,r30
 	and	r27,r29		; x1%4
 	add	r0,r30		; relocate .gouraud_shading_pixel
-	shlq	#2,r29
+	shlq	#1,r29
 	add	r29,r30
 	jump	(r30)
-	shrq	#2,r29
+	shrq	#1,r29
 .gouraud_phrase_mode\~:	
 	.endm
 
 	.macro	begin_gouraud_pixel
 	sub	r26,r25		; x % 4 = 0
-	sat24	r25
 	sub	r26,r25		; x % 4 = 1
-	sat24	r25
 	sub	r26,r25		; x % 4 = 2
-	sat24	r25
-	nop
 	sat24	r25		; x % 4 = 3
 	.endm
 	
