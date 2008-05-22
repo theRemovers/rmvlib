@@ -164,6 +164,49 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	fast_jsr	r17,r30	; jsr .render_incrementalize
 	.endm
 
+	.macro	detect_gouraud_mode
+	;; x1%4 is used to detect the good place to jump!!
+	;; it is assumed that code starting at \1 begins with
+	;; a call to begin_gouraud_pixel
+	;; 
+	move	r26,r30
+	shlq	#2,r26
+	shlq	#10,r30
+	move	r25,r27
+	sharq	#8,r30
+	move	r25,r28
+	cmp	r26,r30
+	jr	ne,.bad_di\~
+	sharq	#2,r26
+.ok_di\~:
+	sub	r26,r27
+	or	r27,r28
+	sub	r26,r27
+	or	r27,r28
+	sub	r26,r27
+	or	r27,r28
+	shrq	#24,r28
+	jr	eq,.good_phrase\~
+.bad_di\~:
+	movefa	r26,r27		; restore y|x1
+	moveq	#3,r29
+	movei	#\1-.render_polygon,r30
+	and	r27,r29		; x1%4
+	add	r0,r30		; relocate .gouraud_shading_pixel
+	add	r29,r30
+	add	r29,r30
+	jump	(r30)
+.good_phrase\~:
+	movefa	r27,r28		; restore w
+	.endm
+
+	.macro	begin_gouraud_pixel
+	sub	r26,r25		; x % 4 = 0
+	sub	r26,r25		; x % 4 = 1
+	sub	r26,r25		; x % 4 = 2
+	sat24	r25		; x % 4 = 3
+	.endm
+	
 	.macro	set_i
 	;; r30 should contain initial intensity
 	;; r15 is A1_BASE and is incremented by 12 at the end
@@ -267,12 +310,11 @@ renderer:
 	movei	#.renderer_params-.render_polygon,r1
 	movei	#.renderer_buffer+7-.render_polygon,r10
 	movei	#.render_incrementalize-.render_polygon,r17
-	add	r0,r1		; relocate .renderer_params
-	moveq	#7,r11
 	add	r0,r10		; relocate .renderer_buffer+7
-	not	r11
+	add	r0,r1		; relocate .renderer_params
+	shrq	#3,r10
 	add	r0,r17		; relocate .render_incrementalize
-	and	r11,r10		; align on phrase boundary
+	shlq	#3,r10		; align on phrase boundary
 	load	(r1),r15	; target screen
 	addq	#4,r1
 	load	(r1),r14	; polygon list (not null)
@@ -719,19 +761,54 @@ renderer:
 	moveta	r27,r26		; save y|x1
 	;; compute i
 	compute_i
+	;;
+	detect_gouraud_mode	.gouraud_shading_pixel
 	;; 
-	movefa	r26,r27		; restore y|x1
-	movefa	r27,r28		; restore w
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
 	;; set intensities
-	move	r25,r30
-	set_i
-	subq	#12,r15
+	addq	#16,r15
+	store	r25,(r15+((B_I3-(A1_BASE+16))/4))
+	sub	r26,r25
+	store	r25,(r15+((B_I2-(A1_BASE+16))/4))
+	sub	r26,r25	
+	store	r25,(r15+((B_I1-(A1_BASE+16))/4))
+	sub	r26,r25
+	shlq	#10,r26
+	store	r25,(r15+((B_I0-(A1_BASE+16))/4))
+	shrq	#8,r26
+	subq	#16,r15
+	store	r26,(r15+((B_IINC-A1_BASE)/4))
 	;; 
+	movefa	r18,r30					; blitter flags
 	movei	#PATDSEL|GOURD,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	store	r30,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+	;; 
+	add	r10,r9		; lx += ldx
+	add	r12,r11		; rx += rdx
+	jump	(r18)		; -> .do_scanlines
+	add	r21,r4		; y++
+.gouraud_shading_pixel:
+	;; mandatory!
+	begin_gouraud_pixel
+	;; 
+	wait_blitter_gpu	r15,r29
+ 	or	r21,r28		; 1|w (executed during wait loop)
+	;; set intensities
+	shlq	#8,r26
+	store	r25,(r15+((B_I3-A1_BASE)/4)) 	; B_I3
+	shrq	#8,r26
+	store	r26,(r15+((B_IINC-A1_BASE)/4)) 	; B_IINC
+	;; 
+	movefa	r18,r30					; blitter flags
+	movei	#PATDSEL|GOURD,r29
+	bset	#XADDPIX_BIT,r30			; pixel mode
+	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
+	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	store	r30,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 	add	r10,r9		; lx += ldx
