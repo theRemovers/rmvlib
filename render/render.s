@@ -165,30 +165,24 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	.endm
 
 	.macro	detect_gouraud_mode
-	;; x1%4 is used to detect the good place to jump!!
+	;; x1%4 is used to compute the target code address
 	;; it is assumed that code starting at \1 begins with
 	;; a call to begin_gouraud_pixel
 	;;
-	sat24	r25
-	move	r26,r30
-	shlq	#2,r26
-	shlq	#10,r30
-	move	r25,r27
-	sharq	#8,r30
-	move	r25,r28
-	cmp	r26,r30
-	jr	ne,.bad_di\~
-	sharq	#2,r26
-.ok_di\~:
-	sub	r26,r27
-	or	r27,r28
-	sub	r26,r27
-	or	r27,r28
-	sub	r26,r27
-	or	r27,r28
-	shrq	#24,r28
-	jr	eq,.good\~
-.bad_di\~:
+	sat24	r25		; saturate I3
+	move	r26,r30		; copy IINC
+	move	r25,r27		; copy I3
+	shlq	#10,r30		; check overflow of 4*IINC
+	add	r26,r27		; I3+IINC
+	shlq	#2,r26		; 4*IINC (theoretical value)
+	sharq	#8,r30		; 4*IINC (practical value)
+	sub	r26,r27		; I3-3*IINC
+	sub	r26,r30		; compare theoretical and practical value of 4*IINC
+	shrq	#24,r27		; check overflow
+	sharq	#2,r26		; restore IINC
+	or	r27,r30
+	movefa	r27,r28		; restore w
+	jr	eq,.gouraud_phrase_mode\~
 	movefa	r26,r27		; restore y|x1
 	moveq	#3,r29
 	movei	#\1-.render_polygon,r30
@@ -197,8 +191,8 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	shlq	#2,r29
 	add	r29,r30
 	jump	(r30)
-.good\~:
-	movefa	r27,r28		; restore w
+	shrq	#2,r29
+.gouraud_phrase_mode\~:	
 	.endm
 
 	.macro	begin_gouraud_pixel
