@@ -932,18 +932,18 @@ renderer:
 	moveq	#0,r27		; A2_PIXEL
 	add	r28,r30		; 1 | (w + x1 % 4)
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
-	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 	.if	ENABLE_TEXTURE_GOURAUD
 	btst	#GRDSHADING,r2
 	jr	ne,.texture_gouraud_shading
 	.endif
-	movefa	r22,r13					; get finish routine
+	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 .texture_flat_shading:
  	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF|BUSHIFLAG,r26
 	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
+	movefa	r22,r29					; get finish routine
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
-	jump	(r13)
+	jump	(r29)
  	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	.if	ENABLE_TEXTURE_GOURAUD
 .texture_gouraud_shading:
@@ -985,10 +985,11 @@ renderer:
 	bset	#XADDPIX_BIT,r27
 	wait_blitter_gpu	r15,r29
 	movefa	r25,r30					; restore B_COUNT (executed during wait loop)
+	movefa	r22,r29					; get finish routine
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	store	r28,(r15+((A2_PIXEL-A1_BASE)/4)) 	; A2_PIXEL
 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	jump	(r13)
+	jump	(r29)
 	store	r26,(r15+((B_CMD-A1_BASE)/4)) 		; B_CMD
 	.endif
 .texture_nozbuffer:
