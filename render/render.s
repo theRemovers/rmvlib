@@ -315,9 +315,11 @@ renderer:
 	moveta	r3,r18				; dest blitter flags (phrase mode)
 	moveq	#1,r20
 	moveq	#1,r21
+	moveq	#1,r22
 	shlq	#15,r20		; 1<<15 = 1/2 (half_one)
+	rorq	#1,r22		; $80000000 (we will copy sign)
 	shlq	#16,r21		; 1<<16 = 1 (one)
-	movei	#$ffff0000,r22	; mask to get integer part
+	sharq	#15,r22		; $ffff0000 (mask to get integer part)
 .render_one_polygon:
 	load	(r14+(POLY_FLAGS/4)),r2		; load flags and size
 	moveq	#VERTEX_SIZEOF,r8
