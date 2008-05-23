@@ -211,7 +211,7 @@ void build_display_strip_tree(display *d, qphrase *list) {
 /*   } */
 /* } */
 
-display *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
+display *new_custom_display(unsigned int max_nb_sprites, int strips[], int double_buffered) {
   display *d;
   int i;
 
@@ -219,10 +219,18 @@ display *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
     max_nb_sprites = DISPLAY_DFLT_MAX_SPRITE;
   }
   max_nb_sprites++; // for stop object
-  d = (display *)memalign(sizeof(qphrase),sizeof(display)+2*(DISPLAY_STRIP_TREE_SIZEOF+DISPLAY_NB_STRIPS*max_nb_sprites*sizeof(qphrase)));
+  if(double_buffered) {
+    d = (display *)memalign(sizeof(qphrase),sizeof(display)+2*(DISPLAY_STRIP_TREE_SIZEOF+DISPLAY_NB_STRIPS*max_nb_sprites*sizeof(qphrase)));
+  } else {
+    d = (display *)memalign(sizeof(qphrase),sizeof(display)+DISPLAY_STRIP_TREE_SIZEOF+DISPLAY_NB_STRIPS*max_nb_sprites*sizeof(qphrase));
+  }
 
   d->phys = d->op_list;
-  d->log = d->op_list + DISPLAY_STRIP_TREE_SIZEOF + DISPLAY_NB_STRIPS*max_nb_sprites;
+  if(double_buffered) {
+    d->log = d->op_list + DISPLAY_STRIP_TREE_SIZEOF + DISPLAY_NB_STRIPS*max_nb_sprites;
+  } else {
+    d->log = d->phys;
+  }
 
   d->x = 0;
   d->y = 0;
@@ -252,7 +260,9 @@ display *new_custom_display(unsigned int max_nb_sprites, int strips[]) {
   //
   
   build_display_strip_tree(d,d->phys);
-  build_display_strip_tree(d,d->log);
+  if(double_buffered) {
+    build_display_strip_tree(d,d->log);
+  }
 
   return d;
 }
@@ -267,5 +277,5 @@ display *new_display(unsigned int max_nb_sprites) {
     strips[i] = i * h_strip;
   } 
   strips[DISPLAY_NB_STRIPS] = y_max-y_min;
-  return new_custom_display(max_nb_sprites,strips);
+  return new_custom_display(max_nb_sprites,strips,1);
 }
