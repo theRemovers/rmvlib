@@ -313,8 +313,10 @@ renderer:
 	moveta	r2,r17				; dest base address
 	store	r10,(r15+((A2_BASE-A1_BASE)/4)) ; .renderer_buffer is A2_BASE
 	moveta	r3,r18				; dest blitter flags (phrase mode)
-	movei	#1<<15,r20	; 1/2
-	movei	#1<<16,r21	; 1
+	moveq	#1,r20
+	moveq	#1,r21
+	shlq	#15,r20		; 1<<15 = 1/2 (half_one)
+	shlq	#16,r21		; 1<<16 = 1 (one)
 	movei	#$ffff0000,r22	; mask to get integer part
 .render_one_polygon:
 	load	(r14+(POLY_FLAGS/4)),r2		; load flags and size

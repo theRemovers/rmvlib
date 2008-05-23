@@ -48,8 +48,8 @@ GPU_STACK_SIZE		equ	32	; in long words
 ; gpu_usp:	ds.l	GPU_STACK_SIZE
 ; GPU_ISP	equ	gpu_isp
 ; GPU_USP	equ	gpu_usp
-GPU_USP	equ	(G_ENDRAM-(4*GPU_STACK_SIZE))
-GPU_ISP	equ	(GPU_USP-(4*GPU_STACK_SIZE))
+GPU_ISP	equ	(G_ENDRAM-(4*GPU_STACK_SIZE))
+GPU_USP	equ	(GPU_ISP-(4*GPU_STACK_SIZE))
 			
 	.text
 	.68000
