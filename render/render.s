@@ -592,10 +592,15 @@ renderer:
 .ok_right_edge:
 	move	PC,r18
 	movei	#.loop_render-.render_polygon,r19
-	addq	#.do_scanlines-.ok_right_edge,r18 ; .do_scanlines
+	addq	#.next_scanline-.ok_right_edge,r18 ; .next_scanline
 	add	r0,r19		; relocate .loop_render
+	jr	.do_scanline
 	movefa	r16,r16		; render inner loop
-.do_scanlines:
+.next_scanline:
+	add	r10,r9		; lx += ldx
+	add	r21,r4		; y++
+	add	r12,r11		; rx += rdx
+.do_scanline:
 	cmp	r7,r4		; y < left_y
 	jump	pl,(r19)	; no -> .loop_render
 	cmp	r8,r4		; y < right_y
@@ -628,24 +633,28 @@ renderer:
 	jump	pl,(r1)		; if y >= h -> .render_next_polygon
 	.endif
 	sub	r27,r28		; x2-x1
-	jr	pl,.go_hline	; x2-x1 < 0 -> .skip_hline
-	addq	#1,r28		; w = x2-x1+1
-.skip_hline:
-	.if	TRIVIAL_CLIPPING
-	movei	#.skip_hline_clipping-.render_polygon,r30
-	add	r10,r9		; lx += ldx
-	add	r0,r30		; relocate .skip_hline_clipping
-	add	r12,r11		; rx += rdx
-	jump	(r30)
-	add	r21,r4		; y++
+	addqt	#1,r28		; w = x2-x1+1	
+	.if	!TRIVIAL_CLIPPING
+	jump	mi,(r18)	; x2-x1 < 0 -> .next_scanline
+	cmpq	#0,r2		; check flags
 	.else
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
+	jr	pl,.go_hline	; x2-x1 < 0 -> .skip_hline
+	cmpq	#0,r2		; check flags
+.skip_hline:
+	;; very inefficient clipping when y < 0
+	;; update i
+	movei	#.skip_hline_clipping-.render_polygon,r30
+	movefa	r0,r25		; i1
+	add	r0,r30
+	movefa	r2,r26		; i2
+	sat24	r25
+	sat24	r26
+	movefa	r1,r27		; di1
+	jump	(r30)
+	movefa	r3,r28		; di2
 	.endif
 .go_hline:
-	cmpq	#0,r2		; check flags
+*	cmpq	#0,r2		; check flags
 	jump	eq,(r16)	; if flat rendering, then skip computation of 1/dx and frac
 	or	r4,r27		; y|x1
 	move	r11,r29		; rx
@@ -671,13 +680,7 @@ renderer:
 	.if	TRIVIAL_CLIPPING
 .skip_hline_clipping:
 	;; very inefficient clipping when y < 0
-	;; update i
-	movefa	r0,r25		; i1
-	movefa	r2,r26		; i2
-	sat24	r25
-	sat24	r26
-	movefa	r1,r27		; di1
-	movefa	r3,r28		; di2
+	;; finish to update i 
 	add	r25,r27
 	add	r26,r28
 	moveta	r27,r0		; i1'
@@ -708,9 +711,7 @@ renderer:
 	add	r25,r27
 	add	r26,r28
 	moveta	r27,r10		; v1'
-; 	moveta	r28,r14		; v2'
-	;; 
-	jump	(r18)		; -> .do_scanlines
+	jump	(r18)		; -> .next_scanline
 	moveta	r28,r14		; v2'
 	.endif
 	;; next polygon
@@ -739,12 +740,9 @@ renderer:
  	movei	#PATDSEL|BUSHIFLAG,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	jump	(r18)					; -> .next_scanline
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
 .gouraud_shading:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
@@ -783,12 +781,9 @@ renderer:
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	jump	(r18)					; -> .next_scanline
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
 .flat_zbuffer:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
@@ -807,12 +802,9 @@ renderer:
  	movei	#PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND|BUSHIFLAG,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	jump	(r18)					; -> .next_scanline
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
 .gouraud_zbuffer:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
@@ -873,13 +865,10 @@ renderer:
  	movei	#PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND|BUSHIFLAG,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
-	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS 
+	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	jump	(r18)					; -> .next_scanline
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
 .texture_mapping:
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
@@ -1016,12 +1005,9 @@ renderer:
 	store	r28,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
 	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+	jump	(r18)					; -> .next_scanline
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
 .texture_zbuffer:
 	;; compute z
 	compute_z
@@ -1049,12 +1035,9 @@ renderer:
 	store	r28,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
 	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+	jump	(r18)					; -> .next_scanline
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
-	add	r10,r9		; lx += ldx
-	add	r12,r11		; rx += rdx
-	jump	(r18)		; -> .do_scanlines
-	add	r21,r4		; y++
 .render_incrementalize:
 	;; input
 	;; r23 = 1/dw
