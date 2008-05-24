@@ -28,8 +28,6 @@ XADDINC_BIT	equ	17
 	
 OPT_FLAT	equ	1
 
-BUSHIFLAG	equ	0
-	
 	;; 1/z condition
 ZCOND	equ	ZMODELT|ZMODEEQ	
 
@@ -774,7 +772,7 @@ renderer:
 	;; r28: w (almost width)
 	wait_blitter_gpu	r15,r29
 	or	r21,r28					; 1|w	(executed during wait loop)
- 	movei	#PATDSEL|BUSHIFLAG,r29
+ 	movei	#PATDSEL,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	jump	(r18)					; -> .next_scanline
@@ -814,7 +812,7 @@ renderer:
 	subq	#32,r15
 	store	r26,(r15+((B_IINC-A1_BASE)/4)) 		; B_IINC
 	;; 
-	movei	#PATDSEL|GOURD|BUSHIFLAG,r29
+	movei	#PATDSEL|GOURD,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
@@ -836,7 +834,7 @@ renderer:
 	set_z_phrase
 	subq	#32,r15
 	;; 
- 	movei	#PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND|BUSHIFLAG,r29
+ 	movei	#PATDSEL|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	jump	(r18)					; -> .next_scanline
@@ -899,7 +897,7 @@ renderer:
 	subq	#32,r15
 	store	r26,(r15+((B_IINC-A1_BASE)/4))		; B_IINC	
 	;;
- 	movei	#PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND|BUSHIFLAG,r29
+ 	movei	#PATDSEL|GOURD|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
@@ -968,7 +966,7 @@ renderer:
 	.endif
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 .texture_flat_shading:
- 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF|BUSHIFLAG,r26
+ 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
 	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	movefa	r22,r29					; get finish routine
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
@@ -1005,11 +1003,11 @@ renderer:
 	subq	#32,r15
 	store	r26,(r15+((B_IINC-A1_BASE)/4)) 		; B_IINC
 	;; 
-	movei	#PATDSEL|DSTA2|GOURD|BUSHIFLAG,r28
+	movei	#PATDSEL|DSTA2|GOURD,r28
 	store	r30,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
  	store	r28,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;;
-	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL|BUSHIFLAG,r26
+	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26
 	move	r30,r27					; GPU buffer flags
 	moveq	#0,r28
 	bset	#XADDPIX_BIT,r27
@@ -1028,7 +1026,7 @@ renderer:
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
 	;;
- 	movei	#SRCEN|LFU_REPLACE|BUSHIFLAG,r29
+ 	movei	#SRCEN|LFU_REPLACE,r29
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	and	r27,r25
@@ -1058,7 +1056,7 @@ renderer:
 	set_z_phrase	
 	subq	#32,r15
 	;;
- 	movei	#SRCEN|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND|BUSHIFLAG,r29	
+ 	movei	#SRCEN|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29	
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	and	r27,r25
