@@ -64,11 +64,13 @@ void *init_renderer(/** Address where to load the GPU routine. It
 /** Asynchronous rendering. Of course the blitter is not available for
     other tasks since it is drawing polygons. */
 void render_polygon_list_and_wait(screen *target,
-				  polygon *p);
+				  polygon *p,
+				  int clear_flags);
 
 /** Synchronous rendering. */
 void render_polygon_list(screen *target,
-			 polygon *p);
+			 polygon *p,
+			 int clear_flags);
 
 /** Wait completion of the renderer. */
 void wait_renderer_completion();
@@ -78,5 +80,10 @@ void wait_renderer_completion();
 #define GRDSHADING 0x1
 #define ZBUFFERING 0x2
 #define TXTMAPPING 0x4
+
+/** Clear flags can be one of these */
+#define NO_CLR_SCREEN 0x0
+#define CLR_SCREEN 0x1
+#define CLR_Z_SCREEN 0x2
 
 #endif

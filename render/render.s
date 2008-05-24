@@ -21,7 +21,8 @@
 
 NB_PARAMS	equ	3
 
-SRCENX_BIT	equ	2
+DSTWRZ_BIT	equ	5
+	
 XADDPIX_BIT	equ	16
 XADDINC_BIT	equ	17
 	
@@ -35,6 +36,9 @@ ZCOND	equ	ZMODELT|ZMODEEQ
 	;; size of buffer in GPU ram
 WIDBUFFER	equ	WID320
 
+	;; clear screen
+ENABLE_CLR_SCREEN	equ	1
+	
 	;; inefficient clipping
 TRIVIAL_CLIPPING	equ	1
 
@@ -305,14 +309,47 @@ renderer:
 	load	(r1),r14	; polygon list (not null)
 	load	(r15+(SCREEN_DATA/4)),r2	; screen address
 	load	(r15+(SCREEN_FLAGS/4)),r3 	; flags
-	.if	TRIVIAL_CLIPPING
+	.if	TRIVIAL_CLIPPING|ENABLE_CLR_SCREEN
 	load	(r15+(SCREEN_H/4)),r4	  	; size of screen (trivial clipping)
+	.endif
+	.if	TRIVIAL_CLIPPING
 	moveta	r4,r23
 	.endif
 	movei	#A1_BASE,r15
 	moveta	r2,r17				; dest base address
 	store	r10,(r15+((A2_BASE-A1_BASE)/4)) ; .renderer_buffer is A2_BASE
 	moveta	r3,r18				; dest blitter flags (phrase mode)
+	.if	ENABLE_CLR_SCREEN
+.chk_clr:
+	moveq	#0,r6				; to clear B_PATD, ...
+	shrq	#1,r14
+	store	r6,(r15+((A1_CLIP-A1_BASE)/4))	; A1_CLIP workaround
+	movei	#PATDSEL|UPDA1,r7
+	jr	cs,.clr_screen
+	shrq	#1,r14
+	jr	cc,.clr_done
+	bset	#DSTWRZ_BIT,r7
+.clr_z_screen:
+	;; clear Z-buffered screen
+	store	r6,(r15+((B_SRCZ1-A1_BASE)/4)) ; clear source Z1
+	store	r6,(r15+((B_SRCZ1+4-A1_BASE)/4)) ; clear source Z1	
+.clr_screen:
+	;; clear screen
+	store	r4,(r15+((B_COUNT-A1_BASE)/4))	; B_COUNT
+	shlq	#16,r4				; W|0
+	store	r6,(r15+((B_PATD-A1_BASE)/4))	; clear color
+	neg	r4
+	store	r6,(r15+((B_PATD+4-A1_BASE)/4)) ; clear color
+	shrq	#16,r4
+	store	r6,(r15+((A1_PIXEL-A1_BASE)/4)) ; A1_PIXEL
+	bset	#16,r4
+	store	r3,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
+	store	r2,(r15+((A1_BASE-A1_BASE)/4))	; A1_BASE
+	store	r4,(r15+((A1_STEP-A1_BASE)/4)) 	; A1_STEP
+	store	r7,(r15+((B_CMD-A1_BASE)/4))   	; B_CMD
+.clr_done:
+	shlq	#2,r14
+	.endif
 	moveq	#1,r20
 	moveq	#1,r21
 	moveq	#1,r22
@@ -1111,12 +1148,16 @@ _init_renderer:
 	rts
 
 	.globl	_render_polygon_list_and_wait
-;;; void render_polygon_list_and_wait(screen *target, polygon *p)
+;;; void render_polygon_list_and_wait(screen *target, polygon *p, int clear_flags)
 _render_polygon_list_and_wait:
 	move.l	renderer_gpu_address,a0
 	lea	RENDERER_PARAMS(a0),a1
 	move.l	4(sp),(a1)+
-	move.l	8(sp),(a1)+
+	move.l	8(sp),d0
+	move.l	12(sp),d1
+	and.b	#%11,d1
+	or.b	d1,d0
+	move.l	d0,(a1)+
 	move.l	#$80000000,(a1)
 	lea	RENDERER_RENDER(a0),a1
 	jsr_gpu	a1
@@ -1128,12 +1169,16 @@ _render_polygon_list_and_wait:
 	rts
 	
 	.globl	_render_polygon_list
-;;; void render_polygon_list(screen *target, polygon *p)
+;;; void render_polygon_list(screen *target, polygon *p, int clear_flags)
 _render_polygon_list:
 	move.l	renderer_gpu_address,a0
 	lea	RENDERER_PARAMS(a0),a1
 	move.l	4(sp),(a1)+
-	move.l	8(sp),(a1)+
+	move.l	8(sp),d0
+	move.l	12(sp),d1
+	and.b	#%11,d1
+	or.b	d1,d0
+	move.l	d0,(a1)+
 	move.l	#$80000000,(a1)
 	lea	RENDERER_RENDER(a0),a1
 	jsr_gpu	a1
