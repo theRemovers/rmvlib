@@ -40,3 +40,7 @@
 	phrase mode of the blitter and if it cannot, it uses pixel mode
 	instead. This should solve several issues due to limitation of
 	phrase mode that was always used before this fix.
+
+1.2.5
+-----
+	Added "clear screen" option to the renderer.
