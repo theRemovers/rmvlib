@@ -310,10 +310,10 @@ renderer:
 	load	(r15+(SCREEN_DATA/4)),r2	; screen address
 	load	(r15+(SCREEN_FLAGS/4)),r3 	; flags
 	.if	TRIVIAL_CLIPPING|ENABLE_CLR_SCREEN
-	load	(r15+(SCREEN_H/4)),r4	  	; size of screen (trivial clipping)
+	load	(r15+(SCREEN_H/4)),r4	  	; size of screen 
 	.endif
 	.if	TRIVIAL_CLIPPING
-	moveta	r4,r23
+	moveta	r4,r23				; save size for trivial clipping
 	.endif
 	movei	#A1_BASE,r15
 	moveta	r2,r17				; dest base address
@@ -322,33 +322,33 @@ renderer:
 	.if	ENABLE_CLR_SCREEN
 .chk_clr:
 	moveq	#0,r6				; to clear B_PATD, ...
-	shrq	#1,r14
+	shrq	#1,r14				; test bit 0
 	store	r6,(r15+((A1_CLIP-A1_BASE)/4))	; A1_CLIP workaround
 	movei	#PATDSEL|UPDA1,r7
-	jr	cs,.clr_screen
-	shrq	#1,r14
-	jr	cc,.clr_done
-	bset	#DSTWRZ_BIT,r7
+	jr	cs,.clr_screen			; if bit 0 set then clear
+	shrq	#1,r14				; test bit 1
+	jr	cc,.clr_done			; if bit 1 clear then nothing
+	bset	#DSTWRZ_BIT,r7			; else clear also Z
 .clr_z_screen:
 	;; clear Z-buffered screen
-	store	r6,(r15+((B_SRCZ1-A1_BASE)/4)) ; clear source Z1
-	store	r6,(r15+((B_SRCZ1+4-A1_BASE)/4)) ; clear source Z1	
+	store	r6,(r15+((B_SRCZ1-A1_BASE)/4)) 		; clear SRCZ1
+	store	r6,(r15+((B_SRCZ1+4-A1_BASE)/4))	; clear SRCZ1
 .clr_screen:
 	;; clear screen
 	store	r4,(r15+((B_COUNT-A1_BASE)/4))	; B_COUNT
-	shlq	#16,r4				; W|0
-	store	r6,(r15+((B_PATD-A1_BASE)/4))	; clear color
-	neg	r4
-	store	r6,(r15+((B_PATD+4-A1_BASE)/4)) ; clear color
-	shrq	#16,r4
+	shlq	#16,r4				; W<<16
+	store	r6,(r15+((B_PATD-A1_BASE)/4))	; clear B_PATD
+	neg	r4				; -(W<<16) 
+	store	r6,(r15+((B_PATD+4-A1_BASE)/4)) ; clear B_PATD
+	shrq	#16,r4				; -W
 	store	r6,(r15+((A1_PIXEL-A1_BASE)/4)) ; A1_PIXEL
-	bset	#16,r4
+	bset	#16,r4				; 1|-W
 	store	r3,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	store	r2,(r15+((A1_BASE-A1_BASE)/4))	; A1_BASE
 	store	r4,(r15+((A1_STEP-A1_BASE)/4)) 	; A1_STEP
 	store	r7,(r15+((B_CMD-A1_BASE)/4))   	; B_CMD
 .clr_done:
-	shlq	#2,r14
+	shlq	#2,r14				; on a long boundary
 	.endif
 	moveq	#1,r20
 	moveq	#1,r21
