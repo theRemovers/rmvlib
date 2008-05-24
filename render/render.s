@@ -749,24 +749,6 @@ renderer:
 	jump	(r18)		; -> .next_scanline
 	moveta	r28,r14		; v2'
 	.endif
-	;; next polygon
-.render_next_polygon:
-	subq	#POLY_VERTICES,r14
-	movei	#.render_one_polygon-.render_polygon,r1
-	load	(r14),r14
-	add	r0,r1		; relocate .render_one_polygon
-	cmpq	#0,r14
-	jump	ne,(r1)
-	nop
-	;; done
-	;; return from sub routine and clear mutex
-	movei	#.renderer_params+8-.render_polygon,r1
-	moveq	#0,r2
-	add	r0,r1		; relocate .renderer_params+8
-	load	(r31),r0	; return address
-	addq	#4,r31		; restore stack
-	jump	(r0)		; return
-	store	r2,(r1)		; clear mutex
 .flat_shading:
 	;; r27: y|x1 (start of blit)
 	;; r28: w (almost width)
@@ -1103,6 +1085,25 @@ renderer:
 	dc.l	.texture_zbuffer-.render_polygon
 	;; texture + gouraud + z
 	dc.l	.texture_zbuffer-.render_polygon
+	;; next polygon
+.render_next_polygon:
+	subq	#POLY_VERTICES,r14
+	movei	#.render_one_polygon-.render_polygon,r1
+	load	(r14),r14
+	add	r0,r1		; relocate .render_one_polygon
+	cmpq	#0,r14
+	jump	ne,(r1)
+	nop
+	;; done
+	;; return from sub routine and clear mutex
+.renderer_return:
+	move	PC,r1
+	moveq	#0,r2
+	addq	#.renderer_params+8-.renderer_return,r1 ; .renderer_params+8
+	load	(r31),r0	; return address
+	addq	#4,r31		; restore stack
+	jump	(r0)		; return
+	store	r2,(r1)		; clear mutex
 	.long
 .renderer_params:
 	.rept	NB_PARAMS
