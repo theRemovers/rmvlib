@@ -172,7 +172,7 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	;; check whether 4*IINC fits in 24 bits
 	;; and whether sat24 is needed or not
 	;; \1 is blitter dest flags register (phrase mode)
-	;; if \2 then fix also frac value else no
+	;; if \2 then fix according to x1 else assume 0
 	;; \3, \4, \5: temporary registers
 	move	r26,\3		; copy IINC
 	move	r25,\4		; copy I3
@@ -190,6 +190,7 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	jr	eq,.phrase_mode\~
 	moveq	#3,\5
 .pixel_mode\~:
+	.if	\2
 	move	PC,\3
 	bset	#XADDPIX_BIT,\1	; set pixel mode
 	addq	#.fix_mode\~-.pixel_mode\~,\3
@@ -199,12 +200,9 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	add	\4,\3
 	shlq	#16,\5
 	jump	(\3)
-	.if	\2
-	.print	"Fixing frac value"
 	sub	\5,r24		; fix frac
 	.else
-	.print	"Frac value has not been fixed"
-	nop
+	bset	#XADDPIX_BIT,\1	; set pixel mode
 	.endif
 .fix_mode\~:
 	sub	r26,r25		; x1 % 4 = 0
@@ -768,7 +766,7 @@ renderer:
 	compute_i
 	;;
 	movefa	r18,r13		; get blitter flags
-	fix_gouraud_mode	r13,0,r27,r28,r29
+	fix_gouraud_mode	r13,1,r27,r28,r29 ; fix according to x1
 	movefa	r26,r27		; restore y|x1
 	movefa	r27,r28		; restore w
 	;; 
@@ -830,7 +828,7 @@ renderer:
 	compute_i
 	;;
 	movefa	r18,r13		; get blitter flags
-	fix_gouraud_mode	r13,1,r27,r28,r29 	; fix also frac
+	fix_gouraud_mode	r13,1,r27,r28,r29 	; fix according to x1
 	;;
 	moveta	r25,r24		; save i
 	moveta	r26,r25		; save di
@@ -964,7 +962,7 @@ renderer:
 	compute_i
 	;; 
 	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
-	fix_gouraud_mode	r27,0,r28,r29,r30
+	fix_gouraud_mode	r27,0,r28,r29,r30	; do not use x1 to fix value
 	;; set intensities
 	btst	#XADDPIX_BIT,r27
 	addqt	#32,r15
