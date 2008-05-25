@@ -171,36 +171,37 @@ ENABLE_TEXTURE_GOURAUD	equ	1
 	.macro	fix_gouraud_mode
 	;; check whether 4*IINC fits in 24 bits
 	;; and whether sat24 is needed or not
-	;; if \1 then fix also frac value else no
-	;; \2 is blitter dest flags register (phrase mode)
-	move	r26,r29		; copy IINC
-	move	r25,r27		; copy I3
-	shlq	#10,r29		; check overflow of 4*IINC
-	add	r26,r27		; I3+IINC
+	;; \1 is blitter dest flags register (phrase mode)
+	;; if \2 then fix also frac value else no
+	;; \3, \4, \5: temporary registers
+	move	r26,\3		; copy IINC
+	move	r25,\4		; copy I3
+	shlq	#10,\3		; check overflow of 4*IINC
+	add	r26,\4		; I3+IINC
 	shlq	#2,r26		; 4*IINC (theoretical value)
-	sharq	#8,r29		; 4*IINC (practical value)
-	sub	r26,r27		; I3-3*IINC
-	sub	r26,r29		; compare theoretical and practical value of 4*IINC
-	or	r25,r27		; (I3-3*IINC) | I3
-	shrq	#24,r27		; check overflow in top 8 bits
+	sharq	#8,\3		; 4*IINC (practical value)
+	sub	r26,\4		; I3-3*IINC
+	sub	r26,\3		; compare theoretical and practical value of 4*IINC
+	or	r25,\4		; (I3-3*IINC) | I3
+	shrq	#24,\4		; check overflow in top 8 bits
 	sharq	#2,r26		; restore IINC
-	or	r27,r29
-	movefa	r26,r27		; get y|x1
+	or	\4,\3
+	movefa	r26,\4		; get y|x1
 	jr	eq,.phrase_mode\~
-	moveq	#3,r28
+	moveq	#3,\5
 .pixel_mode\~:
-	move	PC,r29
-	bset	#XADDPIX_BIT,\2	; set pixel mode
-	addq	#.fix_mode\~-.pixel_mode\~,r29
-	and	r28,r27		; x1 % 4
-	add	r27,r29
-	sub	r27,r28		; (3 - x1) % 4
-	add	r27,r29
-	shlq	#16,r28
-	jump	(r29)
-	.if	\1
+	move	PC,\3
+	bset	#XADDPIX_BIT,\1	; set pixel mode
+	addq	#.fix_mode\~-.pixel_mode\~,\3
+	and	\5,\4		; x1 % 4
+	add	\4,\3
+	sub	\4,\5		; (3 - x1) % 4
+	add	\4,\3
+	shlq	#16,\5
+	jump	(\3)
+	.if	\2
 	.print	"Fixing frac value"
-	sub	r28,r24		; fix frac
+	sub	\5,r24		; fix frac
 	.else
 	.print	"Frac value has not been fixed"
 	nop
@@ -767,7 +768,7 @@ renderer:
 	compute_i
 	;;
 	movefa	r18,r13		; get blitter flags
-	fix_gouraud_mode	0,r13
+	fix_gouraud_mode	r13,0,r27,r28,r29
 	movefa	r26,r27		; restore y|x1
 	movefa	r27,r28		; restore w
 	;; 
@@ -829,7 +830,7 @@ renderer:
 	compute_i
 	;;
 	movefa	r18,r13		; get blitter flags
-	fix_gouraud_mode	1,r13 	; fix also frac
+	fix_gouraud_mode	r13,1,r27,r28,r29 	; fix also frac
 	;;
 	moveta	r25,r24		; save i
 	moveta	r26,r25		; save di
@@ -962,10 +963,10 @@ renderer:
 	;; compute i
 	compute_i
 	;; 
-	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r30	; GPU buffer flags
-	fix_gouraud_mode	0,r30
+	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
+	fix_gouraud_mode	r27,0,r28,r29,r30
 	;; set intensities
-	btst	#XADDPIX_BIT,r30
+	btst	#XADDPIX_BIT,r27
 	addqt	#32,r15
 	jr	eq,.texture_gouraud_phrase_mode
 	store	r25,(r15+((B_I3-(A1_BASE+32))/4)) ; B_I3
@@ -986,11 +987,10 @@ renderer:
 	store	r26,(r15+((B_IINC-A1_BASE)/4)) 		; B_IINC
 	;; 
 	movei	#PATDSEL|DSTA2|GOURD,r28
-	store	r30,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
+	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
  	store	r28,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;;
 	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26
-	move	r30,r27					; GPU buffer flags
 	moveq	#0,r28
 	bset	#XADDPIX_BIT,r27
 	wait_blitter_gpu	r15,r29
