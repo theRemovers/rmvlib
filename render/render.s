@@ -740,7 +740,9 @@ renderer:
 	jump	(r18)		; -> .next_scanline
 	moveta	r28,r14		; v2'
 	.endif
+	;; 
 .flat_shading:
+	;; Flat
 	;; r27: y|x1 (start of blit)
 	;; r28: w (almost width)
 	wait_blitter_gpu	r15,r29
@@ -752,6 +754,7 @@ renderer:
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 .gouraud_shading:
+	;; Gouraud
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
 	;; compute i
@@ -793,6 +796,7 @@ renderer:
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 .flat_zbuffer:
+	;; FLat with Z-buffer
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
 	;; compute z
@@ -814,6 +818,7 @@ renderer:
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 .gouraud_zbuffer:
+	;; Gouraud with Z-buffer
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
 	;; compute i
@@ -878,6 +883,7 @@ renderer:
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 .texture_mapping:
+	;; Texture mapping
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
 	;; compute u & v
