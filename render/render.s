@@ -40,9 +40,6 @@ ENABLE_CLR_SCREEN	equ	1
 	;; inefficient clipping
 TRIVIAL_CLIPPING	equ	1
 
-	;; this finally works!
-ENABLE_TEXTURE_GOURAUD	equ	1
-	
 	.include	"../risc.s"
 	
 	.include	"../routine.s"
@@ -429,16 +426,11 @@ renderer:
 	moveta	r27,r19				; save texture base address
 	shrq	#8,r9				; intensity increment
 	moveta	r26,r21				; save texture window
- 	.if	ENABLE_TEXTURE_GOURAUD
 	moveq	#0,r10				; no color
 	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
 	store	r10,(r15+((B_PATD-A1_BASE)/4))	; set color for gouraud shading
 	jr	.loop_render
 	store	r10,(r15+((B_PATD+4-A1_BASE)/4)); set color for gouraud shading
-	.else
-	jr	.loop_render
-	store	r9,(r15+((B_IINC-A1_BASE)/4))	; flat source shading increment
-	.endif
 .phrase_mode:
 	shlq	#16,r9
 	movefa	r17,r29				; dest base address
@@ -941,12 +933,11 @@ renderer:
 	moveq	#0,r27		; A2_PIXEL
 	add	r28,r30		; 1 | (w + x1 % 4)
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
-	.if	ENABLE_TEXTURE_GOURAUD
 	btst	#GRDSHADING,r2
 	jr	ne,.texture_gouraud_shading
-	.endif
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 .texture_flat_shading:
+	;; Texture flat shading
  	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
 	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	movefa	r22,r29					; get finish routine
@@ -954,8 +945,9 @@ renderer:
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	jump	(r29)
  	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
-	.if	ENABLE_TEXTURE_GOURAUD
+	;; 
 .texture_gouraud_shading:
+	;; Texture Gouraud shading
 	moveta	r30,r25					; save (modified) B_COUNT
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	;; compute i
@@ -999,8 +991,9 @@ renderer:
 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	jump	(r29)
 	store	r26,(r15+((B_CMD-A1_BASE)/4)) 		; B_CMD
-	.endif
+	;; 
 .texture_nozbuffer:
+	;; Texture without Z-buffer
 	movefa	r26,r27		; restore y|x1
 	movefa	r27,r28		; restore w
 	wait_blitter_gpu	r15,r29
@@ -1024,6 +1017,7 @@ renderer:
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 .texture_zbuffer:
+	;; Texture with Z-buffer
 	;; compute z
 	compute_z
 	;;
