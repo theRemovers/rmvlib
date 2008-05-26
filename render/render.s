@@ -1005,16 +1005,19 @@ renderer:
 	wait_blitter_gpu	r15,r29
  	or	r21,r28		; 1|w (executed during wait loop)
 	;;
- 	movei	#SRCEN|LFU_REPLACE,r29
+ 	movei	#SRCENX|SRCEN|LFU_REPLACE,r29 			; ** SRCENX **
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	and	r27,r25
 	moveq	#0,r27
+	subq	#4,r25						; ** stupid workaround **
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	shlq	#16,r25						; ** to force the blitter **
 	movefa	r17,r28					; destination base address
+	shrq	#16,r25						; ** read the previous phrase **
+	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
 	store	r25,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	movefa	r18,r25					; destination blitter flags
-	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
 	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r28,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
 	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
@@ -1036,16 +1039,19 @@ renderer:
 	set_z_phrase	
 	subq	#32,r15
 	;;
- 	movei	#SRCEN|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29	
+ 	movei	#SRCENX|SRCEN|LFU_REPLACE|ZBUFF|DSTEN|DSTENZ|DSTWRZ|ZCOND,r29	; ** SRCENX **
 	moveq	#3,r25
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
 	and	r27,r25
 	moveq	#0,r27
+	subq	#4,r25						; ** stupid workaround **
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	shlq	#16,r25						; ** to force the blitter **
 	movefa	r17,r28					; destination base address
+	shrq	#16,r25						; ** read the previous phrase **
+	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
 	store	r25,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	movefa	r18,r25					; destination blitter flags
-	store	r27,(r15+((A1_CLIP-A1_BASE)/4))		; A1_CLIP workaround
 	movei	#XADDPHR|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r28,(r15+((A1_BASE-A1_BASE)/4))		; A1_BASE
 	store	r25,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
