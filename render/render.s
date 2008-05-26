@@ -796,7 +796,7 @@ renderer:
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 .flat_zbuffer:
-	;; FLat with Z-buffer
+	;; Flat with Z-buffer
 	moveta	r28,r27		; save w
 	moveta	r27,r26		; save y|x1
 	;; compute z
