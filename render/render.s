@@ -944,7 +944,8 @@ renderer:
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 .texture_flat_shading:
 	;; Texture flat shading
- 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+* 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
+ 	movei	#SRCEN|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26	
 	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	movefa	r22,r29					; get finish routine
  	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
@@ -986,7 +987,8 @@ renderer:
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
  	store	r28,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;;
-	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26
+*	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26
+	movei	#SRCEN|DSTA2|DSTEN|ADDDSEL,r26
 	moveq	#0,r28
 	bset	#XADDPIX_BIT,r27
 	wait_blitter_gpu	r15,r29
