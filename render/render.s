@@ -28,8 +28,6 @@ SRCSHADE_BIT	equ	30
 XADDPIX_BIT	equ	16
 XADDINC_BIT	equ	17
 
-
-	
 OPT_FLAT	equ	1
 
 	;; 1/z condition
@@ -412,6 +410,7 @@ renderer:
 	jump	eq,(r10)	; -> .phrase_mode
 	move	r4,r8		; right_y
 .pixel_mode:
+	;; r13 will be blit_cmd 
 	movefa	r16,r10				; texture mapping finish routine
 	movei	#.texture_mapping-.render_polygon,r11
 	load	(r13),r13			; read texture screen address
@@ -426,7 +425,20 @@ renderer:
 	addq	#SCREEN_DATA-SCREEN_H,r13
 	bset	#XADDINC_BIT,r25		; set increment mode
 	load	(r13),r27			; texture base address
+	btst	#GRDSHADING,r2
+	movei	#SRCEN|LFU_REPLACE|DSTA2,r13
+	jr	ne,.set_cmd_gouraud
 	moveta	r25,r20				; save texture flags
+.set_cmd_flat:
+	btst	#FLTMAPPING,r2
+	jr	eq,.set_cmd_ok
+	nop
+	bset	#SRCSHADE_BIT,r13
+	jr	.set_cmd_ok
+	bset	#ZBUFF_BIT,r13
+.set_cmd_gouraud:
+	movei	#SRCEN|DSTA2|DSTEN|ADDDSEL,r13
+.set_cmd_ok:
 	moveta	r27,r19				; save texture base address
 	shrq	#8,r9				; intensity increment
 	moveta	r26,r21				; save texture window
@@ -953,18 +965,11 @@ renderer:
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 .texture_flat_shading:
 	;; Texture flat shading
-* 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
-	btst	#FLTMAPPING,r2
- 	movei	#SRCEN|LFU_REPLACE|DSTA2,r26
-	jr	eq,.texture_no_shading
 	movefa	r22,r29					; get finish routine
-	bset	#SRCSHADE_BIT,r26
-	bset	#ZBUFF_BIT,r26
-.texture_no_shading:
 	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	jump	(r29)
- 	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
+ 	store	r13,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;; 
 .texture_gouraud_shading:
 	;; Texture Gouraud shading
@@ -999,8 +1004,6 @@ renderer:
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
  	store	r28,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
 	;;
-*	movei	#SRCEN|CLIP_A1|DSTA2|DSTEN|ADDDSEL,r26
-	movei	#SRCEN|DSTA2|DSTEN|ADDDSEL,r26
 	moveq	#0,r28
 	bset	#XADDPIX_BIT,r27
 	wait_blitter_gpu	r15,r29
@@ -1010,7 +1013,7 @@ renderer:
 	store	r28,(r15+((A2_PIXEL-A1_BASE)/4)) 	; A2_PIXEL
 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	jump	(r29)
-	store	r26,(r15+((B_CMD-A1_BASE)/4)) 		; B_CMD
+	store	r13,(r15+((B_CMD-A1_BASE)/4)) 		; B_CMD
 	;; 
 .texture_nozbuffer:
 	;; Texture without Z-buffer
