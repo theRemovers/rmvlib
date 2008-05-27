@@ -628,11 +628,11 @@ renderer:
 	add	r12,r11		; rx += rdx
 .do_scanline:
 	cmp	r7,r4		; y < left_y
+	move	r9,r27		; lx
 	jump	pl,(r19)	; no -> .loop_render
 	cmp	r8,r4		; y < right_y
-	jump	pl,(r19)	; no -> .loop_render
-	move	r9,r27		; lx
 	move	r11,r28		; rx
+	jump	pl,(r19)	; no -> .loop_render
 	add	r20,r27		; lx+1/2
 	sub	r20,r28		; rx-1/2
 	subq	#1,r27		; lx+1/2-1/65536
@@ -662,10 +662,10 @@ renderer:
 	addqt	#1,r28		; w = x2-x1+1	
 	.if	!TRIVIAL_CLIPPING
 	jump	mi,(r18)	; x2-x1 < 0 -> .next_scanline
-	cmpq	#0,r2		; check flags
+	cmpq	#0,r2		; check flags (instead of nop)
 	.else
 	jr	pl,.go_hline	; x2-x1 < 0 -> .skip_hline
-	cmpq	#0,r2		; check flags
+	cmpq	#0,r2		; check flags (instead of nop)
 .skip_hline:
 	;; very inefficient clipping when y < 0
 	;; update i
@@ -680,7 +680,7 @@ renderer:
 	movefa	r3,r28		; di2
 	.endif
 .go_hline:
-*	cmpq	#0,r2		; check flags
+*	cmpq	#0,r2		; check flags (done above)
 	jump	eq,(r16)	; if flat rendering, then skip computation of 1/dx and frac
 	or	r4,r27		; y|x1
 	move	r11,r29		; rx
