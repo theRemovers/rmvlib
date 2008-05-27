@@ -81,6 +81,9 @@ void wait_renderer_completion();
 #define ZBUFFERING 0x2
 #define TXTMAPPING 0x4
 
+/** Modifier to activate flat shading when texturing */
+#define FLTMAPPING 0x8
+
 /** Clear flags can be one of these */
 #define NO_CLR_SCREEN 0x0
 #define CLR_SCREEN 0x1

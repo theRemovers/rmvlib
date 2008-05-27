@@ -22,9 +22,13 @@
 NB_PARAMS	equ	3
 
 DSTWRZ_BIT	equ	5
-	
+ZBUFF_BIT	equ	13
+SRCSHADE_BIT	equ	30
+
 XADDPIX_BIT	equ	16
 XADDINC_BIT	equ	17
+
+
 	
 OPT_FLAT	equ	1
 
@@ -944,15 +948,20 @@ renderer:
 	add	r28,r30		; 1 | (w + x1 % 4)
 	store	r27,(r15+((A2_PIXEL-A1_BASE)/4))	; A2_PIXEL
 	btst	#GRDSHADING,r2
+ 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	jr	ne,.texture_gouraud_shading
 	bclr	#0,r30		; 1 | (w + x1 % 4) [even width]
 .texture_flat_shading:
 	;; Texture flat shading
 * 	movei	#SRCEN|CLIP_A1|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26
- 	movei	#SRCEN|LFU_REPLACE|DSTA2|SRCSHADE|ZBUFF,r26	
-	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
+	btst	#FLTMAPPING,r2
+ 	movei	#SRCEN|LFU_REPLACE|DSTA2,r26
+	jr	eq,.texture_no_shading
 	movefa	r22,r29					; get finish routine
- 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
+	bset	#SRCSHADE_BIT,r26
+	bset	#ZBUFF_BIT,r26
+.texture_no_shading:
+	movei	#XADDPIX|WIDBUFFER|PIXEL16|PITCH1,r27	; GPU buffer flags
 	store	r27,(r15+((A2_FLAGS-A1_BASE)/4))	; A2_FLAGS
 	jump	(r29)
  	store	r26,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
@@ -960,7 +969,6 @@ renderer:
 .texture_gouraud_shading:
 	;; Texture Gouraud shading
 	moveta	r30,r25					; save (modified) B_COUNT
- 	store	r30,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	;; compute i
 	compute_i
 	;; 
