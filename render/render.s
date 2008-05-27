@@ -747,8 +747,10 @@ renderer:
 	;; r28: w (almost width)
 	wait_blitter_gpu	r15,r29
 	or	r21,r28					; 1|w	(executed during wait loop)
- 	movei	#PATDSEL,r29
+* 	movei	#PATDSEL,r29
+	moveq	#PATDSEL>>16,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
+	shlq	#16,r29
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	jump	(r18)					; -> .next_scanline
 	store	r29,(r15+((B_CMD-A1_BASE)/4))		; B_CMD
@@ -788,8 +790,10 @@ renderer:
 	subq	#32,r15
 	store	r26,(r15+((B_IINC-A1_BASE)/4)) 		; B_IINC
 	;; 
-	movei	#PATDSEL|GOURD,r29
+*	movei	#PATDSEL|GOURD,r29
+	moveq	#(PATDSEL|GOURD)>>12,r29
 	store	r27,(r15+((A1_PIXEL-A1_BASE)/4))	; A1_PIXEL
+	shlq	#12,r29
 	store	r28,(r15+((B_COUNT-A1_BASE)/4))		; B_COUNT
 	store	r13,(r15+((A1_FLAGS-A1_BASE)/4))	; A1_FLAGS
 	jump	(r18)					; -> .next_scanline
