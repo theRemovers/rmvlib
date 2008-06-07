@@ -31,30 +31,30 @@
     \begin{array}{c@{\quad\quad\quad}c}
       \left\{
         \begin{aligned}
-          x_M & = x_A + \dy \frac{x_B - x_A}{y_B - y_A} \\
-          v_M & = v_A + \dy \frac{v_B - v_A}{y_B - y_A} 
+          x_M & = x_A + \dy \times \frac{x_B - x_A}{y_B - y_A} \\
+          v_M & = v_A + \dy \times \frac{v_B - v_A}{y_B - y_A} 
         \end{aligned}
       \right.
       &
       \left\{
         \begin{aligned}
-          x_N & = x_A + \dy \frac{x_C - x_A}{y_C - y_A} \\
-          v_N & = v_A + \dy \frac{v_C - v_A}{y_C - y_A} \\
+          x_N & = x_A + \dy \times \frac{x_C - x_A}{y_C - y_A} \\
+          v_N & = v_A + \dy \times \frac{v_C - v_A}{y_C - y_A} \\
         \end{aligned}
       \right.
     \end{array}
     \\
     \\
-    v_P = v_M + \dx \frac{v_N - v_M}{x_N - x_M}
+    v_P = v_M + \dx \times \frac{v_N - v_M}{x_N - x_M}
   \end{array}
 \end{displaymath}
 
 \begin{align*}
-v_N - v_M & = \dy (\frac{v_C - v_A}{y_C - y_A} - \frac{v_B - v_A}{y_B - y_A}) \\
-& = \dy \frac{(v_C - v_A)(y_B - y_A) - (v_B - v_A)(y_C - y_A)}{(y_B - y_A)(y_C - y_A)}
+v_N - v_M & = \dy \times \left(\frac{v_C - v_A}{y_C - y_A} - \frac{v_B - v_A}{y_B - y_A}\right) \\
+& = \dy \times \frac{(v_C - v_A)(y_B - y_A) - (v_B - v_A)(y_C - y_A)}{(y_B - y_A)(y_C - y_A)}
 \\
-x_N - x_M & = \dy (\frac{x_C - x_A}{y_C - y_A} - \frac{x_B - x_A}{y_B - y_A}) \\
-& = \dy \frac{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)}{(y_B - y_A)(y_C - y_A)}
+x_N - x_M & = \dy \times \left(\frac{x_C - x_A}{y_C - y_A} - \frac{x_B - x_A}{y_B - y_A}\right) \\
+& = \dy \times \frac{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)}{(y_B - y_A)(y_C - y_A)}
 \end{align*}
 
 \begin{align*}
