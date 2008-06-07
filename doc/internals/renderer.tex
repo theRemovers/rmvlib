@@ -3,6 +3,8 @@
 \newcommand{\dy}{\Delta y}
 \newcommand{\dx}{\Delta x}
 
+\enlargethispage{\baselineskip}
+
 \section{Triangle rendering}
 
 \begin{tikzpicture}
@@ -55,8 +57,7 @@
 v_N - v_M & = \dy \times \left(\frac{v_C - v_A}{y_C - y_A} - \frac{v_B - v_A}{y_B - y_A}\right) \\
 & = \dy \times \frac{(v_C - v_A)(y_B - y_A) - (v_B - v_A)(y_C - y_A)}{(y_B - y_A)(y_C - y_A)}
 \\
-x_N - x_M & = \dy \times \left(\frac{x_C - x_A}{y_C - y_A} - \frac{x_B - x_A}{y_B - y_A}\right) \\
-& = \dy \times \frac{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)}{(y_B - y_A)(y_C - y_A)}
+x_N - x_M & = \dy \times \frac{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)}{(y_B - y_A)(y_C - y_A)}
 \end{align*}
 
 \begin{align*}
