@@ -3,6 +3,8 @@
 \newcommand{\dy}{\Delta y}
 \newcommand{\dx}{\Delta x}
 
+\section{Triangle rendering}
+
 \begin{tikzpicture}
   \node (A) at (5,5) {$A$};
   \node (B) at (1,2) {$B$};
@@ -13,7 +15,7 @@
   \draw (A) -- (B) node[pos=0.5,left]{$M$};
   \draw (A) -- (C) node[pos=0.28,right]{$N$};
   \draw (B) -- (C);
-  \draw (M) -- (N) node[pos=0.5]{$\bullet$} node[pos=0.5,above]{$P$};
+  \draw[dashed] (M) -- (N) node[pos=0.5]{$\bullet$} node[pos=0.5,above]{$P$};
   \node (YA) at (0,5) {};
   \node (YM) at (0,3.5) {};
   \node (XM) at (3,-1) {};
@@ -60,3 +62,5 @@ x_N - x_M & = \dy \times \left(\frac{x_C - x_A}{y_C - y_A} - \frac{x_B - x_A}{y_
 \begin{align*}
 \frac{v_N - v_M}{x_N - x_M} & = \frac{(v_C - v_A)(y_B - y_A) - (v_B - v_A)(y_C - y_A)}{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)}
 \end{align*}
+
+\section{Quadrilateral rendering}
