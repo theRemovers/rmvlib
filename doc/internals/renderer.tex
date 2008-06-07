@@ -64,3 +64,62 @@ x_N - x_M & = \dy \times \left(\frac{x_C - x_A}{y_C - y_A} - \frac{x_B - x_A}{y_
 \end{align*}
 
 \section{Quadrilateral rendering}
+
+\begin{tikzpicture}
+  \node (A) at (5,5) {$A$};
+  \node (B) at (1,2) {$B$};
+  \node (C) at (10,0) {$C$};
+  \node (D) at (9,5) {$D$};
+  \node (M) at (3,3.5) {};
+  \node (N) at (9.3,3.5) {};
+  \node (P) at (6.15,3.5) {};
+  \draw (A) -- (B) node[pos=0.5,left]{$M$};
+  \draw (D) -- (C) node[pos=0.28,right]{$N$};
+  \draw (B) -- (C);
+  \draw (A) -- (D);
+  \draw[dashed] (M) -- (N) node[pos=0.5]{$\bullet$} node[pos=0.5,above]{$P$};
+  \node (YA) at (0,5) {};
+  \node (YM) at (0,3.5) {};
+  \node (XM) at (3,-1) {};
+  \node (XP) at (6.15,-1) {};
+  \draw[dotted] (YA) -- (A);
+  \draw[dotted] (YM) -- (M);
+  \draw[<->] (YA) -- (YM) node[pos=0.5,left]{$\dy$};
+  \draw[dotted] (XM) -- (M);
+  \draw[dotted] (XP) -- (P);
+  \draw[<->] (XM) -- (XP) node[pos=0.5,above]{$\dx$};
+\end{tikzpicture}
+
+\begin{displaymath}
+  \begin{array}{c}
+    \begin{array}{c@{\quad\quad\quad}c}
+      \left\{
+        \begin{aligned}
+          x_M & = x_A + \dy \times \frac{x_B - x_A}{y_B - y_A} \\
+          v_M & = v_A + \dy \times \frac{v_B - v_A}{y_B - y_A} 
+        \end{aligned}
+      \right.
+      &
+      \left\{
+        \begin{aligned}
+          x_N & = x_D + \dy \times \frac{x_C - x_D}{y_C - y_D} \\
+          v_N & = v_D + \dy \times \frac{v_C - v_D}{y_C - y_D} \\
+        \end{aligned}
+      \right.
+    \end{array}
+    \\
+    \\
+    v_P = v_M + \dx \times \frac{v_N - v_M}{x_N - x_M}
+  \end{array}
+\end{displaymath}
+
+\begin{align*}
+v_N - v_M & = v_D - v_A + \dy \times \left(\frac{v_C - v_D}{y_C - y_D} - \frac{v_B - v_A}{y_B - y_A}\right) \\
+& = v_D - v_A + \dy \times \frac{(v_C - v_D)(y_B - y_A) - (v_B - v_A)(y_C - y_D)}{(y_B - y_A)(y_C - y_D)}
+\\
+x_N - x_M & = x_D - x_A + \dy \times \frac{(x_C - x_D)(y_B - y_A) - (x_B - x_A)(y_C - y_D)}{(y_B - y_A)(y_C - y_D)}
+\end{align*}
+
+\begin{align*}
+\frac{v_N - v_M}{x_N - x_M} & = ? 
+\end{align*}
