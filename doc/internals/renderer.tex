@@ -64,6 +64,33 @@ x_N - x_M & = \dy \times \frac{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)}{
 \frac{v_N - v_M}{x_N - x_M} & = \frac{(v_C - v_A)(y_B - y_A) - (v_B - v_A)(y_C - y_A)}{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)}
 \end{align*}
 
+Note that
+\begin{align*}
+(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A) & =
+\begin{array}{|cc|} 
+  x_C - x_A & x_B - x_A \\
+  y_C - y_A & y_B - y_A
+\end{array}
+\\
+& = \det(AC, AB) \\
+& = \|AC\| \|AB\| \sin(AC,AB) \\
+& = - \|AB\| \|AC\| \sin(AB,AC) \\
+& = - \det(AB, AC)
+\end{align*}
+
+The triangle is trivial iff this value is null. 
+
+The sign of this value depends on the orientation of the triangle.
+
+Thus, one might prefer one of the following expressions:
+\begin{align*}
+\frac{v_N - v_M}{x_N - x_M} 
+& = \frac{(v_C - v_A)(y_B - y_A) - (v_B - v_A)(y_C - y_A)}{(x_C - x_A)(y_B - y_A) - (x_B - x_A)(y_C - y_A)} \\
+& = \frac{(v_C - v_A)(y_B - y_A) - (v_B - v_A)(y_C - y_A)}{\det(AC,AB)} \\
+& = \frac{(v_B - v_A)(y_C - y_A) - (v_C - v_A)(y_B - y_A)}{(x_B - x_A)(y_C - y_A) - (x_C - x_A)(y_B - y_A)} \\
+& = \frac{(v_B - v_A)(y_C - y_A) - (v_C - v_A)(y_B - y_A)}{\det(AB,AC)}
+\end{align*}
+
 \section{Quadrilateral rendering}
 
 \begin{tikzpicture}
