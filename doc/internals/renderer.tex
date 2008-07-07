@@ -2,6 +2,7 @@
 
 \newcommand{\dy}{\Delta y}
 \newcommand{\dx}{\Delta x}
+\newcommand{\dv}{\Delta v}
 
 \section{Triangle rendering}
 
@@ -203,3 +204,138 @@ x_N - x_M & = x_D - x_A + \dy \times \frac{(x_C - x_D)(y_B - y_A) - (x_B - x_A)(
   \frac{v_N - v_H}{x_N - x_H} 
   & = \frac{\begin{array}{|cc|} v_A - v_D & v_C - v_D \\ y_A - y_D & y_C - y_D \end{array}}{\det(DA,DC)} \\
 \end{align*}
+
+\section{Polygon rendering (coplanar case)}
+Assume that the coordinates $x$, $y$ and $v$ (where $v$ is the value
+to interpolate) follow an affine dependency\footnote{This is always
+  the case for a triangle}, \ie that there exist $a, b$
+and $c$ such that (*)
+$$\forall x, y, v: a x + b y = c + v$$
+
+
+Let's compute $a$ and $b$. Let $A$, $B$ and $C$ be three points in the
+plane.
+
+We have 
+\begin{displaymath}
+  \left\{
+  \begin{aligned}
+    a x_A + b y_A & = c + v_A \\
+    a x_B + b y_B & = c + v_B \\
+    a x_C + b y_C & = c + v_C
+  \end{aligned}\right.
+\end{displaymath}
+
+Thus
+\begin{displaymath}
+  \left\{
+  \begin{aligned}
+    a (x_B - x_A) + b (y_B - y_A) & = v_B - v_A \\
+    a (x_C - x_A) + b (y_C - y_A) & = v_C - v_A
+  \end{aligned}
+\right.
+\end{displaymath}
+
+In other words
+\begin{displaymath}
+  \left(
+    \begin{array}{cc}
+      x_B - x_A & y_B - y_A \\
+      x_C - x_A & y_C - y_A
+    \end{array}
+  \right)
+  \left(
+    \begin{array}{c}
+      a \\
+      b 
+    \end{array}
+  \right)
+  =
+  \left(
+    \begin{array}{c}
+      v_B - v_A \\
+      v_C - v_A
+    \end{array}
+  \right)
+\end{displaymath}
+
+Let $M$ be the matrix
+\begin{displaymath}
+  M = 
+  \left(
+    \begin{array}{cc}
+      x_B - x_A & y_B - y_A \\
+      x_C - x_A & y_C - y_A
+    \end{array}
+  \right)
+\end{displaymath}
+
+Assume that $\det(M) = \det(AB,AC) \neq 0$ (\ie $A$, $B$ and $C$ are
+not colinear).
+
+Then 
+\begin{displaymath}
+  M^{-1} =
+  \frac{1}{\det(AB,AC)}
+  \left(
+    \begin{array}{cc}
+      y_C - y_A & - (y_B - y_A) \\
+      - (x_C - x_A) & x_B - x_A
+    \end{array}
+  \right)
+\end{displaymath}
+  
+And
+\begin{displaymath}
+  \left(
+    \begin{array}{c}
+      a \\
+      b 
+    \end{array}
+  \right)
+  =
+  \frac{1}{\det(AB,AC)}
+  \left(
+    \begin{array}{cc}
+      y_C - y_A & - (y_B - y_A) \\
+      - (x_C - x_A) & x_B - x_A
+    \end{array}
+  \right)
+  \left(
+    \begin{array}{c}
+      v_B - v_A \\
+      v_C - v_A
+    \end{array}
+  \right)
+\end{displaymath}
+
+Thus
+\begin{displaymath}
+  \left\{
+    \begin{aligned}
+      a & = \frac{(y_C - y_A)(v_B - v_A) - (y_B - y_A)(v_C - v_A)}{\det(AB,AC)} \\
+      b & = \frac{(x_B - x_A)(v_C - v_A) - (x_C - x_A)(v_B - v_A)}{\det(AB,AC)}
+    \end{aligned}
+  \right.
+\end{displaymath}
+
+\ie
+\begin{displaymath}
+  \left\{
+    \begin{aligned}
+      a & = \frac{\begin{array}{|cc|}
+          y_C - y_A & v_C - v_A \\
+          y_B - y_A & v_B - v_A
+        \end{array}}{\det(AB,AC)} \\
+      b & = \frac{\begin{array}{|cc|}
+          x_B - x_A & v_B - v_A \\
+          x_C - x_A & v_C - v_A 
+        \end{array}}{\det(AB,AC)}
+    \end{aligned}
+  \right.
+\end{displaymath}
+
+From (*), we get
+$$a \dx + b \dy = \dv$$
+
+Thus, if $\dy = 0$, we have $$\dv = a \dx$$.
