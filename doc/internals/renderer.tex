@@ -339,3 +339,64 @@ From (*), we get
 $$a \dx + b \dy = \dv$$
 
 Thus, if $\dy = 0$, we have $$\dv = a \dx$$.
+
+\section{Algorithm}
+
+\begin{algorithm}
+  \caption{Traingle rendering}
+  \begin{algorithmic}[1]
+    \Procedure{Render}{$A, B, C$}
+    \State $y \gets y_A$ \Comment{we first reorder $A, B, C$ such that $A$ has minimal $y$}
+    \State $\dy_1 \gets y_B - y_C$
+    \If{$\dy_1 < 0$}
+    \State $\dy_2 \gets y_B - y_A$
+    \If{$\dy_2 < 0$}
+    \State $y \gets y_B$
+    \State $T \gets A$
+    \State $A \gets B$
+    \State $B \gets C$
+    \State $C \gets T$
+    \State $\dy_1 \gets - \dy_1$
+    \State $\dy_2 \gets - \dy_2$
+    \State $\dy_3 \gets \dy_2 - \dy_1$
+    \Else
+    \State $\dy_3 \gets - \dy_1$
+    \State $\dy_1 \gets \dy_2$
+    \State $\dy_2 \gets y_C - y_A$
+    \EndIf
+    \Else
+    \State $\dy_2 \gets y_C - y_A$
+    \If{$\dy_2 < 0$}
+    \State $y \gets y_C$
+    \State $T \gets A$
+    \State $A \gets C$
+    \State $C \gets B$
+    \State $B \gets T$
+    \State $T \gets \dy_1$
+    \State $\dy_1 \gets - \dy_2$
+    \State $\dy_2 \gets T$
+    \State $\dy_3 \gets \dy_2 - \dy_1$
+    \Else
+    \State $\dy_3 \gets - \dy_1$
+    \State $\dy_1 \gets y_B - y_A$
+    \EndIf
+    \EndIf
+%    \Comment{$\dy_1 = y_B - y_A$ (right edge) $\dy_2 = y_C - y_A$ (left edge) $\dy_3 = y_C - y_B$ (depends on sign)}
+    \State $\dx_1 \gets x_B - x_A$ 
+    \State $\dx_2 \gets x_C - x_A$ 
+    \If{$\dy_1 \neq 0$} 
+    \State $\Delta_{r} \gets \frac{\dx_1}{\dy_1}$ \Comment{right edge}
+    \EndIf
+    \If{$\dy_2 \neq 0$} 
+    \State $\Delta_{l} \gets \frac{\dx_2}{\dy_2}$ \Comment{left edge}
+    \EndIf
+    \State $\Delta \gets \dy_1 \times \dx_2 - \dy_2 \times \dx_1$
+    \If{$\Delta \geq 0$}
+    \Return \Comment{break if triangle is trivial or badly oriented}
+    \Else
+    \State $\Delta \gets - \Delta$
+    \EndIf
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
