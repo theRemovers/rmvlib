@@ -22,6 +22,8 @@ PROJECT=rmvlib
 # also change in Doxyfile!!!
 PROJECT_NUMBER=1.2.5
 
+export PROJECT_NUMBER
+
 TARFILE=$(PROJECT)-$(PROJECT_NUMBER).tar
 
 DISTFILES=Makefile main.h jaguar.inc routine.s
