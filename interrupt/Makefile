@@ -1,5 +1,5 @@
-JAGPATH=$(HOME)/Jaguar
-CROSSPATH=/usr/local/m68k-aout/m68k-aout
+# JAGPATH=$(HOME)/Jaguar
+# CROSSPATH=/usr/local/m68k-aout/m68k-aout
 MADMAC=$(JAGPATH)/bin/mac
 CC=$(CROSSPATH)/bin/gcc
 AR=$(CROSSPATH)/bin/ar

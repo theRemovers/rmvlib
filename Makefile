@@ -4,6 +4,9 @@ MADMAC=$(JAGPATH)/bin/mac
 CC=$(CROSSPATH)/bin/gcc
 AR=$(CROSSPATH)/bin/ar
 
+export JAGPATH
+export CROSSPATH
+
 MACFLAGS=-fb -v
 CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float 
 SRCS=
