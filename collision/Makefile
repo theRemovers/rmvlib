@@ -1,11 +1,4 @@
-# JAGPATH=$(HOME)/Jaguar
-# CROSSPATH=/usr/local/m68k-aout/m68k-aout
-MADMAC=$(JAGPATH)/bin/mac
-CC=$(CROSSPATH)/bin/gcc
-AR=$(CROSSPATH)/bin/ar
-
-MACFLAGS=-fb -v
-CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float
+include ../Makefile.config
 
 SRCC=
 SRCS=collision.s

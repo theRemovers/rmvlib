@@ -1,4 +1,5 @@
-DOXYGEN=doxygen
+include ../Makefile.config
+
 DISTFILES=Makefile Doxyfile
 INSTALLH=
 INSTALLLIB=

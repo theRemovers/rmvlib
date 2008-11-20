@@ -1,11 +1,6 @@
-JAGPATH=$(HOME)/Jaguar
-CROSSPATH=/usr/local/m68k-aout/m68k-aout
-MADMAC=$(JAGPATH)/bin/mac
-CC=$(CROSSPATH)/bin/gcc
-AR=$(CROSSPATH)/bin/ar
+include ../Makefile.config
 
-MACFLAGS=-fb -v -dDISPLAY_LOG_NB_STRIPS=3
-CFLAGS=-mc68000 -Wall -fomit-frame-pointer -O2 -msoft-float
+MACFLAGS:=$(MACFLAGS) -dDISPLAY_LOG_NB_STRIPS=3
 
 SRCC=n_display.c
 SRCS=display.s
