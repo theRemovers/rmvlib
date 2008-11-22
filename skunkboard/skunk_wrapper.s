@@ -68,7 +68,7 @@ _skunkFILEWRITE:
 	
 _skunkFILEREAD:
 	move.l	4(sp),a0	; buffer address
-	move.l	8(sp),d0
+	move.l	8(sp),d0	; length
 	movem.l	d2-d7/a2-a6,-(sp)
 	bsr	skunkFILEREAD
 	movem.l	(sp)+,d2-d7/a2-a6
