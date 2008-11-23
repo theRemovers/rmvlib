@@ -1,6 +1,6 @@
 include ../Makefile.config
 
-SRCC=
+SRCC=open_skunk_console.c
 SRCS=skunk_wrapper.s
 SRCH=skunk.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
@@ -9,8 +9,7 @@ DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) skunk.s
 INSTALLH=skunk.h
 INSTALLLIB=
 
-# all: .depend $(OBJS)
-all: $(OBJS)
+all: .depend $(OBJS)
 
 %.o: %.s
 	$(MADMAC) $(MACFLAGS) $<
@@ -30,9 +29,9 @@ install-h:
 install-lib:
 	@echo $(INSTALLLIB)
 
-# .depend: $(SRCC)
-# 	$(CC) -MM $(SRCC) > .depend
+.depend: $(SRCC)
+	$(CC) -MM $(SRCC) > .depend
 
-# -include .depend
+-include .depend
 
 

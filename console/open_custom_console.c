@@ -355,7 +355,7 @@ static int putc(FILE *stream, char c) {
   console *co = stream->data;
   if(co != NULL) {
     output_char(co,c);
-    return 0;
+    return c;
   }
   return EOF;
 }
@@ -369,17 +369,18 @@ static int puts(FILE *stream, const char *s) {
   return EOF;
 }
 
-static size_t write(FILE *stream, const  void  *ptr,  size_t  size,  size_t  nmemb) {
-  console *co = stream->data;
-  if(co != NULL) {
-    int i;
-    char *s = (char *) ptr;
-    for(i = 0; i < nmemb * size; i++) {
-      putc(stream,*s++);
-    }
-  }
-  return 0;
-}
+/* static size_t write(FILE *stream, const  void  *ptr,  size_t  size,  size_t  nmemb) { */
+/*   console *co = stream->data; */
+/*   if(co != NULL) { */
+/*     int i; */
+/*     char *s = (char *) ptr; */
+/*     for(i = 0; i < nmemb * size; i++) { */
+/*       output_char(co, *s++); */
+/*     } */
+/*     return nmemb; */
+/*   } */
+/*   return 0; */
+/* } */
 
 static int close(FILE *fp) {
   console *co = fp->data;
@@ -424,7 +425,7 @@ FILE *open_custom_console(display *d, int x, int y, int idx, int width, int heig
   fp->eof = eof;
   fp->putc = putc;
   fp->puts = puts;
-  fp->write = write;
+  fp->write = NULL; // use default implementation
   fp->flush = NULL;
   fp->close = close;
   return fp;

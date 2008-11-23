@@ -5,6 +5,8 @@
 	.text
 	.68000
 
+	.globl	_skunkINIT
+	.globl	_skunkEXIT
 	.globl	_skunkRESET
 	.globl	_skunkNOP
 	.globl	_skunkCONSOLEWRITE
@@ -14,7 +16,14 @@
 	.globl	_skunkFILEWRITE
 	.globl	_skunkFILEREAD
 	.globl	_skunkFILECLOSE
+	.globl	_skunkISUP
 
+_skunkINIT:
+	movem.l	d2-d7/a2-a6,-(sp)
+	bsr	skunkRESET
+	bsr	skunkNOP
+	movem.l	(sp)+,d2-d7/a2-a6
+	rts
 	
 _skunkRESET:
 	movem.l	d2-d7/a2-a6,-(sp)
@@ -34,7 +43,8 @@ _skunkCONSOLEWRITE:
 	bsr	skunkCONSOLEWRITE
 	movem.l	(sp)+,d2-d7/a2-a6
 	rts
-	
+
+_skunkEXIT:	
 _skunkCONSOLECLOSE:
 	movem.l	d2-d7/a2-a6,-(sp)
 	bsr	skunkCONSOLECLOSE
@@ -80,3 +90,6 @@ _skunkFILECLOSE:
 	movem.l	(sp)+,d2-d7/a2-a6
 	rts
 	
+_skunkISUP:
+	move.l	skunkConsoleUp,d0
+	rts
