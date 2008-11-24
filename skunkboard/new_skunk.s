@@ -109,17 +109,18 @@ emit_request:
 	add.w	#$1000,d1	; switch to second buffer for reply
 	; wait for a response - (done with d0 since
 	; the PC side must honor our length request)
-	move.l  #timeout,d0
+;; 	move.l  #timeout,d0
 .inploop2:	
 	move.w	d1,(a1)		; write address
 	move.w	(a1),d2		; read data
 	andi.w	#$FF00,d2
 	cmp.w	#$FF00,d2	; test if used
-	bne		.gotresp
-	dbra	d0,.inploop2
-	; got nothing, give up
-	moveq	#-2,d0		; failure
-	bra		.exit
+	beq	.inploop2
+;; 	bne		.gotresp
+;; 	dbra	d0,.inploop2
+;; 	; got nothing, give up
+;; 	moveq	#-2,d0		; failure
+;; 	bra		.exit
 .gotresp:
 	; get the real value again
 	move.w	d1,(a1)		; write address
