@@ -109,19 +109,13 @@ emit_request:
  	add.w	#$1000,d1	; switch to second buffer for reply
 	; wait for a response - (done with d0 since
 	; the PC side must honor our length request)
-;; 	move.l  #timeout,d0
-.inploop2:	
+.wait_reply:	
 	move.w	d1,(a1)		; write address
 	move.w	(a1),d2		; read data
 	andi.w	#$FF00,d2
 	cmp.w	#$FF00,d2	; test if used
-	beq	.inploop2
-;; 	bne		.gotresp
-;; 	dbra	d0,.inploop2
-;; 	; got nothing, give up
-;; 	moveq	#-2,d0		; failure
-;; 	bra		.exit
-.gotresp:
+	beq.s	.wait_reply
+.got_reply:
 	; get the real value again
 	move.w	d1,(a1)		; write address
 	move.w	(a1),d2		; read data (length)
@@ -138,7 +132,15 @@ emit_request:
 	move.w	#$4004,(a1)	; enter HPI write mode
 	move.w	d1,(a1)		; set HPI write data address
 	move.w	#$0000,(a2)	; write data
+
 	move.w	#$4001,(a1)	; enter flash read-only mode
+	;; wait for PC to clear the buffer flag
+.synchro:
+	move.w	d1,(a1)
+	move.w	(a1),d2
+	and.w	#$ff00,d2
+	cmp.w	#$ff00,d2
+	bne.s	.synchro
 .no_reply:	
 	;; done
 
