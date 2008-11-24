@@ -106,7 +106,7 @@ emit_request:
 	cmp.w	#SYNC_MSG,d3
 	bne.s	.no_reply
 .get_reply:
-	add.w	#$1000,d1	; switch to second buffer for reply
+ 	add.w	#$1000,d1	; switch to second buffer for reply
 	; wait for a response - (done with d0 since
 	; the PC side must honor our length request)
 ;; 	move.l  #timeout,d0
