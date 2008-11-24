@@ -31,6 +31,7 @@
 
 	.globl	_skunk_init
 	.globl	_skunk_asynchronous_request
+	.globl	_skunk_synchronous_request	
 	
 ;---------------------------------------------------------------------
 
@@ -57,9 +58,16 @@ _skunk_is_up:
 	move.l	skunkConsoleUp,d0
 	rts
 	
+;;; int skunk_synchronous_request(Message *request, Message *reply)
+_skunk_synchronous_request:
+	moveq	#SYNC_MSG,d0
+	bra.s	emit_request
 ;;; int skunk_asynchronous_request(Message *request)
 _skunk_asynchronous_request:
-	movem.l	d2-d7/a2-a6,-(sp)
+	moveq	#ASYNC_MSG,d0
+emit_request:
+	movem.l	d2-d3/a2,-(sp)
+	move.w	d0,d3		; save request type
 	
 	bsr	setAddresses
 	bsr	getBuffer
@@ -67,15 +75,15 @@ _skunk_asynchronous_request:
 	tst.l	d1
 	beq	.exit
 
-	;; 
-	move.l	4+(11*4)(sp),a0	; get request message
+	;; emit request
+	move.l	4+(3*4)(sp),a0	; get request message
 	
 	move.w	#$4004,(a1)	; enter HPI write mode
 	move.w	d1,(a1)		; set write address
 
 	;; write header
 	move.w	#$ffff,(a2)	
-	move.w	#ASYNC_MSG,(a2)	 
+	move.w	d3,(a2)		; request type
 
 	;; write message
 	move.w	(a0)+,d2	; size of content
@@ -94,14 +102,52 @@ _skunk_asynchronous_request:
 	addq.w	#4,d2		; add header size
 	move.w	d2,(a2)		; write length (PC gets this buffer now)
 
-	;; done
 	move.w #$4001,(a1)	; enter flash read-only mode	
 	
+	;; check for reply
+	cmp.w	#SYNC_MSG,d3
+	bne.s	.no_reply
+.get_reply:
+	add.w	#$1000,d1	; switch to second buffer for reply
+	; wait for a response - (done with d0 since
+	; the PC side must honor our length request)
+	move.l  #timeout,d0
+.inploop2:	
+	move.w	d1,(a1)		; write address
+	move.w	(a1),d2		; read data
+	andi.w	#$FF00,d2
+	cmp.w	#$FF00,d2	; test if used
+	bne		.gotresp
+	dbra	d0,.inploop2
+	; got nothing, give up
+	moveq	#-2,d0		; failure
+	bra		.exit
+.gotresp:
+	; get the real value again
+	move.w	d1,(a1)		; write address
+	move.w	(a1),d2		; read data (length)
+	move.l	8+(3*4)(sp),a0	; get reply message
+
+	sub.w	#$FEA,d1	; get base address of buffer
+	move.w	d1,(a1)		; set address
+.read_reply:
+	move.w	(a1),(a0)+	; write data
+	subq.w	#2,d2
+	bhi.s	.read_reply
+
+	add.w	#$FEA,d1	; go back up to the length field again			
+	move.w	#$4004,(a1)	; enter HPI write mode
+	move.w	d1,(a1)		; set HPI write data address
+	move.w	#$0000,(a2)	; write data
+	move.w	#$4001,(a1)	; enter flash read-only mode
+.no_reply:	
+	;; done
+
 	moveq	#0,d0		; success
 .exit:
-	movem.l	(sp)+,d2-d7/a2-a6
+	movem.l	(sp)+,d2-d3/a2
 	rts
-	
+
 ; ---------------------------------------------------------------------
 ; Helper functions - not intended to be externally called
 ; ---------------------------------------------------------------------
