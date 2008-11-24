@@ -3,21 +3,25 @@
 #include <skunk.h>
 #include <stdlib.h>
 
-#define MAXSIZE 4060
+#define MAXSIZE 4000
 
 #define FALSE 0
 #define TRUE 1
 
 typedef struct {
-  char buf[MAXSIZE+2];
   int i;
+  SkunkMessageHeader header;
+  char buf[MAXSIZE+2];
 } SkunkConsole;
 
 static inline void flush_buffer(SkunkConsole *co) {
   if(co->i > 0) {
     co->buf[co->i] = '\0';
-    skunkCONSOLEWRITE(co->buf);
-    skunkNOP();
+    co->header.length = co->i;
+    co->header.kind = SKUNK_WRITE_STDERR;
+    skunk_asynchronous_request((SkunkMessage *)(&(co->header)));
+/*     skunkCONSOLEWRITE(co->buf); */
+/*     skunkNOP(); */
     co->i = 0;
   }
 }
