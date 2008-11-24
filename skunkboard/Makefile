@@ -1,7 +1,7 @@
 include ../Makefile.config
 
 SRCC=open_skunk_console.c
-SRCS=skunk_wrapper.s new_skunk.s
+SRCS=skunk.s
 SRCH=skunk.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
