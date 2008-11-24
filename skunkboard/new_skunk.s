@@ -86,9 +86,8 @@ emit_request:
 	move.w	d3,(a2)		; request type
 
 	;; write message
-	move.w	(a0)+,d2	; size of content
-	move.w	d2,(a2)		; write it
-	move.w	(a0)+,(a2)	; kind
+	move.w	(a0),d2		; size of content
+	addq.w	#4,d2		; add size of "length field" and "kind field"
 	move.w	d2,d0
 .write_message:
 	move.w	(a0)+,(a2)	; write content
@@ -98,7 +97,6 @@ emit_request:
 	;; write length
 	add.w	#$FEA,d1	; get address of length flag
 	move.w	d1,(a1)		; set address
-	addq.w	#4,d2		; add size of "length field" and "kind field"
 	addq.w	#4,d2		; add header size
 	move.w	d2,(a2)		; write length (PC gets this buffer now)
 
