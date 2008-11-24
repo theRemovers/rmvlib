@@ -22,6 +22,7 @@ _skunkINIT:
 	movem.l	d2-d7/a2-a6,-(sp)
 	bsr	skunkRESET
 	bsr	skunkNOP
+	bsr	skunkNOP	
 	movem.l	(sp)+,d2-d7/a2-a6
 	rts
 	

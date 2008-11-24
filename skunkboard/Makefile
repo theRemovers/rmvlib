@@ -1,12 +1,12 @@
 include ../Makefile.config
 
 SRCC=open_skunk_console.c
-SRCS=skunk_wrapper.s
+SRCS=skunk_wrapper.s new_skunk.s
 SRCH=skunk.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
 DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) skunk.s
-INSTALLH=skunk.h
+INSTALLH=skunk.h new_skunk.h
 INSTALLLIB=
 
 all: .depend $(OBJS)
