@@ -422,10 +422,16 @@ FILE *open_custom_console(display *d, int x, int y, int idx, int width, int heig
   //  SET_SHORT_INT(0xffff,(CLUT+2*idx+2));
   FILE *fp = malloc(sizeof(FILE));
   fp->data = co;
-  fp->eof = eof;
+  // no input actions
+  fp->read = NULL;
+  fp->getc = NULL;
+  fp->gets = NULL;
+  // output actions
   fp->putc = putc;
   fp->puts = puts;
   fp->write = NULL; // use default implementation
+  // general purpose actions
+  fp->eof = eof;
   fp->flush = NULL;
   fp->close = close;
   return fp;

@@ -120,10 +120,16 @@ FILE *open_skunk_console() {
   co->buf[MAXSIZE] = '\0';
   FILE *fp = malloc(sizeof(FILE));
   fp->data = co;
-  fp->eof = eof;
+  // no input actions
+  fp->getc = NULL;
+  fp->gets = NULL;
+  fp->read = NULL;
+  // output actions
   fp->putc = putc;
   fp->puts = puts;
   fp->write = NULL; // use default implementation
+  // general purpose actions
+  fp->eof = eof;
   fp->flush = flush;
   fp->close = close;
   return fp;
