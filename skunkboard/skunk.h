@@ -5,6 +5,7 @@
 
 #define SKUNK_WRITE_STDERR 1
 #define SKUNK_READ_STDIN 2
+#define SKUNK_OPEN_FILE 3
 
 typedef struct {
   unsigned short int length;
