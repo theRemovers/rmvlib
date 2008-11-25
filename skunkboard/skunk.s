@@ -66,7 +66,7 @@ _skunk_synchronous_request:
 _skunk_asynchronous_request:
 	moveq	#ASYNC_MSG,d0
 emit_request:
-	movem.l	d2-d3/a2,-(sp)
+	movem.l	d2-d4/a2,-(sp)
 	move.w	d0,d3		; save request type
 	
 	bsr	setAddresses
@@ -76,7 +76,7 @@ emit_request:
 	beq	.exit
 
 	;; emit request
-	move.l	4+(3*4)(sp),a0	; get request message
+	move.l	4+(4*4)(sp),a0	; get request message
 	
 	move.w	#$4004,(a1)	; enter HPI write mode
 	move.w	d1,(a1)		; set write address
@@ -86,18 +86,33 @@ emit_request:
 	move.w	d3,(a2)		; request type
 
 	;; write message
-	move.w	(a0),d2		; size of content
-	addq.w	#4,d2		; add size of "length field" and "kind field"
+	move.w	(a0)+,d2	; size of content
+	move.w	d2,(a2)		; write content length
+	move.w	(a0)+,(a2)	; write request kind
+	move.l	(a0),a0		; get content address
 	move.w	d2,d0
-.write_message:
+	beq.s	.request_content_emitted
+	move.l	a0,d4
+	and.w	#1,d4
+	beq.s	.write_request_content_even
+.write_request_content_odd:
+	move.b	(a0)+,d4
+	rol.w	#8,d4
+	move.b	(a0)+,d4
+	move.w	d4,(a2)
+	subq.w	#2,d0
+	bhi.s	.write_request_content_odd
+	bra.s	.request_content_emitted
+.write_request_content_even:
 	move.w	(a0)+,(a2)	; write content
 	subq.w	#2,d0
-	bhi.s	.write_message
-
+	bhi.s	.write_request_content_even
+.request_content_emitted:
+	
 	;; write length
 	add.w	#$FEA,d1	; get address of length flag
 	move.w	d1,(a1)		; set address
-	addq.w	#4,d2		; add header size
+	addq.w	#4,d2		; add header size (escape command)
 	move.w	d2,(a2)		; write length (PC gets this buffer now)
 
 	move.w #$4001,(a1)	; enter flash read-only mode	
@@ -119,14 +134,33 @@ emit_request:
 	; get the real value again
 	move.w	d1,(a1)		; write address
 	move.w	(a1),d2		; read data (length)
-	move.l	8+(3*4)(sp),a0	; get reply message
+	move.l	8+(4*4)(sp),a0	; get reply message
 
 	sub.w	#$FEA,d1	; get base address of buffer
 	move.w	d1,(a1)		; set address
-.read_reply:
+
+	move.w	(a1),(a0)+	; read content length
+	move.w	(a1),(a0)+	; read content kind
+	move.l	(a0),a0		; get address of content
+	subq.w	#4,d2
+	beq.s	.reply_content_read
+	move.l	a0,d4
+	and.w	#1,d4
+	beq.s	.read_reply_content_even
+.read_reply_content_odd:
+	move.w	(a1),d4
+	ror.w	#8,d4
+	move.b	d4,(a0)+
+	rol.w	#8,d4
+	move.b	d4,(a0)+
+	subq.w	#2,d2
+	bhi.s	.read_reply_content_odd
+	bra.s	.reply_content_read
+.read_reply_content_even:
 	move.w	(a1),(a0)+	; write data
 	subq.w	#2,d2
-	bhi.s	.read_reply
+	bhi.s	.read_reply_content_even
+.reply_content_read:
 
 	add.w	#$FEA,d1	; go back up to the length field again			
 	move.w	#$4004,(a1)	; enter HPI write mode
@@ -146,7 +180,7 @@ emit_request:
 
 	moveq	#0,d0		; success
 .exit:
-	movem.l	(sp)+,d2-d3/a2
+	movem.l	(sp)+,d2-d4/a2
 	rts
 
 ; ---------------------------------------------------------------------

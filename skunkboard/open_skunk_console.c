@@ -10,16 +10,17 @@
 
 typedef struct {
   int i;
-  SkunkMessageHeader header;
+  SkunkMessage request;
   char buf[MAXSIZE+2];
 } SkunkConsole;
 
 static inline void flush_buffer(SkunkConsole *co) {
   if(co->i > 0) {
     co->buf[co->i] = '\0';
-    co->header.length = co->i;
-    co->header.kind = SKUNK_WRITE_STDERR;
-    skunk_asynchronous_request((SkunkMessage *)(&(co->header)));
+    co->request.length = co->i;
+    co->request.kind = SKUNK_WRITE_STDERR;
+    co->request.content = co->buf;
+    skunk_asynchronous_request(&(co->request));
 /*     skunkCONSOLEWRITE(co->buf); */
 /*     skunkNOP(); */
     co->i = 0;
