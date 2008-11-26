@@ -42,6 +42,8 @@ timeout	.equ	200000
 
 ASYNC_MSG	equ	1
 SYNC_MSG	equ	2
+
+MSGHDRSZ	equ	4
 	
 _skunk_init:
 	movem.l	a1-a2,-(sp)
@@ -113,6 +115,7 @@ emit_request:
 	add.w	#$FEA,d1	; get address of length flag
 	move.w	d1,(a1)		; set address
 	addq.w	#4,d2		; add header size (escape command)
+	addq.w	#MSGHDRSZ,d2
 	move.w	d2,(a2)		; write length (PC gets this buffer now)
 
 	move.w #$4001,(a1)	; enter flash read-only mode	
@@ -142,7 +145,7 @@ emit_request:
 	move.w	(a1),(a0)+	; read content length
 	move.w	(a1),(a0)+	; read content kind
 	move.l	(a0),a0		; get address of content
-	subq.w	#4,d2
+	subq.w	#MSGHDRSZ,d2
 	beq.s	.reply_content_read
 	move.l	a0,d4
 	and.w	#1,d4
