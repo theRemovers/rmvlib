@@ -9,11 +9,11 @@
 
 typedef struct {
   unsigned short int length;
-  short int kind;
+  int abstract;
   char *content;
 } SkunkMessage;
 
-#define MAX_SKUNK_MSG_LENGTH (4060-4);
+#define MAX_SKUNK_MSG_LENGTH (4060-6);
 
 void skunk_init();
 

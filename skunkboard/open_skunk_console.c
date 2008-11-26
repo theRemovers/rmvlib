@@ -18,7 +18,7 @@ static inline void flush_buffer(SkunkConsole *co) {
   if(co->i > 0) {
     co->buf[co->i] = '\0';
     co->request.length = co->i;
-    co->request.kind = SKUNK_WRITE_STDERR;
+    co->request.abstract = SKUNK_WRITE_STDERR;
     co->request.content = co->buf;
     skunk_asynchronous_request(&(co->request));
 /*     skunkCONSOLEWRITE(co->buf); */

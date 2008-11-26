@@ -43,7 +43,7 @@ timeout	.equ	200000
 ASYNC_MSG	equ	1
 SYNC_MSG	equ	2
 
-MSGHDRSZ	equ	4
+MSGHDRSZ	equ	6
 	
 _skunk_init:
 	movem.l	a1-a2,-(sp)
@@ -90,13 +90,14 @@ emit_request:
 	;; write message
 	move.w	(a0)+,d2	; size of content
 	move.w	d2,(a2)		; write content length
-	move.w	(a0)+,(a2)	; write request kind
+	move.w	(a0)+,(a2)	; write request asbtract
+	move.w	(a0)+,(a2)	
 	move.l	(a0),a0		; get content address
 	move.w	d2,d0
 	beq.s	.request_content_emitted
 	move.l	a0,d4
-	and.w	#1,d4
-	beq.s	.write_request_content_even
+	lsr.b	#1,d4
+	bcc.s	.write_request_content_even
 .write_request_content_odd:
 	move.b	(a0)+,d4
 	rol.w	#8,d4
@@ -144,12 +145,13 @@ emit_request:
 
 	move.w	(a1),(a0)+	; read content length
 	move.w	(a1),(a0)+	; read content kind
+	move.w	(a1),(a0)+	; read content kind
 	move.l	(a0),a0		; get address of content
 	subq.w	#MSGHDRSZ,d2
 	beq.s	.reply_content_read
 	move.l	a0,d4
-	and.w	#1,d4
-	beq.s	.read_reply_content_even
+	lsr.b	#1,d4
+	bcc.s	.read_reply_content_even
 .read_reply_content_odd:
 	move.w	(a1),d4
 	ror.w	#8,d4
