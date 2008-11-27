@@ -398,7 +398,7 @@ static int close(FILE *fp) {
 
 static int eof(FILE *fp) {
   console *co = fp->data;
-  return (co != NULL);
+  return (co == NULL);
 }
 
 FILE *open_custom_console(display *d, int x, int y, int idx, int width, int height, int layer) {

@@ -96,7 +96,7 @@ static int puts(FILE *fp, const char *s) {
 
 static int eof(FILE *fp) {
   SkunkConsole *co = fp->data;
-  return (co != NULL);
+  return (co == NULL);
 }
 
 static int close(FILE *fp) {
