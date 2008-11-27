@@ -143,27 +143,37 @@ emit_request:
 	sub.w	#$FEA,d1	; get base address of buffer
 	move.w	d1,(a1)		; set address
 
-	move.w	(a1),(a0)+	; read content length
+	move.w	(a1),d2		; read content length
+	move.w	d2,(a0)+
 	move.w	(a1),(a0)+	; read content kind
 	move.w	(a1),(a0)+	; read content kind
 	move.l	(a0),a0		; get address of content
-	subq.w	#MSGHDRSZ,d2
+	tst.w	d2
 	beq.s	.reply_content_read
 	move.l	a0,d4
 	lsr.b	#1,d4
 	bcc.s	.read_reply_content_even
 .read_reply_content_odd:
+	subq.w	#1,d2
+	bls.s	.read_reply_last_byte
 	move.w	(a1),d4
 	ror.w	#8,d4
 	move.b	d4,(a0)+
 	rol.w	#8,d4
 	move.b	d4,(a0)+
-	subq.w	#2,d2
+	subq.w	#1,d2
 	bhi.s	.read_reply_content_odd
 	bra.s	.reply_content_read
+.read_reply_last_byte:
+	move.w	(a1),d4
+	ror.w	#8,d4
+	move.b	d4,(a0)+
+	bra.s	.reply_content_read
 .read_reply_content_even:
+	subq.w	#1,d2
+	bls.s	.read_reply_last_byte
 	move.w	(a1),(a0)+	; write data
-	subq.w	#2,d2
+	subq.w	#1,d2
 	bhi.s	.read_reply_content_even
 .reply_content_read:
 
