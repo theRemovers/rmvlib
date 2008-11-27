@@ -8,7 +8,8 @@
 
 typedef struct {
   int fd;
-  SkunkMessage msg;
+  SkunkMessage request;
+  SkunkMessage reply;
   char buf[SKUNKMSGLENMAX];
 } SkunkWrapper;
 
@@ -39,12 +40,13 @@ static int eof(FILE *fp) {
   if(wrapper == NULL) {
     return EOF;
   }
-  wrapper->msg.length = 0;
-  wrapper->msg.abstract = SKUNK_FEOF;
-  wrapper->msg.content = wrapper->buf;
-  putInt16(&(wrapper->msg), wrapper->fd);
-  skunk_synchronous_request(&(wrapper->msg), &(wrapper->msg));
-  return wrapper->msg.abstract;
+  wrapper->request.length = 0;
+  wrapper->request.abstract = SKUNK_FEOF;
+  wrapper->request.content = wrapper->buf;
+  putInt16(&(wrapper->request), wrapper->fd);
+  wrapper->reply.content = wrapper->buf; // not really needed but just to be sure
+  skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+  return wrapper->reply.abstract;
 }
 
 static int flush(FILE *fp) {
@@ -52,12 +54,13 @@ static int flush(FILE *fp) {
   if(wrapper == NULL) {
     return EOF;
   }
-  wrapper->msg.length = 0;
-  wrapper->msg.abstract = SKUNK_FFLUSH;
-  wrapper->msg.content = wrapper->buf;
-  putInt16(&(wrapper->msg), wrapper->fd);
-  skunk_synchronous_request(&(wrapper->msg), &(wrapper->msg));
-  return wrapper->msg.abstract;
+  wrapper->request.length = 0;
+  wrapper->request.abstract = SKUNK_FFLUSH;
+  wrapper->request.content = wrapper->buf;
+  putInt16(&(wrapper->request), wrapper->fd);
+  wrapper->reply.content = wrapper->buf; // not really needed but just to be sure
+  skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+  return wrapper->reply.abstract;
 }
 
 static int close(FILE *fp) {
@@ -65,15 +68,43 @@ static int close(FILE *fp) {
   if(wrapper == NULL) {
     return EOF;
   }
-  wrapper->msg.length = 0;
-  wrapper->msg.abstract = SKUNK_FCLOSE;
-  wrapper->msg.content = wrapper->buf;
-  putInt16(&(wrapper->msg), wrapper->fd);
-  skunk_synchronous_request(&(wrapper->msg), &(wrapper->msg));
-  int res = wrapper->msg.abstract;
+  wrapper->request.length = 0;
+  wrapper->request.abstract = SKUNK_FCLOSE;
+  wrapper->request.content = wrapper->buf;
+  putInt16(&(wrapper->request), wrapper->fd);
+  wrapper->reply.content = wrapper->buf; // not really needed but just to be sure
+  skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+  int res = wrapper->reply.abstract;
   free(wrapper);
   fp->data = NULL;
   return res;
+}
+
+static int read(FILE *fp, void *ptr, size_t size, size_t nmemb) {
+  SkunkWrapper *wrapper = fp->data;
+  if(wrapper == NULL) {
+    return 0;
+  }
+  int total = size*nmemb;
+  int maxlen = SKUNKMSGLENMAX;
+  while(total > 0) {
+    int nbbytes = (total<=maxlen)?total:maxlen;
+    wrapper->request.length = 0;
+    wrapper->request.abstract = SKUNK_FREAD;
+    wrapper->request.content = wrapper->buf;
+    putInt32(&(wrapper->request), 1);              // size = 1 byte
+    putInt32(&(wrapper->request), nbbytes);        // nmemb = nbbytes
+    putInt16(&(wrapper->request), wrapper->fd);
+    wrapper->reply.content = ptr; 
+    skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+    int got = wrapper->reply.abstract;
+    ptr += got;
+    total -= got;
+    if(got < nbbytes) {
+      break;
+    }
+  }
+  return (nmemb - (total+size-1)/size);
 }
 
 static int write(FILE *fp, const void *ptr, size_t size, size_t nmemb) {
@@ -81,28 +112,28 @@ static int write(FILE *fp, const void *ptr, size_t size, size_t nmemb) {
   if(wrapper == NULL) {
     return 0;
   }
-  int nb = 0;
   int total = size*nmemb;
   int maxlen = SKUNKMSGLENMAX-10;
   while(total > 0) {
-    int out = (total<=maxlen)?total:maxlen;
-    wrapper->msg.length = 0;
-    wrapper->msg.abstract = SKUNK_FWRITE;
-    wrapper->msg.content = wrapper->buf;
-    putInt32(&(wrapper->msg), 1);
-    putInt32(&(wrapper->msg), out);
-    putInt16(&(wrapper->msg), wrapper->fd);
-    memcpy(wrapper->buf + 10, ptr, out);
-    wrapper->msg.length += out;
-    skunk_synchronous_request(&(wrapper->msg), &(wrapper->msg));
-    int res = wrapper->msg.abstract;
-    ptr += res;
-    total -= res;
-    if(res < out) {
+    int nbbytes = (total<=maxlen)?total:maxlen;
+    wrapper->request.length = 0;
+    wrapper->request.abstract = SKUNK_FWRITE;
+    wrapper->request.content = wrapper->buf;
+    putInt32(&(wrapper->request), 1);                // size = 1 byte
+    putInt32(&(wrapper->request), nbbytes);          // nmemb = nbbytes
+    putInt16(&(wrapper->request), wrapper->fd);
+    memcpy(wrapper->buf + 10, ptr, nbbytes);
+    wrapper->request.length += nbbytes;
+    wrapper->reply.content = wrapper->buf; // not really needed but just to be sure
+    skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+    int wrote = wrapper->reply.abstract;
+    ptr += wrote;
+    total -= wrote;
+    if(wrote < nbbytes) {
       break;
     }
   }
-  return (nb - (total+size-1)/size);
+  return (nmemb - (total+size-1)/size);
 }
 
 static int puts(FILE *fp, const char *s) {
@@ -116,13 +147,14 @@ static int putc(FILE *fp, int c) {
   if(wrapper == NULL) {
     return EOF;
   }
-  wrapper->msg.length = 0;
-  wrapper->msg.abstract = SKUNK_FPUTC;
-  wrapper->msg.content = wrapper->buf;
-  putInt16(&(wrapper->msg), c);
-  putInt16(&(wrapper->msg), wrapper->fd);
-  skunk_synchronous_request(&(wrapper->msg), &(wrapper->msg));
-  return wrapper->msg.abstract;
+  wrapper->request.length = 0;
+  wrapper->request.abstract = SKUNK_FPUTC;
+  wrapper->request.content = wrapper->buf;
+  putInt16(&(wrapper->request), c);
+  putInt16(&(wrapper->request), wrapper->fd);
+  wrapper->reply.content = wrapper->buf; // not really needed but just to be sure
+  skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+  return wrapper->reply.abstract;
 }
 
 FILE *open_skunk_file(int fd) {
@@ -133,7 +165,7 @@ FILE *open_skunk_file(int fd) {
   // input actions
   fp->getc = NULL;
   fp->gets = NULL;
-  fp->read = NULL;
+  fp->read = read;
   // output actions
   fp->putc = putc;
   fp->puts = puts;
