@@ -13,6 +13,8 @@
 #define SKUNK_FPUTC 7
 #define SKUNK_FEOF 8
 #define SKUNK_FFLUSH 9
+#define SKUNK_FGETS 10
+#define SKUNK_FGETC 11
 
 typedef struct {
   unsigned short int length;

@@ -13,14 +13,14 @@ typedef struct {
   char buf[SKUNKMSGLENMAX];
 } SkunkWrapper;
 
-static void putInt16(SkunkMessage *m, int n) {
+static inline void putInt16(SkunkMessage *m, int n) {
   int i = m->length;
   m->content[i++] = (char)((n >> 8) & 0xff);
   m->content[i++] = (char)(n & 0xff);
   m->length = i;
 }
 
-static void putInt32(SkunkMessage *m, int n) {
+static inline void putInt32(SkunkMessage *m, int n) {
   int i = m->length;
   m->content[i++] = (char)((n >> 24) & 0xff);
   m->content[i++] = (char)((n >> 16) & 0xff);
@@ -29,7 +29,7 @@ static void putInt32(SkunkMessage *m, int n) {
   m->length = i;
 }
 
-static void putString(SkunkMessage *m, char *s) {
+static inline void putString(SkunkMessage *m, char *s) {
   int i = m->length;
   strcpy(m->content + i, s);
   m->length += 1+strlen(s);
@@ -107,6 +107,24 @@ static int read(FILE *fp, void *ptr, size_t size, size_t nmemb) {
   return (nmemb - (total+size-1)/size);
 }
 
+static int getc(FILE *fp) {
+  SkunkWrapper *wrapper = fp->data;
+  if(wrapper == NULL) {
+    return EOF;
+  }
+  wrapper->request.length = 0;
+  wrapper->request.abstract = SKUNK_FGETC;
+  wrapper->request.content = wrapper->buf;
+  putInt16(&(wrapper->request), wrapper->fd); 
+  wrapper->reply.content = wrapper->buf;
+  skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+  int c = wrapper->reply.abstract;
+  if(c == -1) {
+    return EOF;
+  }
+  return c;
+}
+
 static int write(FILE *fp, const void *ptr, size_t size, size_t nmemb) {
   SkunkWrapper *wrapper = fp->data;
   if(wrapper == NULL) {
@@ -163,7 +181,7 @@ FILE *open_skunk_file(int fd) {
   FILE *fp = malloc(sizeof(FILE));
   fp->data = wrapper;
   // input actions
-  fp->getc = NULL;
+  fp->getc = getc;
   fp->gets = NULL;
   fp->read = read;
   // output actions
