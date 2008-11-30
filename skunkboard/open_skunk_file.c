@@ -6,6 +6,9 @@
 #define TRUE 1
 #define FALSE 0
 
+//#undef SKUNKMSGLENMAX
+//#define SKUNKMSGLENMAX 14
+
 typedef struct {
   int fd;
   SkunkMessage request;
@@ -86,6 +89,9 @@ static int read(FILE *fp, void *ptr, size_t size, size_t nmemb) {
     return 0;
   }
   int total = size*nmemb;
+  if(total == 0) {
+    return 0;
+  }
   int maxlen = SKUNKMSGLENMAX;
   while(total > 0) {
     int nbbytes = (total<=maxlen)?total:maxlen;
@@ -125,12 +131,54 @@ static int getc(FILE *fp) {
   return c;
 }
 
+static char *gets(FILE *fp, char *s, int size) {
+  char *str = s;
+  SkunkWrapper *wrapper = fp->data;
+  if(wrapper == NULL) {
+    return NULL;
+  }
+  int total = size;
+  if(total == 0) {
+    return NULL;
+  }
+  int maxlen = SKUNKMSGLENMAX;
+  while(total > 1) {
+    int nbbytes = (total <= maxlen)?total:maxlen;
+    wrapper->request.length = 0;
+    wrapper->request.abstract = SKUNK_FGETS;
+    wrapper->request.content = wrapper->buf;
+    putInt32(&(wrapper->request), nbbytes);
+    putInt16(&(wrapper->request), wrapper->fd);
+    wrapper->reply.content = s;
+    skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+    if(wrapper->reply.abstract != 0) {
+      break;
+    }
+    int n = strlen(s);
+    if(n < nbbytes-1) {
+      break;
+    }
+    if(s[n-1] == '\n') {
+      break;
+    }
+    s += n;
+    total -= n;
+  }
+  if(total == size) {
+    return NULL;
+  }
+  return str;
+}
+
 static int write(FILE *fp, const void *ptr, size_t size, size_t nmemb) {
   SkunkWrapper *wrapper = fp->data;
   if(wrapper == NULL) {
     return 0;
   }
   int total = size*nmemb;
+  if(total == 0) {
+    return 0;
+  }
   int maxlen = SKUNKMSGLENMAX-10;
   while(total > 0) {
     int nbbytes = (total<=maxlen)?total:maxlen;
@@ -182,7 +230,7 @@ FILE *open_skunk_file(int fd) {
   fp->data = wrapper;
   // input actions
   fp->getc = getc;
-  fp->gets = NULL;
+  fp->gets = gets;
   fp->read = read;
   // output actions
   fp->putc = putc;
