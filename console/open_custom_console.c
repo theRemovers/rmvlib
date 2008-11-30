@@ -351,7 +351,7 @@ static inline void output_string(Console *co,const char *s) {
   }
 }
 
-static int putc(FILE *stream, char c) {
+static int putc(FILE *stream, int c) {
   Console *co = stream->data;
   if(co != NULL) {
     output_char(co,c);
@@ -439,6 +439,7 @@ static int seek(FILE *fp, long offset, int whence) {
   } else if(co->x >= co->width) {
     co->x = co->width-1;
   }
+  return 0;
 }
 
 static long tell(FILE *fp) {

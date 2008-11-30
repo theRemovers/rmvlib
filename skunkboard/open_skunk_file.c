@@ -83,7 +83,7 @@ static int close(FILE *fp) {
   return res;
 }
 
-static int read(FILE *fp, void *ptr, size_t size, size_t nmemb) {
+static size_t read(FILE *fp, void *ptr, size_t size, size_t nmemb) {
   SkunkWrapper *wrapper = fp->data;
   if(wrapper == NULL) {
     return 0;
@@ -170,7 +170,7 @@ static char *gets(FILE *fp, char *s, int size) {
   return str;
 }
 
-static int write(FILE *fp, const void *ptr, size_t size, size_t nmemb) {
+static size_t write(FILE *fp, const void *ptr, size_t size, size_t nmemb) {
   SkunkWrapper *wrapper = fp->data;
   if(wrapper == NULL) {
     return 0;
@@ -223,6 +223,36 @@ static int putc(FILE *fp, int c) {
   return wrapper->reply.abstract;
 }
 
+static long tell(FILE *fp) {
+  SkunkWrapper *wrapper = fp->data;
+  if(wrapper == NULL) {
+    return -1;
+  }
+  wrapper->request.length = 0;
+  wrapper->request.abstract = SKUNK_FTELL;
+  wrapper->request.content = wrapper->buf;
+  putInt16(&(wrapper->request), wrapper->fd); 
+  wrapper->reply.content = wrapper->buf;
+  skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+  return wrapper->reply.abstract;
+}
+
+static int seek(FILE *fp, long offset, int whence) {
+  SkunkWrapper *wrapper = fp->data;
+  if(wrapper == NULL) {
+    return -1;
+  }
+  wrapper->request.length = 0;
+  wrapper->request.abstract = SKUNK_FTELL;
+  wrapper->request.content = wrapper->buf;
+  putInt32(&(wrapper->request), offset); 
+  putInt16(&(wrapper->request), whence); 
+  putInt16(&(wrapper->request), wrapper->fd); 
+  wrapper->reply.content = wrapper->buf;
+  skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
+  return wrapper->reply.abstract;
+}
+
 static FILE *open_skunk_file_desc(int fd) {
   SkunkWrapper *wrapper = malloc(sizeof(SkunkWrapper));
   wrapper->fd = fd;
@@ -237,6 +267,8 @@ static FILE *open_skunk_file_desc(int fd) {
   fp->puts = puts;
   fp->write = write;
   // general purpose actions
+  fp->seek = seek;
+  fp->tell = tell;
   fp->eof = eof;
   fp->flush = flush;
   fp->close = close;
