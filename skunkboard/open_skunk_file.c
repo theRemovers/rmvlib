@@ -223,10 +223,10 @@ static int putc(FILE *fp, int c) {
   return wrapper->reply.abstract;
 }
 
-FILE *open_skunk_file(int fd) {
+static FILE *open_skunk_file_desc(int fd) {
   SkunkWrapper *wrapper = malloc(sizeof(SkunkWrapper));
   wrapper->fd = fd;
-  FILE *fp = malloc(sizeof(FILE));
+  FILE *fp = calloc(1,sizeof(FILE));
   fp->data = wrapper;
   // input actions
   fp->getc = getc;
@@ -242,4 +242,34 @@ FILE *open_skunk_file(int fd) {
   fp->close = close;
   //
   return fp;
+}
+
+FILE *skunk_stdin() {
+  return open_skunk_file_desc(0);
+}
+
+FILE *skunk_stderr() {
+  return open_skunk_file_desc(1);
+}
+
+FILE *skunk_fopen(const char *path, const char *mode) {
+  int n = strlen(path) + strlen(mode) + 2;
+  if(n > SKUNKMSGLENMAX) {
+    return NULL;
+  }
+  SkunkMessage request;
+  SkunkMessage reply;
+  char buf[n];
+  request.length = 0;
+  request.abstract = SKUNK_FOPEN;
+  request.content = buf;
+  putString(&request, path);
+  putString(&request, mode);
+  reply.content = buf; // not really needed
+  skunk_synchronous_request(&request, &reply);
+  if(reply.abstract >= 0) {
+    return open_skunk_file_desc(reply.abstract);
+  } else {
+    return NULL;
+  }
 }

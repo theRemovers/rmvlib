@@ -29,6 +29,8 @@ void skunk_init();
 int skunk_asynchronous_request(SkunkMessage *request);
 int skunk_synchronous_request(SkunkMessage *request, SkunkMessage *reply);
 
-FILE *open_skunk_file(int fd);
+FILE *skunk_stdin();
+FILE *skunk_stderr();
+FILE *skunk_fopen(const char *path, const char *mode);
 
 #endif

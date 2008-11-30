@@ -17,7 +17,7 @@ typedef struct {
   short int width;
   short int height;
   sprite *s;
-} console;
+} Console;
 
 static char ascii_fnt[256*8] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -278,7 +278,7 @@ static char ascii_fnt[256*8] = {
   0x00, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static inline void output_char(console *co, char c) {
+static inline void output_char(Console *co, char c) {
   if(co->y == co->height) {
     char *adr = (char *) co->s->data;
 #if USE_BLITTER
@@ -345,14 +345,14 @@ static inline void output_char(console *co, char c) {
   }
 }
 
-static inline void output_string(console *co,const char *s) {
+static inline void output_string(Console *co,const char *s) {
   while(*s != 0) {
     output_char(co,*s++);
   }
 }
 
 static int putc(FILE *stream, char c) {
-  console *co = stream->data;
+  Console *co = stream->data;
   if(co != NULL) {
     output_char(co,c);
     return c;
@@ -361,7 +361,7 @@ static int putc(FILE *stream, char c) {
 }
 
 static int puts(FILE *stream, const char *s) {
-  console *co = stream->data;
+  Console *co = stream->data;
   if(co != NULL) {
     output_string(co,s);
     return 0;
@@ -370,7 +370,7 @@ static int puts(FILE *stream, const char *s) {
 }
 
 /* static size_t write(FILE *stream, const  void  *ptr,  size_t  size,  size_t  nmemb) { */
-/*   console *co = stream->data; */
+/*   Console *co = stream->data; */
 /*   if(co != NULL) { */
 /*     int i; */
 /*     char *s = (char *) ptr; */
@@ -383,7 +383,7 @@ static int puts(FILE *stream, const char *s) {
 /* } */
 
 static int close(FILE *fp) {
-  console *co = fp->data;
+  Console *co = fp->data;
   if(co != NULL) {
     sprite *s = co->s;
     detach_sprite_from_display(s);
@@ -397,15 +397,63 @@ static int close(FILE *fp) {
 }
 
 static int eof(FILE *fp) {
-  console *co = fp->data;
+  Console *co = fp->data;
   return (co == NULL);
+}
+
+static int seek(FILE *fp, long offset, int whence) {
+  Console *co = fp->data;
+  if(co == NULL) {
+    return -1;
+  }
+  long pos;
+  switch(whence) {
+  case SEEK_SET: {
+    pos = 0;
+    pos += offset;
+    break;
+  }
+  case SEEK_CUR: {
+    pos = co->x + co->y * co->width;
+    pos += offset;
+    break;
+  }
+  case SEEK_END: {
+    pos = co->height * co->width - 1;
+    pos -= offset;
+    break;
+  }
+  default:
+    return -1;
+    break;
+  }
+  co->y = pos / co->width;
+  co->x = pos % co->width;
+  if(co->y < 0) {
+    co->y = 0;
+  } else if(co->y >= co->height) {
+    co->y = co->height-1;
+  }
+  if(co->x < 0) {
+    co->x = 0;
+  } else if(co->x >= co->width) {
+    co->x = co->width-1;
+  }
+}
+
+static long tell(FILE *fp) {
+  Console *co = fp->data;
+  if(co == NULL) {
+    return -1;
+  }
+  return co->x + co->y * co->width;
 }
 
 FILE *open_custom_console(display *d, int x, int y, int idx, int width, int height, int layer) {
   if(width % 8 != 0) {
     width += 8-(width % 8);
   }
-  console *co = malloc(sizeof(console));
+  Console *co = malloc(sizeof(Console));
   phrase *scr_addr = calloc(8,(width / 8) * (height * 8));
   sprite *s = new_sprite(width*8,height*8,x,y,DEPTH1,scr_addr);
   s->trans = 0;
@@ -420,20 +468,17 @@ FILE *open_custom_console(display *d, int x, int y, int idx, int width, int heig
   SET_CLUT_RGB(idx+1,255,255,255);
   //  SET_SHORT_INT(0,(CLUT+2*idx));
   //  SET_SHORT_INT(0xffff,(CLUT+2*idx+2));
-  FILE *fp = malloc(sizeof(FILE));
+  FILE *fp = calloc(1, sizeof(FILE));
   fp->data = co;
-  // no input actions
-  fp->read = NULL;
-  fp->getc = NULL;
-  fp->gets = NULL;
   // output actions
   fp->putc = putc;
   fp->puts = puts;
   fp->write = NULL; // use default implementation
   // general purpose actions
   fp->eof = eof;
-  fp->flush = NULL;
   fp->close = close;
+  fp->seek = seek;
+  fp->tell = tell;
   return fp;
 }
 
