@@ -161,3 +161,109 @@ display *new_display(/** maximal number of sprites the ::display can contain.
 		    unsigned int max_nb_sprites);
 
 #endif
+
+/** \page display Display driver
+
+    The display driver offer a convenient way to manipulate Jaguar
+    (hardware) sprites.
+
+    A display is simply a sprite container. It is organized in layers,
+    in order to control the order in which the sprites are drawn onto
+    screen.
+    
+    \section display_api API 
+
+    \code
+    void init_display_driver();
+    \endcode
+
+    Initialise the display driver (load GPU interrupt routine,
+    ...). 
+
+    This must be called prior any other display-related operations.
+
+    \code
+    display *new_display(unsigned int max_sprites);
+    \endcode
+
+    Create (allocate & initialise) a new display that could contain at
+    most the given number of sprites.
+
+    \code
+    void show_display(display *d);
+    void hide_display(display *d);
+    \endcode
+
+    Show/hide the given display. At most one display can be active at
+    any time.
+
+    \code
+    void wait_display_refresh();
+    \endcode
+    
+    Wait for the display to be refreshed on screen.
+
+    \code
+    void jump_gpu_subroutine(void *address);
+    \endcode
+
+    Execute a GPU subroutine located at given address (which should be
+    located in GPU ram space).
+
+    \section display_example Example
+    
+    Here is the minimal code to create a display and make it the active one.
+
+    \subsection display_c_example C example
+
+    \code
+#include <display.h>
+
+int main(int argc, char *argv[]) {
+  // initialise the display driver
+  init_display_driver();
+
+  // create a new display that could contain at most DISPLAY_DFLT_MAX_SPRITE
+  display *d = new_display(0);
+
+  // make it active
+  show_display(d);
+
+  // infinite loop
+  for(;;) {
+  }
+}
+    \endcode
+
+    \subsection display_asm_example ASM example
+
+    \code
+    .extern _init_display_driver
+    .extern _new_display
+    .extern _show_display
+
+    .globl _main
+
+    .text
+    .m68000
+_main:
+    jsr _init_display_driver ;; initialise display driver
+
+    move.l #0,-(sp)
+    jsr    _new_display    ;; create display
+    addq.l #4,sp
+
+    move.l d0,display_addr ;; save display address
+
+    move.l d0,-(sp)
+    jsr _show_display      ;; show display
+    addq.l #4,sp
+
+.loop:
+    bra.s .loop
+
+    .bss
+display_addr: ds.l 1
+    \endcode
+
+ */
