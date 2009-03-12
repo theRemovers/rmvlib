@@ -169,7 +169,7 @@ display *new_display(/** maximal number of sprites the ::display can contain.
 
     A display is simply a sprite container. It is organized in layers,
     in order to control the order in which the sprites are drawn onto
-    screen.
+    %screen.
     
     \section display_api API 
 
@@ -201,7 +201,7 @@ display *new_display(/** maximal number of sprites the ::display can contain.
     void wait_display_refresh();
     \endcode
     
-    Wait for the display to be refreshed on screen.
+    Wait for the display to be refreshed on %screen.
 
     \code
     void jump_gpu_subroutine(void *address);
