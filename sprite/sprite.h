@@ -256,6 +256,8 @@ void show_display_layer(/** Address of the ::display */
 
 /** \page sprite Sprite Management
 
+    \section sprite_api API
+
     \code
     sprite *new_sprite(int width, int height, int x, int y, depth d, phrase *data);
     void set_sprite(sprite *s, int width, int height, int x, int y, depth d, phrase *data);
