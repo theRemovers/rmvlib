@@ -170,6 +170,9 @@ display *new_display(/** maximal number of sprites the ::display can contain.
     A display is simply a sprite container. It is organized in layers,
     in order to control the order in which the sprites are drawn onto
     %screen.
+
+    Each layer has its own coordinates inside a display and has an
+    independent visibility flag.
     
     \section display_api API 
 
@@ -202,6 +205,19 @@ display *new_display(/** maximal number of sprites the ::display can contain.
     \endcode
     
     Wait for the display to be refreshed on %screen.
+
+    \code
+    void move_display_layer(display *d, int layer, int x, int y);
+    \endcode
+
+    Move a layer inside a display.
+
+    \code
+    void hide_display_layer(display *d, int layer);
+    void show_display_layer(display *d,	int layer);
+    \endcode
+
+    Make invisible (resp. visible) a given layer in a display.
 
     \code
     void jump_gpu_subroutine(void *address);

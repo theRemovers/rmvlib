@@ -256,9 +256,57 @@ void show_display_layer(/** Address of the ::display */
 
 /** \page sprite Sprite Management
 
-    The library offers a convenient and easy way to manipulate Jaguar
-    (hardware) sprites.
+    \code
+    sprite *new_sprite(int width, int height, int x, int y, depth d, phrase *data);
+    void set_sprite(sprite *s, int width, int height, int x, int y, depth d, phrase *data);
+    \endcode
 
-    
+    Create (resp. initialise) a sprite with given characteristics.
 
+    By default, the sprite uses transparency (black pixels), is
+    visible, still (i.e.  not animated), and at ratio 1:1 (i.e. not scaled).
+
+    \code
+    void attach_sprite_to_display_at_layer(sprite *s, display *d, int layer);
+    \endcode
+
+    Attach a sprite to a display at given layer. A sprite may be
+    attached to at most one display at a time.
+
+    \code
+    void detach_sprite_from_display(sprite *s);
+    \endcode
+
+    Detach a sprite from its current display.
+
+    \code
+    void change_sprite_layer(sprite *s, display *d, int layer);
+    \endcode
+
+    Detach a sprite from its current display and attach it to a
+    (possibly different) display at given layer.
+
+    \code
+    void display_iter_layer(display *d, int layer, void (*f)(sprite *s));
+    void display_iter_all_layers(display *d, void (*f)(sprite *s));
+    \endcode
+
+    Iterate a function over the sprites of a given layer (resp. every
+    layer) in the given display.
+
+    \code
+    void sort_display_layer(display *d, int layer, int (*compare)(sprite *s1, sprite *s2));
+    \endcode
+
+    Sort the sprites of a given layer in the given display, according
+    to the given comparison function.
+
+    This allows to modify the order in which sprites are drawn onto
+    screen. The lowest sprite is drawn first while the greatest is
+    drawn last.
+
+    Since the modification of the display structure may happen while
+    the GPU refresh routine operates, it is recommended to wait for
+    the end of the refresh (thanks to ::wait_display_refresh) before
+    calling this function.
  */
