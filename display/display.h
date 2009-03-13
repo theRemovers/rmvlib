@@ -210,7 +210,7 @@ display *new_display(/** maximal number of sprites the ::display can contain.
     void move_display_layer(display *d, int layer, int x, int y);
     \endcode
 
-    Move a layer inside a display.
+    Change the layer coordinates in a display.
 
     \code
     void hide_display_layer(display *d, int layer);
