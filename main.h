@@ -9,6 +9,8 @@
 
     \li \ref display
 
+    \li \ref sprite
+
     Actually, the library is quite different from the first version
     we released in June 2006. The only common point is that the author
     of this library is Seb/The Removers.
@@ -195,7 +197,7 @@
     The following license applies to every file of the distribution
     except the file jaguar.inc.
 
-    Copyright (C) 2006 Seb/The Removers
+    Copyright (C) 2006-2009 Seb/The Removers
     http://removers.atari.org/
 
     This library is free software; you can redistribute it and/or 

@@ -253,3 +253,12 @@ void show_display_layer(/** Address of the ::display */
 			/** Layer (modulo 16) */
 			int layer);
 #endif
+
+/** \page sprite Sprite Management
+
+    The library offers a convenient and easy way to manipulate Jaguar
+    (hardware) sprites.
+
+    
+
+ */
