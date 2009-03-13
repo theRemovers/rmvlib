@@ -165,7 +165,8 @@ display *new_display(/** maximal number of sprites the ::display can contain.
 /** \page display Display driver
 
     The display driver offer a convenient way to manipulate Jaguar
-    (hardware) sprites.
+    (hardware) sprites. It also includes a simple GPU routines
+    manager.
 
     A display is simply a sprite container. It is organized in layers,
     in order to control the order in which the sprites are drawn onto
