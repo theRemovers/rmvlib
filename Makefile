@@ -11,13 +11,14 @@ SUBDIRS=$(NASUBDIRS) $(ASUBDIRS) $(OSUBDIRS)
 
 PROJECT=rmvlib
 # also change in Doxyfile!!!
-PROJECT_NUMBER=1.2.6
+PROJECT_NUMBER=1.2.7
 
 export PROJECT_NUMBER
 
 TARFILE=$(PROJECT)-$(PROJECT_NUMBER).tar
 
-DISTFILES=Makefile main.h jaguar.inc routine.s
+DISTFILES=Makefile Makefile.config
+DISTFILES+=main.h jaguar.inc routine.s risc.s
 DISTFILES+=ChangeLog LICENSE build.sh 
 
 INSTALLH=

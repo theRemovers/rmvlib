@@ -5,7 +5,7 @@ SRCS=render.s
 SRCH=render.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS)
+DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) render_def.s
 INSTALLH=render.h
 INSTALLLIB=render.o
 

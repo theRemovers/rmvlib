@@ -5,7 +5,7 @@ SRCS=skunk.s
 SRCH=skunk.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
-DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) skunk.s
+DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) 
 INSTALLH=skunk.h 
 INSTALLLIB=
 
