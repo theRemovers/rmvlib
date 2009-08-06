@@ -265,7 +265,7 @@ gpu_display_driver:
 ;; 	jr	ne,.gpu_copy_strips
 ;; 	addqt	#4,r2
 ;;; 
-;;;  	reordered code
+;;;  	rescheduled code
 ;;; 
 	load	(r1),r4		; read Y|H
 	addqt	#4,r1
@@ -411,29 +411,54 @@ gpu_display_driver:
 	;; r10 goes through hash table
 	;; r11 is layer counter
 	;; r14 is sprite base address
+;;; 	original code
+;;; 
+;; 	load	(r14+SPRITE_Y/4),r5 ; Y|X
+;; 	shrq	#3,r4		; DATA in phrases
+;; 	move	r5,r6
+;; 	shlq	#16,r5		; X|0
+;; 	sharq	#16,r6		; Y
+;; 	sharq	#16,r5		; X
+;; 	add	r3,r6		; Y+y_min+DISPLAY_Y+LAYER_Y
+;; 	add	r2,r5		; X+DISPLAY_X+LAYER_X
+;; 	;; r5 is X (still to be adjusted according to HOTSPOT)
+;; 	;; r6 is Y (...)
+;; 	move	r8,r19		; copy low bits of snd phrase
+;; 	move	r8,r7		; copy low bits of snd phrase
+;; 	shlq	#22,r19		; HEIGHT<<22
+;; 	shrq	#12,r8		; clear HEIGHT field
+;; 	cmpq	#0,r19		; HEIGHT<<22 = 0?
+;; 	jump	eq,(r25)	; jump eq,.next_in_layer
+;; 	shrq	#22,r19		; HEIGHT
+;; 	;; r19 is HEIGHT (not null)
+;; 	shlq	#12,r8		; 12 lower bits cleared
+;; 	shlq	#4,r7
+;; 	btst	#SPRITE_TYPE,r9	;
+;; 	jump	eq,(r23)	; jump eq,.non_scaled_sprite
+;; 	shrq	#32-10,r7	; DWIDTH
+;;; 
+;;;	rescheduled code
+;;; 
 	load	(r14+SPRITE_Y/4),r5 ; Y|X
-	shrq	#3,r4		; DATA in phrases
-	move	r5,r6
-	shlq	#16,r5		; X|0
-	sharq	#16,r6		; Y
-	sharq	#16,r5		; X
-	add	r3,r6		; Y+y_min+DISPLAY_Y+LAYER_Y
-	add	r2,r5		; X+DISPLAY_X+LAYER_X
-	;; r5 is X (still to be adjusted according to HOTSPOT)
-	;; r6 is Y (...)
 	move	r8,r19		; copy low bits of snd phrase
 	move	r8,r7		; copy low bits of snd phrase
-	shlq	#22,r19		; HEIGHT<<22
+	shrq	#3,r4		; DATA in phrases
 	shrq	#12,r8		; clear HEIGHT field
-	cmpq	#0,r19		; HEIGHT<<22 = 0?
+	move	r5,r6
+	sharq	#16,r6		; Y
+	shlq	#16,r5		; X|0
+	add	r3,r6		; Y+y_min+DISPLAY_Y+LAYER_Y
+	sharq	#16,r5		; X
+	add	r2,r5		; X+DISPLAY_X+LAYER_X
+	shlq	#22,r19		; HEIGHT<<22 = 0?
 	jump	eq,(r25)	; jump eq,.next_in_layer
-	shrq	#22,r19		; HEIGHT
-	;; r19 is HEIGHT (not null)
-	shlq	#12,r8		; 12 lower bits cleared
 	shlq	#4,r7
+	shrq	#22,r19		; HEIGHT
+	shlq	#12,r8		; 12 lower bits cleared
 	btst	#SPRITE_TYPE,r9	;
 	jump	eq,(r23)	; jump eq,.non_scaled_sprite
 	shrq	#32-10,r7	; DWIDTH
+;;; 
 .scaled_sprite:
 ;; 	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
 ;; 	jump	eq,(r25)	; jump eq,.next_in_layer
@@ -783,7 +808,7 @@ gpu_display_driver:
 ;; 	jump	(r22)		; jump .non_scaled_cut_sprite
 ;; 	addq	#4,r13
 ;;;
-;;; 	reordered code
+;;; 	rescheduled code
 ;;;
 	load	(r13),r15
 	move	r6,r16		; y
