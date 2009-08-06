@@ -248,20 +248,39 @@ gpu_display_driver:
 	add	r15,r1		; to read strips 
 	moveq	#DISPLAY_NB_STRIPS,r3
 .gpu_copy_strips:
+;;;	original code
+;;; 
+;; 	load	(r1),r4		; read Y|H
+;; 	addq	#4,r1
+;; ;; 	move	r4,r6
+;; ;; 	sharq	#16,r4		; Y
+;; 	load	(r1),r5		; read offset (in bytes)	
+;; 	store	r4,(r2)
+;; 	addq	#4,r2
+;; 	addq	#4,r1
+;; 	add	r0,r5		; start of corresponding list
+;; 	shrq	#3,r5		; in phrases
+;; 	subq	#1,r3		; strip--
+;; 	store	r5,(r2)		; do not change flags!
+;; 	jr	ne,.gpu_copy_strips
+;; 	addqt	#4,r2
+;;; 
+;;;  	reordered code
+;;; 
 	load	(r1),r4		; read Y|H
-	addq	#4,r1
-;; 	move	r4,r6
-;; 	sharq	#16,r4		; Y
-	load	(r1),r5		; read offset (in bytes)	
-	store	r4,(r2)
-	addq	#4,r2
-	addq	#4,r1
+	addqt	#4,r1
+	load	(r1),r5		; read offset (in bytes)
+	addqt	#4,r1	
 	add	r0,r5		; start of corresponding list
+	store	r4,(r2)
 	shrq	#3,r5		; in phrases
+	addqt	#4,r2
 	subq	#1,r3		; strip--
 	store	r5,(r2)		; do not change flags!
 	jr	ne,.gpu_copy_strips
 	addqt	#4,r2
+;;; 
+	;; 
 	load	(r1),r4
 	store	r4,(r2)
 ;; 	shlq	#16,r6
@@ -732,35 +751,70 @@ gpu_display_driver:
 	jump	eq,(r25)	; then jump .next_in_layer
 	add	r17,r4		; DATA += DWIDTH*(strip.y-y)
 .non_scaled_emit_sprite:
+;;; 	original code
+;;; 
+;; 	load	(r13),r15
+;; 	move	r6,r16		; y
+;; 	move	r15,r17
+;; 	shlq	#3,r15		; in bytes
+;; 	addq	#2,r17		; next LINK in 2 phrases
+;; 	move	r19,r5		; height
+;; 	store	r17,(r13)	; next object in list
+;; 	shlq	#32-11+1,r16	; keep 11 bits of Y*2
+;; 	shlq	#32-10,r5
+;; 	shrq	#32-14,r16	; YPOS|0
+;; 	shrq	#32-24,r5
+;; 	addq	#4,r13
+;; 	or	r5,r16		; HEIGHT|YPOS|0
+;; 	move	r17,r5		; copy LINK
+;; 	shlq	#32-8,r17
+;; 	shrq	#8,r5
+;; 	or	r17,r16		; low bits of first phrase
+;; 	move	r4,r17
+;; 	store	r16,(r15+1)
+;; 	shlq	#11,r17		; DATA|0
+;; 	store	r8,(r15+3)
+;; 	or	r5,r17		; high bits of first phrase
+;; 	store	r9,(r15+2)
+;; 	subq	#1,r12		; strip--
+;; 	jr	eq,.next_in_layer
+;; 	store	r17,(r15)
+;; 	load	(r13),r5	; strip.y
+;; 	jump	(r22)		; jump .non_scaled_cut_sprite
+;; 	addq	#4,r13
+;;;
+;;; 	reordered code
+;;;
 	load	(r13),r15
 	move	r6,r16		; y
-	move	r15,r17
-	shlq	#3,r15		; in bytes
-	addq	#2,r17		; next LINK in 2 phrases
-	move	r19,r5		; height
-	store	r17,(r13)	; next object in list
 	shlq	#32-11+1,r16	; keep 11 bits of Y*2
+	move	r19,r5		; height
 	shlq	#32-10,r5
 	shrq	#32-14,r16	; YPOS|0
 	shrq	#32-24,r5
-	addq	#4,r13
+	move	r15,r17
+	addqt	#2,r17		; next LINK in 2 phrases
 	or	r5,r16		; HEIGHT|YPOS|0
+	store	r17,(r13)	; next object in list		
 	move	r17,r5		; copy LINK
+	shlq	#3,r15		; in bytes
 	shlq	#32-8,r17
-	shrq	#8,r5
+	addqt	#4,r13
 	or	r17,r16		; low bits of first phrase
-	move	r4,r17
 	store	r16,(r15+1)
-	shlq	#11,r17		; DATA|0
 	store	r8,(r15+3)
-	or	r5,r17		; high bits of first phrase
 	store	r9,(r15+2)
+	move	r4,r17
+	shlq	#11,r17		; DATA|0
+	shrq	#8,r5
+	or	r5,r17		; high bits of first phrase
 	subq	#1,r12		; strip--
 	jr	eq,.next_in_layer
 	store	r17,(r15)
 	load	(r13),r5	; strip.y
 	jump	(r22)		; jump .non_scaled_cut_sprite
 	addq	#4,r13
+;;; 
 .next_in_layer:
 	load	(r14+SPRITE_NEXT/4),r14
 .do_layer_tst:
