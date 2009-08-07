@@ -120,10 +120,10 @@ TRIVIAL_CLIPPING	equ	1
 	.macro	compute_i
 	movefa	r0,r25		; i1
 	movefa	r2,r26		; i2
-	sat24	r25
-	sat24	r26
 	movefa	r1,r27		; di1
 	movefa	r3,r28		; di2
+	sat24	r25
+	sat24	r26
 	add	r25,r27
 	add	r26,r28
 	moveta	r27,r0		; i1'
@@ -219,8 +219,8 @@ TRIVIAL_CLIPPING	equ	1
 	sub	r26,r25
 	store	r25,(r15+((B_Z1-(A1_BASE+32))/4)) 	; B_Z1
 	sub	r26,r25
-	shlq	#2,r26					; dz * 4
 	store	r25,(r15+((B_Z0-(A1_BASE+32))/4)) 	; B_Z0
+	shlq	#2,r26					; dz * 4	
 	store	r26,(r15+((B_ZINC-(A1_BASE+32))/4))	; B_ZINC
 	.endm
 
@@ -451,12 +451,12 @@ renderer:
 	shlq	#16,r9
 	movefa	r17,r29				; dest base address
 	move	r9,r10
-	movefa	r18,r30				; dest blitter flags (phrase mode)
-	shrq	#16,r9
 	store	r29,(r15+((A1_BASE-A1_BASE)/4)) ; A1_BASE
+	shrq	#16,r9
+	movefa	r18,r30				; dest blitter flags (phrase mode)
 	or	r10,r9				; color
-	moveq	#0,r10
 	store	r30,(r15+((A1_FLAGS-A1_BASE)/4)) ; A1_FLAGS
+	moveq	#0,r10
 	store	r9,(r15+((B_PATD-A1_BASE)/4))	; set color
 	store	r9,(r15+((B_PATD+4-A1_BASE)/4))	; set color
 	store	r10,(r15+((A1_CLIP-A1_BASE)/4)) ; A1_CLIP workaround
@@ -877,12 +877,12 @@ renderer:
 	sub	r26,r25
 	store	r25,(r15+((B_Z1-(A1_BASE+32))/4)) 	; B_Z1
 	sub	r26,r25
-	shlq	#2,r26					; 4*z_inc
 	store	r25,(r15+((B_Z0-(A1_BASE+32))/4)) 	; B_Z0
-	movefa	r24,r25				    	; restore i
+	shlq	#2,r26					; 4*z_inc
 	store	r26,(r15+((B_ZINC-(A1_BASE+32))/4))	; B_ZINC
-	movefa	r25,r26				    	; restore di
+	movefa	r24,r25				    	; restore i
 	store	r25,(r15+((B_I3-(A1_BASE+32))/4))	; B_I3
+	movefa	r25,r26				    	; restore di
 	sub	r26,r25
 	store	r25,(r15+((B_I2-(A1_BASE+32))/4))	; B_I2
 	sub	r26,r25
@@ -919,21 +919,21 @@ renderer:
 	sub	r26,r25		; v -= dv
 	;; compute A1_PIXEL, A1_FPIXEL, A1_INC, A1_FINC
 	move	r25,r27		; save Y
-	shlq	#16,r25		; A1_FPIXEL(y)
-	and	r22,r27		; A1_PIXEL(y)
 	move	r26,r28		; save dY
-	shlq	#16,r26		; A1_FINC(y)
 	and	r22,r28		; A1_INC(y)
-	movefa	r24,r29		; X
+	and	r22,r27		; A1_PIXEL(y)
 	movefa	r25,r30		; dX
-	shrq	#16,r29		; A1_PIXEL(x)
 	shrq	#16,r30		; A1_INC(x)
-	or	r29,r27		; A1_PIXEL
-	or	r30,r28		; A1_INC
 	movefa	r24,r29		; X
+	shrq	#16,r29		; A1_PIXEL(x)
+	or	r30,r28		; A1_INC
+	or	r29,r27		; A1_PIXEL
 	movefa	r25,r30		; dX
-	shlq	#16,r29
 	shlq	#16,r30
+	movefa	r24,r29		; X
+	shlq	#16,r29
+	shlq	#16,r25		; A1_FPIXEL(y)
+	shlq	#16,r26		; A1_FINC(y)
 	shrq	#16,r29		; A1_FPIXEL(x)
 	shrq	#16,r30		; A1_FINC(x)
 	or	r29,r25		; A1_FPIXEL

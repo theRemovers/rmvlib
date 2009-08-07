@@ -121,10 +121,10 @@ display_collision_routine:
 	nop
 	load	(r15+SPRITE_HY/4),r26 ; load HY|HX
 	move	r26,r27
-	sharq	#16,r26		; HY
 	shlq	#16,r27		; to get HX
-	sub	r26,r25		; Y -= HY
+	sharq	#16,r26		; HY
 	sharq	#16,r27		; HX
+	sub	r26,r25		; Y -= HY
 	sub	r27,r24		; X -= HX
 .ok_sprite2_coords:	
 	;; r1, r2 is snd phrase of SPRITE1
@@ -297,8 +297,8 @@ display_collision_routine:
 	add	r9,r3		; DATA1
 	add	r10,r23		; DATA2
 	;; DATA computed now
-*	shlq	#16,r18		; done above instead of nop
-*	shlq	#16,r17		; done above instead of nop
+;; 	shlq	#16,r18		; done above instead of nop
+;; 	shlq	#16,r17		; done above instead of nop
 	shrq	#16,r18
 	shrq	#16,r17
 	addq	#1,r18

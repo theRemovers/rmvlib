@@ -137,15 +137,15 @@ dsp_sound_driver:
 	.endif
 	;; init mixing
 	movei	#.sound_dma,r14
-	moveq	#0,r16		; left channel
-	move	r14,r15
 	moveq	#0,r17		; right channel
-	addq	#DMA_SIZEOF,r15	; VOICEs
-	;; dma management
-	load	(r14+DMA_STATE/4),r19	; read DMA state
 	load	(r14+DMA_CONTROL/4),r18	; read DMA control
-	move	r19,r20			; save DMA state
+	load	(r14+DMA_STATE/4),r19	; read DMA state
+	move	r14,r15
+	moveq	#0,r16		; left channel
+	addqt	#DMA_SIZEOF,r15	; VOICEs
+	;; dma management
 	move	r18,r24			; save control (for ack at the end) 
+	move	r19,r20			; save DMA state
 	shlq	#1,r18			; clear or set?
 	jr	cc,.sound_dma_clear_bits
 	shrq	#1,r18
@@ -228,9 +228,9 @@ dsp_sound_driver:
 	shlq	#8,r12		; put on 16 bits
 .sound_sample_ok:
 	add	r3,r4		; add fractionnal increment
-	addc	r5,r1		; add integer increment with carry
 	store	r4,(r15+VOICE_FRAC/4) ; store fractionnal increment (no scoreboard failure since ALU operation for r4)
 	move	r2,r4		; get balance
+	addc	r5,r1		; add integer increment with carry
 	shlq	#16-7,r2	; to get volume
 	shlq	#16-13,r4	; 5 bits
 	sharq	#32-7,r2	; volume
@@ -271,19 +271,19 @@ dsp_sound_driver:
 	sharq	#6+4+LOG2_NB_VOICES-1,r17 ; 
 	sat16s	r16		; saturate
 	sat16s	r17		; idem
-*	store	r16,(r15)	; write left channel
-*	store	r17,(r15+1)	; write right channel
+;; 	store	r16,(r15)	; write left channel
+;; 	store	r17,(r15+1)	; write right channel
 	store	r16,(r15+1)	; write left channel (Zerosquare fix)
 	store	r17,(r15)	; write right channel (Zerosquare fix)
 	.if	DSP_BG
 	storew	r27,(r26)
 	.endif
 	;; return from interrupt
-	bset	#10,r29		; clear latch 1
 	load	(r31),r28	; return address
+	bset	#10,r29		; clear latch 1
 	bclr	#3,r29		; clear IMASK
-	addq	#2,r28		; next instruction
 	addq	#4,r31		; pop from stack
+	addqt	#2,r28		; next instruction
 	jump	t,(r28)		; return
 	store	r29,(r30)	; restore flags
 	.long
@@ -331,7 +331,7 @@ DSP_SUBROUT_ADDR	equ	.dsp_sound_driver_param
 	movei	#SCLK,r10
 	movei	#SMODE,r11
 	movei	#.dsp_sound_driver_init_param,r12
-*	movei	#%010101,r13	; SMODE
+;; 	movei	#%010101,r13	; SMODE
 	movei	#%001101,r13	; SMODE (Zerosquare fix)
 	load	(r12),r12	; SCLK
 	store	r12,(r10)
