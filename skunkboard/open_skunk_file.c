@@ -243,7 +243,7 @@ static int seek(FILE *fp, long offset, int whence) {
     return -1;
   }
   wrapper->request.length = 0;
-  wrapper->request.abstract = SKUNK_FTELL;
+  wrapper->request.abstract = SKUNK_FSEEK;
   wrapper->request.content = wrapper->buf;
   putInt32(&(wrapper->request), offset); 
   putInt16(&(wrapper->request), whence); 
