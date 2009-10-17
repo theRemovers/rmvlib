@@ -159,7 +159,6 @@ display *new_display(/** maximal number of sprites the ::display can contain.
 		     * If 0 then the default value of ::DISPLAY_DFLT_MAX_SPRITE is used. 
 		     */
 		    unsigned int max_nb_sprites);
-
 #endif
 
 /** \page display Display driver

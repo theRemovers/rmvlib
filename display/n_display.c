@@ -211,7 +211,7 @@ void build_display_strip_tree(display *d, qphrase *list) {
 /*   } */
 /* } */
 
-display *new_custom_display(unsigned int max_nb_sprites, int strips[], int double_buffered) {
+static display *new_custom_display(unsigned int max_nb_sprites, int strips[], int double_buffered) {
   display *d;
   int i;
 
@@ -267,6 +267,14 @@ display *new_custom_display(unsigned int max_nb_sprites, int strips[], int doubl
   return d;
 }
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 display *new_display(unsigned int max_nb_sprites) {
   int strips[DISPLAY_NB_STRIPS+1];
   int y_min = (a_vdb+1)/2;
@@ -277,5 +285,6 @@ display *new_display(unsigned int max_nb_sprites) {
     strips[i] = i * h_strip;
   } 
   strips[DISPLAY_NB_STRIPS] = y_max-y_min;
-  return new_custom_display(max_nb_sprites,strips,1);
+  return new_custom_display(max_nb_sprites,strips,TRUE);
 }
+
