@@ -77,7 +77,8 @@ void clear_voice(/** voice */
 int init_module(/** address of the music */
 		char *module,
 		/** enable/disable tempo commands */
-		int tempo_enabled);
+		/** enable/disable replay */
+		int flags);
 
 /** Protracker routine to be called each VBL (50 or 60 Hz) */
 void play_module();

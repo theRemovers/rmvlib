@@ -176,12 +176,18 @@ mt_chunks:
 	
 	.text
 
-;; mt_init(char *module, int tempo_enabled);
+TEMPO_FLAG	equ	0
+NOREPEAT_FLAG	equ	1
+	
+;; mt_init(char *module, int flags);
 mt_init:
 	move.l	4(sp),a0
-	tst.l	8(sp)
+	move.l	8(sp),d0
+	btst	#TEMPO_FLAG,d0
 	sne	mt_tempo_flag
 	st	mt_SetPan_flag
+	btst	#NOREPEAT_FLAG,d0
+	sne	mt_no_repeat_flag
 	movem.l	d2/a2,-(sp)
 	MOVE.L	A0,mt_SongDataPtr
 	;; we first determine the type of module
@@ -697,6 +703,9 @@ mt_NextPosition:
 	cmp.b	mt_SongLength,d1
 	BLO.S	mt_NoNewPosYet
 	move.b	mt_SongRestart,mt_SongPos
+	tst.b	mt_no_repeat_flag ; repeat?
+	beq.s	mt_NoNewPosYet
+	clr.w	mt_SongPlayPause ; no => pause the song
 ; 	CLR.B	mt_SongPos
 mt_NoNewPosYet:	
 	TST.B	mt_PosJumpFlag
@@ -1773,6 +1782,7 @@ mt_nbVoices:		ds.w	1
 mt_SongLength:	ds.b	1
 mt_SongRestart:	ds.b	1
 
+mt_no_repeat_flag:	ds.b	1
 mt_tempo_flag:		ds.b	1
 mt_SetPan_flag:		ds.b	1
 mt_tempo:		ds.b	1
