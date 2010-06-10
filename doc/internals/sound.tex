@@ -1,3 +1,31 @@
 \chapter{The sound engine}
 
+\newcommand{\fname}[1]{\textsc{#1}}
+\newcommand{\public}{\textit{public}}
+\newcommand{\private}{\textit{private}}
+
 \section{Paula emulator, version 1.0}
+
+The Paula emulator is able to resample and mix 8 independent stereo
+voices.
+
+\subsection{Voice description}
+Each voice is described thanks to several \public{} fields.  Several
+\private{} fields are also used for performing replay.
+
+\begin{center}
+  \begin{tabular}{|l|l|l|}
+    \hline
+    field name & policy & description \\
+    \hline
+    \fname{START} & \public & start address of sound data \\
+    \fname{LENGTH} & \public & length of sound data in bytes \\
+    \fname{CONTROL} & \public & replay characteristics (see below)\\
+    \hline
+    \hline
+    \fname{CURRENT} & \private & current address in sound data\\
+    \fname{END} & \private & end address of sound data\\
+    \fname{FRAC} & \private & fractionnal increment (for resampling)\\
+    \hline
+  \end{tabular}
+\end{center}
