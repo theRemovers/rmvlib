@@ -1,31 +1,114 @@
 \chapter{The sound engine}
 
 \newcommand{\fname}[1]{\textsc{#1}}
-\newcommand{\public}{\textit{public}}
-\newcommand{\private}{\textit{private}}
 
 \section{Paula emulator, version 1.0}
-
 The Paula emulator is able to resample and mix 8 independent stereo
 voices.
 
+A global frequency $f_r$ is assumed. It is the frequency at which
+sound data are sent to the Jaguar DACs.
+
 \subsection{Voice description}
-Each voice is described thanks to several \public{} fields.  Several
-\private{} fields are also used for performing replay.
+Each voice is described thanks to several fields. The table below
+lists all the (public) fields that describe a voice and summarise when
+the Paula emulator access these fields.
 
 \begin{center}
   \begin{tabular}{|l|l|l|}
     \hline
-    field name & policy & description \\
+    field name & brief description & read access \\
     \hline
-    \fname{START} & \public & start address of sound data \\
-    \fname{LENGTH} & \public & length of sound data in bytes \\
-    \fname{CONTROL} & \public & replay characteristics (see below)\\
-    \hline
-    \hline
-    \fname{CURRENT} & \private & current address in sound data\\
-    \fname{END} & \private & end address of sound data\\
-    \fname{FRAC} & \private & fractionnal increment (for resampling)\\
+    \fname{START} & start address of sound data & whenever the voice loops\\
+    \fname{LENGTH} & length of sound data in bytes & whenever the
+    voice loops\\
+    \fname{CONTROL} & replay characteristics (see below) & as long as
+    the voice is enabled\\
     \hline
   \end{tabular}
 \end{center}
+
+If \fname{START} becomes NULL, then the voice will be disabled when
+the voice would have looped.
+
+The \fname{CONTROL} field defines the replay characteristics of the
+voice:
+\begin{itemize}
+\item format of sound data: 8 or 16 bits (signed, big endian).
+\item left/right balance (panning) defined by an integer $0 \leq b
+  \leq 16$
+\item its volume defined by an integer $0 \leq v \leq 64$ 
+  (note: the scale is linear, which is incorrect)
+\item its replay frequency, which is defined by an increment (12 bits
+  fixed point) $0 \leq i \leq 16$.
+
+  If $f_s$ is the frequency of the sound and $f_r$ is the global
+  frequency of the sound driver, the increment is given by
+  the formula
+  \begin{center}
+    \fbox{$i = \frac{f_s}{f_r}$}
+  \end{center}
+\end{itemize}
+Its value may change while a voice is enabled.
+
+\subsection{Programming the Paula emulator}
+
+In order to control when the Paula emulator needs to take into account
+new commands written in the voice descriptors a global \fname{CONTROL}
+field is used to communicate is the Paula emulator. Any process can
+read/write this field (including the Paula emulator). 
+
+Before writing this field, any external process should wait that its
+value becomes NULL.
+
+When the Paula emulator reads a non NULL value here, it will take into
+account the command and then write back a NULL value.
+
+The global \fname{CONTROL} is defined as follows:
+\begin{itemize}
+\item each voice has a corresponding bit. The meaning of this bit is
+  the following:
+  \begin{itemize}
+  \item if the bit is clear, the command does not affect the
+    corresponding voice (the voice is \emph{unmarked}).
+  \item if the bit is set, the command does affect the corresponding
+    voice (the voice is \emph{marked}).
+  \end{itemize}
+\item a global bit indicates the meaning of the command:
+  \begin{itemize}
+  \item if this bit is clear, all the marked voices are disabled.
+  \item if this bit is set, all the marked voices are enabled. The
+    fields \fname{START} and \fname{LENGTH} of the marked voices are
+    read at that point to initialize the voice.
+  \end{itemize}
+\end{itemize}
+
+\subsection{How to?}
+
+\paragraph{Disabling a voice}
+\begin{enumerate}
+\item Wait that the global \fname{CONTROL} becomes NULL
+\item Mark the voice to disable and write new value of \fname{CONTROL}
+\end{enumerate}
+
+\paragraph{Enabling a voice (one shot replay)}
+\begin{enumerate}
+\item Fill the voice characteristics (\fname{START}, \fname{LENGTH}, \fname{CONTROL})
+\item Wait that the global \fname{CONTROL} becomes NULL
+\item Mark the voice to enable and write new value of \fname{CONTROL}
+\item Disable replay loop by writing NULL to field \fname{START} of
+  the voice.
+\end{enumerate}
+
+Note that if the voice is already in use, the above process might be
+incorrect. It is safer to first disable the voice, then enable it
+again.
+
+\paragraph{Enabling a voice (replay with loop)}
+\begin{enumerate}
+\item Fill the voice characteristics (\fname{START}, \fname{LENGTH}, \fname{CONTROL})
+\item Wait that the global \fname{CONTROL} becomes NULL
+\item Mark the voice to enable and write new value of \fname{CONTROL}
+\item Fill the start of the replay loop and the length of the loop
+  (\fname{START}, \fname{LENGTH})
+\end{enumerate}
