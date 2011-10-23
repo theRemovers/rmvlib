@@ -465,10 +465,11 @@ FILE *open_custom_console(display *d, int x, int y, int idx, int width, int heig
   co->height = height;
   co->s = s;
   attach_sprite_to_display_at_layer(s,d,layer);
-  SET_CLUT_RGB(idx,0,0,0);
-  SET_CLUT_RGB(idx+1,255,255,255);
-  //  SET_SHORT_INT(0,(CLUT+2*idx));
-  //  SET_SHORT_INT(0xffff,(CLUT+2*idx+2));
+
+  struct jregs *hw = JREGS;
+  hw->clut1[idx] = RGBCOLOR(0, 0, 0);
+  hw->clut1[idx+1] = RGBCOLOR(255, 255, 255);
+
   FILE *fp = calloc(1, sizeof(FILE));
   fp->data = co;
   // output actions
