@@ -40,12 +40,12 @@
 #define RGBCOLOR(r,g,b) (((((r) >> 3) & 0x1f) << 11) | ((((b) >> 3) & 0x1f) << 6) | (((g) >> 2) & 0x3f))
 #define CRYCOLOR(c,r,y) ((((c) & 0xf) << 12) | (((r) & 0xf) << 8) | ((y) & 0xff))
 
-#define SET_BG_RGB(r,g,b) { SET_SHORT_INT(RGBCOLOR(r,g,b),BG); }
-#define SET_BG_CRY(c,r,y) { SET_SHORT_INT(CRYCOLOR(c,r,y),BG); }
-#define SET_CLUT_RGB(idx,r,g,b) { SET_SHORT_INT(RGBCOLOR(r,g,b),CLUT+2*((idx) & 0xff)); }
-#define SET_CLUT_CRY(idx,c,r,y) { SET_SHORT_INT(CRYCOLOR(c,r,y),CLUT+2*((idx) & 0xff)); }
-#define SET_BG(c) { SET_SHORT_INT(c,BG); }
-#define SET_CLUT(idx,c) { SET_SHORT_INT(c,CLUT+2*((idx) & 0xff)); }
+#define SET_BG_RGB(r,g,b) { JREGS->bg = RGBCOLOR(r,g,b); }
+#define SET_BG_CRY(c,r,y) { JREGS->bg = CRYCOLOR(c,r,y); }
+#define SET_CLUT_RGB(idx,r,g,b) { JREGS->clut1[idx & 0xff] = RGBCOLOR(r,g,b); }
+#define SET_CLUT_CRY(idx,c,r,y) { JREGS->clut1[idx & 0xff] = CRYCOLOR(c,r,y); }
+#define SET_BG(c) { JREGS->bg = c; }
+#define SET_CLUT(idx,c) { JREGS->clut1[idx & Oxff] = c; }
 
 typedef struct _sprite_header {
   struct _sprite_header *previous;
