@@ -40,13 +40,6 @@
 #define RGBCOLOR(r,g,b) (((((r) >> 3) & 0x1f) << 11) | ((((b) >> 3) & 0x1f) << 6) | (((g) >> 2) & 0x3f))
 #define CRYCOLOR(c,r,y) ((((c) & 0xf) << 12) | (((r) & 0xf) << 8) | ((y) & 0xff))
 
-#define SET_BG_RGB(r,g,b) { TOMREGS->bg = RGBCOLOR(r,g,b); }
-#define SET_BG_CRY(c,r,y) { TOMREGS->bg = CRYCOLOR(c,r,y); }
-#define SET_CLUT_RGB(idx,r,g,b) { TOMREGS->clut1[idx & 0xff] = RGBCOLOR(r,g,b); }
-#define SET_CLUT_CRY(idx,c,r,y) { TOMREGS->clut1[idx & 0xff] = CRYCOLOR(c,r,y); }
-#define SET_BG(c) { TOMREGS->bg = c; }
-#define SET_CLUT(idx,c) { TOMREGS->clut1[idx & Oxff] = c; }
-
 typedef struct _sprite_header {
   struct _sprite_header *previous;
   struct _sprite_header *next;
