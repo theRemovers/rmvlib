@@ -50,18 +50,18 @@ static uint16_t get_clk(enum uart_baudrate_t bd) {
 static uint16_t get_ctrl(enum uart_parity_t p) {
   switch(p) {
   case PODD:
-    return ASI_ODD|ASI_PAREN;
+    return ASI_ODDPARITY;
     break;
   case PEVEN:
-    return ASI_PAREN;
+    return ASI_EVENPARITY;
     break;
   case PNONE:
   default:
-    return 0;
+    return ASI_NOPARITY;
   }
 }
 
-void uart_init(enum uart_baudrate_t bd, enum uart_parity_t p) {
+void uart_setup(enum uart_baudrate_t bd, enum uart_parity_t p) {
   uint16_t clk = get_clk(bd);
   JERRYREGS->asiclk = clk;
   JERRYREGS->asictrl = ASI_CLRERR;
