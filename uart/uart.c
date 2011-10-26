@@ -47,7 +47,7 @@ static uint16_t get_clk(enum uart_baudrate_t bd) {
   return baudrate_table[0].clk;
 }
 
-static uint16_t get_ctrl(enum uart_baudrate_t p) {
+static uint16_t get_ctrl(enum uart_parity_t p) {
   switch(p) {
   case PODD:
     return ASI_ODD|ASI_PAREN;
@@ -61,39 +61,9 @@ static uint16_t get_ctrl(enum uart_baudrate_t p) {
   }
 }
 
-static int putc(FILE *fp, int c) {
-  while(!(JERRYREGS->asistat & ASI_TBE)) {
-  }
-  JERRYREGS->asidata = c & 0xff;
-  return c;
-}
-
-static int eof(FILE *fp) {
-  return 0;
-}
-
-static int getc(FILE *fp) {
-  if(JERRYREGS->asistat & ASI_ERROR) {
-    JERRYREGS->asictrl |= ASI_CLRERR;
-  }
-  while(!(JERRYREGS->asistat & ASI_RBF)) {
-  }
-  return JERRYREGS->asidata & 0xff;
-}
-
-static int flush(FILE *fp) {
-  while(!(JERRYREGS->asidata & ASI_TBE)) {
-  }
-  return 0;
-}
-
-FILE *open_uart(enum uart_baudrate_t bd, enum uart_parity_t p) {
-  FILE *fp = calloc(1, sizeof(FILE));
-  if(fp == NULL) {
-    return NULL;
-  }
-
-  JERRYREGS->asiclk = get_clk(bd);
+void uart_init(enum uart_baudrate_t bd, enum uart_parity_t p) {
+  uint16_t clk = get_clk(bd);
+  JERRYREGS->asiclk = clk;
   JERRYREGS->asictrl = ASI_CLRERR;
   {
     uint16_t tmp;
@@ -101,23 +71,19 @@ FILE *open_uart(enum uart_baudrate_t bd, enum uart_parity_t p) {
     tmp = JERRYREGS->asidata;
   }
   JERRYREGS->asictrl = get_ctrl(p);
+  JERRYREGS->asiclk = clk;
+}
 
-  fp->data = NULL;
-  // output actions
-  fp->putc = putc;
-  fp->puts = NULL; // use default implementation
-  fp->write = NULL; // use default implementation
-  // input actions
-  fp->getc = getc;
-  fp->gets = NULL; // use default implementation
-  fp->read = NULL; // use default implementation
-  //
-  fp->seek = NULL;
-  fp->tell = NULL;
-  fp->eof = eof;
-  fp->flush = flush;
-  fp->close = NULL;
+int uart_putc(int c) {
+  while(!(JERRYREGS->asistat & ASI_TBE)) {
+  }
+  JERRYREGS->asidata = c & 0xff;
+  return c;
+}
 
-  return fp;
+int uart_getc() {
+  while(!(JERRYREGS->asistat & ASI_RBF)) {
+  }
+  return JERRYREGS->asidata & 0xff;
 }
 

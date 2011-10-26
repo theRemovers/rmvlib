@@ -28,6 +28,8 @@
 enum uart_baudrate_t { B9600, B19200, B38400, B57600, B115200 };
 enum uart_parity_t { PNONE, PODD, PEVEN };
 
-FILE *open_uart(enum uart_baudrate_t bd, enum uart_parity_t p);
+void uart_init(enum uart_baudrate_t bd, enum uart_parity_t p);
+int uart_getc();
+int uart_putc();
 
 #endif
