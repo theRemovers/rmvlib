@@ -93,10 +93,11 @@ int uart_try_getc(unsigned int timeout, int *c) {
 int uart_getc() {
   int c;
   while(uart_try_getc(0, &c) != 0);
+  return c;
 }
 
 void uart_flush() {
-  while(!(JERRYREGS->asidata & ASI_TBE));
+  while(!(JERRYREGS->asistat & ASI_TBE));
 }
 
 int uart_putc(int c) {
