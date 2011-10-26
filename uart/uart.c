@@ -75,15 +75,18 @@ void uart_setup(enum uart_baudrate_t bd, enum uart_parity_t p) {
 }
 
 int uart_try_getc(unsigned int timeout, int *c) {
+  uint16_t status;
   do {
-    if(JERRYREGS->asistat & ASI_ERROR) {
+    status = JERRYREGS->asistat;
+    if(status & ASI_ERROR) {
       JERRYREGS->asictrl |= ASI_CLRERR;
     }
-    if(timeout-- == 0) {
+    if(timeout == 0) {
       break;
     }
-  } while(!(JERRYREGS->asistat & ASI_RBF));
-  if(JERRYREGS->asistat & ASI_RBF) {
+    timeout--;
+  } while(!(status & ASI_RBF));
+  if(status & ASI_RBF) {
     *c = JERRYREGS->asidata & 0xff;
     return 0;
   }
