@@ -17,10 +17,17 @@
 /* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /** \file uart.h
- * \brief FILE wrapper to communicate on UART
+ * \brief UART driver
  */
 
 #ifndef _UART_H
 #define _UART_H
+
+#include <stdio.h>
+
+enum uart_baudrate_t { B9600, B19200, B38400, B57600, B115200 };
+enum uart_parity_t { PNONE, PODD, PEVEN };
+
+FILE *open_uart(enum uart_baudrate_t bd, enum uart_parity_t p);
 
 #endif
