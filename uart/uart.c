@@ -73,7 +73,12 @@ static int eof(FILE *fp) {
 }
 
 static int getc(FILE *fp) {
-  return EOF;
+  if(JERRYREGS->asistat & ASI_ERROR) {
+    JERRYREGS->asictrl |= ASI_CLRERR;
+  }
+  while(!(JERRYREGS->asistat & ASI_RBF)) {
+  }
+  return JERRYREGS->asidata & 0xff;
 }
 
 static int flush(FILE *fp) {
