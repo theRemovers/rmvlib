@@ -74,16 +74,33 @@ void uart_setup(enum uart_baudrate_t bd, enum uart_parity_t p) {
   JERRYREGS->asiclk = clk;
 }
 
-int uart_putc(int c) {
-  while(!(JERRYREGS->asistat & ASI_TBE)) {
+int uart_try_getc(unsigned int timeout, int *c) {
+  do {
+    if(JERRYREGS->asistat & ASI_ERROR) {
+      JERRYREGS->asictrl |= ASI_CLRERR;
+    }
+    if(timeout-- == 0) {
+      break;
+    }
+  } while(!(JERRYREGS->asistat & ASI_RBF));
+  if(JERRYREGS->asistat & ASI_RBF) {
+    *c = JERRYREGS->asidata & 0xff;
+    return 0;
   }
-  JERRYREGS->asidata = c & 0xff;
-  return c;
+  return 1;
 }
 
 int uart_getc() {
-  while(!(JERRYREGS->asistat & ASI_RBF)) {
-  }
-  return JERRYREGS->asidata & 0xff;
+  int c;
+  while(uart_try_getc(0, &c) != 0);
 }
 
+void uart_flush() {
+  while(!(JERRYREGS->asidata & ASI_TBE));
+}
+
+int uart_putc(int c) {
+  uart_flush();
+  JERRYREGS->asidata = c & 0xff;
+  return c;
+}

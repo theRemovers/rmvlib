@@ -31,5 +31,8 @@ enum uart_parity_t { PNONE, PODD, PEVEN };
 void uart_setup(enum uart_baudrate_t bd, enum uart_parity_t p);
 int uart_getc();
 int uart_putc();
+void uart_flush();
+int uart_try_getc(unsigned int timeout, int *c);
+
 
 #endif
