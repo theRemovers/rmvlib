@@ -1,13 +1,13 @@
 include ../Makefile.config
 
 SRCC=
-SRCS=sound.s
+SRCS=sound.s paula.s
 SRCH=sound.h
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
 
 DISTFILES=Makefile $(SRCC) $(SRCH) $(SRCS) pt-play.s 
 INSTALLH=sound.h
-INSTALLLIB=sound.o
+INSTALLLIB=sound.o paula.o
 
 # all: .depend $(OBJS)
 all: $(OBJS)

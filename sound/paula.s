@@ -21,7 +21,7 @@
 	include	"../risc.s"
 	
 DSP_BG	equ	0
-	
+
 DSP_STACK_SIZE	equ	32	; long words
 
 ; 	.bss
@@ -129,66 +129,29 @@ dsp_sound_driver:
 	;; External 1 interrupt
 	padding_nop	$10
 .dsp_sound_i2s_it:
-	;; assume r14 = #.sound_dma
-	load	(r14+DMA_CONTROL/4),r16	; read DMA control
-	load	(r14+DMA_STATE/4),r17	; read DMA state
-	move	r14,r15
-	addqt	#DMA_SIZEOF,r15	; VOICEs
-	;; command management
-	move	r16,r18			; save control (for ack at the end) 
-	move	r17,r19			; save DMA state (previous_state)
-	shlq	#1,r16			; enable or disable voices?
-	jr	cc,.sound_dma_disable_voices
-	shrq	#1,r16			 ; 
-.sound_dma_enable_voices:
-	jr	.sound_dma_update_state
-	or	r16,r17			; state |= (enabled_voices)
-.sound_dma_disable_voices:
-	not	r16			
-	and	r16,r17			; state &= ~(disabled_voices)
-.sound_dma_update_state:
-	xor	r17,r19			; changed_voices = state ^ previous_state
-	jr	eq,.sound_dma_update_voices
-	store	r17,(r14+DMA_STATE/4)	; save state
-.sound_dma_update_voices:
-	moveq	#NB_VOICES,r16
-	;; update status of changed voices
-	;; r14 = #.sound_dma
-	;; r15 = current voice address
-	;; r16 = number of voices remaining
-	;; r17 = state (enabled voices)
-	;; r18 = read command (to be acknowledged)
-	;; r19 = changed_voices
-.sound_dma_update_one_voice:
-	shrq	#1,r19
-	jr	cc, .sound_dma_no_change
-	shrq	#1,r17
-	jr	cc, .sound_dma_clear_voice
-	moveq	#0,r0
-.sound_dma_set_voice:
-	store	r0,(r15+VOICE_FRAC/4) ; clear fractionnal increment
-	load	(r15+VOICE_START/4),r0 ; voice begin
-	load	(r15+VOICE_LENGTH/4),r1 ; voice length (in bytes)
-	add	r0,r1
-	store	r1,(r15+VOICE_END/4) ; update end pointer
-.sound_dma_clear_voice:
-	store	r0,(r15+VOICE_CURRENT/4) ; update current pointer
-.sound_dma_no_change:
-	subq	#1,r16		; one voice less to do
-	jr	ne,.sound_dma_update_one_voice
-	addqt	#VOICE_SIZEOF, r15 ; next voice
-.sound_dma_ack_command:
-	;; acknowledge command
-	cmpq	#0,r18			; was control = 0?
-					; it would be incorrect to re-read control 
-					; at this point since it could have been
-					; written between the two reads 
-	jr	eq,.sound_no_ack	; yes then no ack
-	moveq	#0,r0			; otherwise
-	store	r0,(r14+DMA_CONTROL/4)	; acknowledge
-.sound_no_ack:
-	;; output channels
-	movei	#L_I2S,r15	; I2S output
+	;; r0 = start of first half (currently played)
+	;; r1 = end of first half
+	;; r2 = start of other half (currently generated)
+	;; r3 = end of other half
+	;; r14 = current pointer in active buffer
+	;; r4 = end of active buffer
+	;; r15 = L_I2S
+	load	(r14),r5		; left sample
+	load	(r14+1),r6		; right sample
+	addq	#8,r14
+	store	r5,(r15+1)	; write left channel (Zerosquare fix)
+	store	r6,(r15)	; write right channel (Zerosquare fix)
+	cmp	r14,r4
+	jr	ne,.no_swap
+	moveq	#1,r5
+	move	r2,r14		; other half becomes active buffer
+	move	r3,r4		; update end pointer of active buffer
+	move	r0,r2		; first half becomes other half
+	move	r1,r3
+	move	r14,r0		; other half becomes first half
+	move	r4,r1
+	moveta	r5,r0		; indicate switch of sound buffer to main loop
+.no_swap:
 	;; return from interrupt
 	load	(r31),r28	; return address
 	bset	#10,r29		; clear latch 1
@@ -212,70 +175,87 @@ SOUND_VOICES	equ	.sound_voices
 	dc.l	0
 	.endr
 	.endr	
-.dsp_sound_driver_loop:
-	move	PC,r0		; .dsp_sound_driver_loop
-	move	r0,r1		; .dsp_sound_driver_loop
-	addq	#.dsp_sound_driver_param-.dsp_sound_driver_loop,r0 ; .dsp_sound_driver_param
-	load	(r0),r2		; read SUBROUT_ADDR
-	moveq	#0,r3
-	cmpq	#0,r2		; SUBROUT_ADDR != null
-	jr	eq,.dsp_sound_driver_loop ; if null then loop
+.dsp_sound_driver_main:
+	;; r0 is used by it handler to indicate that audio buffers have been switched
+	cmpq	#0,r0
+	jr	eq,.dsp_sound_driver_main
 	nop
-	subq	#4,r31		; push on stack
-	store	r3,(r0)		; clear SUBROUT_ADDR
-	jump	(r2)		; jump to SUBROUT_ADDR
-	store	r1,(r31)	; return address
-	.long
-.dsp_sound_driver_param:
-DSP_SUBROUT_ADDR	equ	.dsp_sound_driver_param
-	dc.l	0
+	moveq	#0,r0		; reset flag
+	movei	#BG,r1
+	movefa	r0,r2
+	jr	.dsp_sound_driver_main
+	storew	r2,(r1)
 	.long
 .dsp_sound_driver_init:
+	;; 
+SOUND_DRIVER_FRQ	equ	0
+SOUND_DRIVER_BUFSIZE	equ	4
+SOUND_DRIVER_LOCK	equ	8
 	;; assume run from bank 1
 	movei	#DSP_ISP+(DSP_STACK_SIZE*4),r31	; init isp
-	moveq	#0,r1
 	moveta	r31,r31		; ISP (bank 0)
 	movei	#DSP_USP+(DSP_STACK_SIZE*4),r31	; init usp
-	movei	#.dsp_sound_driver_param,r0
-	movei	#.dsp_sound_driver_loop,r2
 	;; set I2S
 	movei	#SCLK,r10
 	movei	#SMODE,r11
-	movei	#.dsp_sound_driver_init_param,r12
+	movei	#.dsp_sound_driver_param,r14
 	movei	#%001101,r13	; SMODE (Zerosquare fix)
-	load	(r12),r12	; SCLK
+	load	(r14+SOUND_DRIVER_FRQ/4),r12	; SCLK
 	store	r12,(r10)
 	store	r13,(r11)
-	;; init some interrupt registers
-	movei	#.sound_dma, r12
-	moveta	r12, r14	; r14 = #.sound_dma
+	;;
+	load	(r14+SOUND_DRIVER_BUFSIZE/4),r13 ; number of samples (might be odd)
+	movei	#.dsp_sound_buffer,r10		; first half of audio buffer
+	move	r13,r12
+	shrq	#1,r13				; half of samples
+	move	r10,r11
+	shlq	#3,r13				; a sample is 8 bytes
+	shlq	#3,r12
+	add	r13,r11				; second half of audio buffer
+	add	r10,r12				; end of audio buffer
+	;;
+	moveta	r10,r0				; start of first half
+	moveta	r11,r1				; end of first half
+	moveta	r11,r2				; start of other half
+	moveta	r12,r3				; end of other half
+	moveta	r10,r14				; start of active buffer (currently played)
+	moveta	r11,r4				; end of active buffer
+	movei	#L_I2S,r13
+	moveta	r13,r15
 	;; enable interrupts
 	movei	#D_FLAGS,r28
-	movei	#D_CPUENA|D_I2SENA|REGPAGE,r29
+	movei	#D_I2SENA|REGPAGE,r29
 	;; go to driver
-	store	r1,(r0)		; clear SUBROUT_ADDR (mutex)
-	jump	(r2)
+	moveq	#0,r1
+	movei	#.dsp_sound_driver_main,r0
+	store	r1,(r14+SOUND_DRIVER_LOCK/4)	; clear LOCK
+	jump	(r0)				; jump to main loop
 	store	r29,(r28)
 	.long
-.dsp_sound_driver_init_param:
-	dc.l	0
+.dsp_sound_driver_param:
+	dc.l	0		; frequency
+	dc.l	0		; buffer size (number of samples)
+	dc.l	0		; lock
 	.long
+.dsp_sound_buffer:
+	.rept	882
+	dc.l	0
+	dc.l	0
+	.endr
 .dsp_sound_driver_end:
 		
 SOUND_DRIVER_INIT	equ	.dsp_sound_driver_init
-SOUND_DRIVER_INIT_PARAM	equ	.dsp_sound_driver_init_param
+SOUND_DRIVER_PARAM	equ	.dsp_sound_driver_param
 SOUND_DRIVER_SIZE	equ	.dsp_sound_driver_end-.dsp_sound_driver_begin
 
-DSP_FREE_RAM		set	.dsp_sound_driver_init
-
+	.if	(SOUND_DRIVER_SIZE+(2*4*DSP_STACK_SIZE)) > (D_ENDRAM-D_RAM)
+	.print	"Sound driver too big: ", (SOUND_DRIVER_SIZE+(2*4*DSP_STACK_SIZE)), " bytes (max allowed = ", (D_ENDRAM-D_RAM), " bytes)"
+	.fail	
+	.endif
+	
 	.print	"Sound driver code size (DSP): ", SOUND_DRIVER_SIZE
-	.print	"Available DSP Ram after D_RAM+",DSP_FREE_RAM-D_RAM
 				
 	.68000
-
-	.globl	DSP_SUBROUT_ADDR
-	.globl	__DSP_FREE_RAM
-__DSP_FREE_RAM	equ	DSP_FREE_RAM
 
 	.globl	_init_sound_driver
 ;; int init_sound_driver(int frequency)
@@ -298,17 +278,28 @@ _init_sound_driver:
 	divu.w	#200,d1
 	and.l	#$ffff,d1
 	subq.l	#1,d1
-	move.l	d1,SOUND_DRIVER_INIT_PARAM
+	move.l	d1,SOUND_DRIVER_PARAM+SOUND_DRIVER_FRQ
  	addq.l	#1,d1
 	mulu.w	#200,d1
  	move.l	#83096875,d0
  	divu.w	d1,d0
 	and.l	#$ffff,d0
  	move.l	d0,replay_frequency
+	;; compute size of audio buffer
+	move.w	CONFIG,d0
+	move.w	#50,d1
+	and.w	#VIDTYPE,d0
+	beq.s	.ok_frq
+	move.w	#60,d1
+.ok_frq:
+	move.l	replay_frequency,d0
+	divu.w	d1,d0		
+	and.l	#$ffff,d0	; number of samples per vbl
+	move.l	d0,SOUND_DRIVER_PARAM+SOUND_DRIVER_BUFSIZE
 	;; set DSP for interrupts
 	move.l	#REGPAGE,D_FLAGS
 	;; launch the driver
-	move.l	#DSP_SUBROUT_ADDR,a0
+	move.l	#SOUND_DRIVER_PARAM+SOUND_DRIVER_LOCK,a0
 	move.l	#$ffffffff,(a0)
 	move.l	#SOUND_DRIVER_INIT,D_PC
 	move.l	#DSPGO,D_CTRL
@@ -317,12 +308,6 @@ _init_sound_driver:
 	tst.l	(a0)
 	bne.s	.wait_init
 	move.l	replay_frequency,d0
-	rts
-
-	.globl	_jump_dsp_subroutine
-;; jump_dsp_subroutine(void *addr); 
-_jump_dsp_subroutine:
-	move.l	4(sp),DSP_SUBROUT_ADDR
 	rts
 
 MAX_PERIOD	equ	1024
