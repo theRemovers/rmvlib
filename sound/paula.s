@@ -133,24 +133,26 @@ dsp_sound_driver:
 	;; r1 = end of first half
 	;; r2 = start of other half (currently generated)
 	;; r3 = end of other half
-	;; r14 = current pointer in active buffer
-	;; r4 = end of active buffer
+	;; r14 = current pointer in played buffer
 	;; r15 = L_I2S
-	load	(r14),r5		; left sample
-	load	(r14+1),r6		; right sample
+	load	(r14),r4		; left sample
+	load	(r14+1),r5		; right sample
 	addq	#8,r14
-	store	r5,(r15+1)	; write left channel (Zerosquare fix)
-	store	r6,(r15)	; write right channel (Zerosquare fix)
-	cmp	r14,r4
-	jr	ne,.no_swap
-	moveq	#1,r5
+	store	r4,(r15+1)	; write left channel (Zerosquare fix)
+	store	r5,(r15)	; write right channel (Zerosquare fix)
+	cmp	r14,r1
+	jr	ne,.no_swap	; have we reached the end of buffer?
+	moveq	#1,r4
+	;; r0 <-> r2
+	;; r1 <-> r3
+	;; r14 := previous r2 = current r0
 	move	r2,r14		; other half becomes active buffer
-	move	r3,r4		; update end pointer of active buffer
+	move	r3,r5		; update end pointer of active buffer
 	move	r0,r2		; first half becomes other half
 	move	r1,r3
 	move	r14,r0		; other half becomes first half
-	move	r4,r1
-	moveta	r5,r0		; indicate switch of sound buffer to main loop
+	move	r5,r1
+	moveta	r4,r0		; indicate switch of sound buffer to main loop
 .no_swap:
 	;; return from interrupt
 	load	(r31),r28	; return address
@@ -214,12 +216,11 @@ SOUND_DRIVER_LOCK	equ	8
 	add	r13,r11				; second half of audio buffer
 	add	r10,r12				; end of audio buffer
 	;;
-	moveta	r10,r0				; start of first half
-	moveta	r11,r1				; end of first half
-	moveta	r11,r2				; start of other half
-	moveta	r12,r3				; end of other half
-	moveta	r10,r14				; start of active buffer (currently played)
-	moveta	r11,r4				; end of active buffer
+	moveta	r10,r0				; start of first half (buffer played)
+	moveta	r11,r1				; end of first half (buffer played)
+	moveta	r11,r2				; start of other half (buffer generated)
+	moveta	r12,r3				; end of other half (buffer generated)
+	moveta	r10,r14				; current point in buffer played
 	movei	#L_I2S,r13
 	moveta	r13,r15
 	;; enable interrupts
