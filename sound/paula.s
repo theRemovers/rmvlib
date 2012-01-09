@@ -178,14 +178,53 @@ SOUND_VOICES	equ	.sound_voices
 	.endr
 	.endr	
 .dsp_sound_driver_main:
-	;; r0 is used by it handler to indicate that audio buffers have been switched
+	;; BEWARE: r0 is used by it handler to indicate that audio
+	;;         buffers have been switched
+	move	PC,r30
+	;; process command (if any)
+	movei	#SOUND_DMA,r14
+	movei	#.dma_no_command,r29
+	load	(r14+DMA_CONTROL/4),r16	; read command
+	move	r14,r15
+	cmpq	#0,r16		      ; is there a command?
+	addqt	#DMA_SIZEOF,r15	; VOICEs
+	jump	eq,(r29)	; => .dma_no_command
+	btst	#31,r16		; is it a SET or a CLEAR command
+	move	r16,r17		; copy command
+	load	(r14+DMA_STATE/4),r22 ; read state (will be updated)
+	jr	eq,.dma_command_clear
+	moveq	#8,r18		; 8 voices to update
+.dma_command_set:
+	shrq	#1,r16
+	jr	cc,.dma_command_skip_voice
+	moveq	#0,r19
+	load	(r15+VOICE_START/4),r20	 ; start address
+	load	(r15+VOICE_LENGTH/4),r21 ; length in bytes
+	add	r20,r21			 ; end address
+	store	r19,(r15+VOICE_FRAC/4)	 ; clear fractionnal increment
+	store	r20,(r15+VOICE_CURRENT/4) ; update current pointer
+	store	r21,(r15+VOICE_END/4)	  ; and end pointer
+.dma_command_skip_voice:
+	subq	#1,r18		; one voice has been processed
+	jr	ne,.dma_command_set
+	addqt	#VOICE_SIZEOF,r15
+	jr	.dma_command_update_state
+	or	r17,r22		; enable voices
+.dma_command_clear:
+	not	r17
+	and	r17,r22		; clear voices
+.dma_command_update_state:
+	moveq	#0,r18
+	store	r22,(r14+DMA_STATE/4) ; update state
+	store	r18,(r14+DMA_CONTROL/4) ; acknowledge command
+.dma_no_command:
 	cmpq	#0,r0
-	jr	eq,.dsp_sound_driver_main
+	jump	eq,(r30)	; => .dsp_sound_driver_main
 	nop
 	moveq	#0,r0		; reset flag
 	movei	#BG,r1
 	movefa	r0,r2
-	jr	.dsp_sound_driver_main
+	jump	(r30)
 	storew	r2,(r1)
 	.long
 .dsp_sound_driver_init:
