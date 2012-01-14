@@ -252,8 +252,8 @@ SOUND_VOICES	equ	.sound_voices
 	;; r2 = end address of working buffer
 	moveq	#NB_VOICES,r3	; number of VOICEs
 	load	(r14+DMA_STATE/4),r16 ; get DMA_STATE
-	movei	#.next_voice,r28      ; .next_voice
 .do_voice:
+	movei	#.next_voice,r28      ; .next_voice
 	;; r3 = VOICE counter
 	;; r16 = DMA state (shifted at each iteration)
 	move	PC,r29		; to loop
@@ -324,7 +324,7 @@ SOUND_VOICES	equ	.sound_voices
 	move	r1,r5
 	move	r1,r4		; left pointer in working buffer
 	addqt	#4,r5		; right pointer in working buffer
-	movei	#.generate_end,r26
+	movei	#.generate_end,r28
 .generate_voice:
 	move	PC,r27
 	cmp	r17,r18		; current < end?
@@ -334,7 +334,7 @@ SOUND_VOICES	equ	.sound_voices
 	move	r20,r18		; new end pointer
 .no_loop:
 	cmpq	#0,r17		; is there a sound?
-	jump	eq,(r26)	; => .generate_end
+	jump	eq,(r28)	; => .generate_end
 	move	r17,r12
 	cmpq	#0,r22
 	jr	eq,.read_8_bits
@@ -358,6 +358,7 @@ SOUND_VOICES	equ	.sound_voices
 	add	r23,r21		; add fractionnal part to fractionnal increment
 	addqt	#8,r4
 	addc	r26,r17
+	addq	#1,r17
 	cmp	r4,r2		; have we finished?
 	jump	ne,(r27)	; => .generate_voice
 	addqt	#8,r5	
@@ -370,7 +371,7 @@ SOUND_VOICES	equ	.sound_voices
 	store	r18,(r15+VOICE_END/4)	  ; save end pointer
 .next_voice:
 	subq	#1,r3			; one voice less to do
-	jump	ne,(r29)
+	jump	ne,(r29)		; => .do_voice
 	addqt	#VOICE_SIZEOF,r15 ; next voice
 	;;
 	movei	#BG,r29
