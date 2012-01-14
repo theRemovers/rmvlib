@@ -138,6 +138,10 @@ dsp_sound_driver:
 	load	(r14),r4		; left sample
 	load	(r14+1),r5		; right sample
 	addq	#8,r14
+	sharq	#8+4+LOG2_NB_VOICES,r4 	; rescale sample (8 for volume, 4 for balance)
+	sharq	#8+4+LOG2_NB_VOICES,r5 	; rescale sample 
+	sat16s	r4			; saturate left sample
+	sat16s	r5			; saturate right sample
 	store	r4,(r15+1)	; write left channel (Zerosquare fix)
 	store	r5,(r15)	; write right channel (Zerosquare fix)
 	cmp	r14,r1
@@ -268,18 +272,39 @@ SOUND_VOICES	equ	.sound_voices
 	move	r22,r23			; to get resampling increment
 	move	r22,r24			; to get volume
 	move	r22,r25			; to get balance
-	shlq	#32-9,r24
-	shlq	#32-3,r25
-	sharq	#32-7,r24		; get volume
-	jr	pl,.volume_ok
-	shlq	#16,r23
-	movei	#64,r24
+	shlq	#32-9,r24		; clear high part to get volume
+	shlq	#32-3,r25		; clear high part to get balance
+	sharq	#32-7,r24		; get volume index
+	movei	#volume_table,r26
+	jr	pl,.get_volume
+	shlq	#16,r23			; clear high part to get fractionnal increment
+	moveq	#1,r24			; compute maximum volume
+	jr	.volume_ok
+	shlq	#8,r24			; 8 bit fix-point arithmetic 
+.get_volume:
+	add	r24,r26
+	loadb	(r26),r24		; get volume in table
 .volume_ok:
-	sharq	#32-5,r25		; get balance
+	sharq	#32-5,r25		; get right balance
+	movei	#16,r26			; to compute left balance and saturate right balance
 	jr	pl,.balance_ok
 	shrq	#16,r23			; get resampling increment
-	movei	#16,r25
+	move	r26,r25			; saturate right balance to 16
 .balance_ok:
+	shrq	#31,r22			; get 8 bits/16 bits flag
+	sub	r25,r26			; left balance = 16 - right balance
+	mult	r24,r25			; right factor = right balance * volume factor (on 12 bits)
+	mult	r26,r24			; left factor = left balance * volume factor (on 12 bits)
+	;; at this point, we have
+	;; r17 = current pointer
+	;; r18 = current end
+	;; r19 = replay pointer
+	;; r20 = end of replay
+	;; r21 = fractionnal increment
+	;; r22 = 8 bits/16 bits flag (0 = 8 bits, 1 = 16 bits)
+	;; r23 = resampling increment
+	;; r24 = left factor
+	;; r25 = right factor
 .next_voice:
 	subq	#1,r3			; one voice less to do
 	jump	ne,(r29)
@@ -526,6 +551,18 @@ _set_volume:
 	move.l	d1,VOICE_CONTROL(a0)
 	rts
 
+	.data
+	.long
+volume_table:	
+	dc.b	0, 6, 12, 17, 22, 28, 32, 37
+	dc.b	41, 46, 51, 55, 60, 64, 68, 72
+	dc.b	77, 81, 85, 89, 93, 97, 101, 105
+	dc.b	109, 112, 117, 120, 124, 128, 132, 136
+	dc.b	140, 143, 147, 152, 155, 158, 163, 166
+	dc.b	169, 173, 176, 180, 184, 187, 191, 195
+	dc.b	199, 203, 207, 209, 213, 218, 220, 224
+	dc.b	227, 231, 233, 238, 241, 245, 248, 253
+	
 	.data
 	.even
 	dc.b	"Sound Driver by Seb/The Removers"
