@@ -193,7 +193,7 @@ SOUND_VOICES	equ	.sound_voices
 	move	r16,r17		; copy command
 	load	(r14+DMA_STATE/4),r22 ; read state (will be updated)
 	jr	eq,.dma_command_clear
-	moveq	#8,r18		; 8 voices to update
+	moveq	#NB_VOICES,r18		; NB_VOICES voices to update
 .dma_command_set:
 	shrq	#1,r16
 	jr	cc,.dma_command_skip_voice
@@ -220,12 +220,75 @@ SOUND_VOICES	equ	.sound_voices
 .dma_no_command:
 	cmpq	#0,r0
 	jump	eq,(r30)	; => .dsp_sound_driver_main
-	nop
+	move	r14,r15		; SOUND_DMA
 	moveq	#0,r0		; reset flag
-	movei	#BG,r1
-	movefa	r0,r2
-	jump	(r30)
-	storew	r2,(r1)
+	movefa	r2,r1		; get working buffer start address
+	movefa	r3,r2		; and end address
+	addqt	#DMA_SIZEOF,r15	; VOICEs
+	;; 
+	movei	#BG,r29
+	movei	#$f800,r28
+	storew	r28,(r29)
+	;; we first clear the audio buffer
+	move	r1,r4		; 
+	move	r1,r3		; left channel
+	addqt	#4,r4		; right channel
+	moveq	#0,r5
+.clear_buffer:
+	store	r5,(r3)
+	addqt	#8,r3
+	store	r5,(r4)
+	cmp	r3,r2
+	jr	ne,.clear_buffer
+	addqt	#4,r4
+	;; we now remix the voices that are enabled
+	;; r14 = SOUND_DMA
+	;; r15 = current voice
+	;; r1 = start address of working buffer
+	;; r2 = end address of working buffer
+	moveq	#NB_VOICES,r3	; number of VOICEs
+	load	(r14+DMA_STATE/4),r16 ; get DMA_STATE
+	movei	#.next_voice,r28      ; .next_voice
+.do_voice:
+	move	PC,r29		; to loop
+	shrq	#1,r16		; is current VOICE enabled?
+	jump	eq,(r28)	; no => next voice
+	nop
+	;; read voice parameters
+	load	(r15+VOICE_CURRENT/4),r17 ; current pointer
+	load	(r15+VOICE_END/4),r18	  ; end pointer
+	load	(r15+VOICE_START/4),r19	  ; loop pointer
+	load	(r15+VOICE_LENGTH/4),r20  ; length of loop in bytes
+	load	(r15+VOICE_FRAC/4),r21	  ; fractionnal increment
+	load	(r15+VOICE_CONTROL/4),r22 ; voice control
+	cmpq	#0,r17			; is there a sample to play?
+	jump	eq,(r28)		; no => next voice
+	add	r19,r20			; compute end of loop
+	;; we now extract all the needed information from CONTROL word
+	move	r22,r23			; to get resampling increment
+	move	r22,r24			; to get volume
+	move	r22,r25			; to get balance
+	shlq	#32-9,r24
+	shlq	#32-3,r25
+	sharq	#32-7,r24		; get volume
+	jr	pl,.volume_ok
+	shlq	#16,r23
+	movei	#64,r24
+.volume_ok:
+	sharq	#32-5,r25		; get balance
+	jr	pl,.balance_ok
+	shrq	#16,r23			; get resampling increment
+	movei	#16,r25
+.balance_ok:
+.next_voice:
+	subq	#1,r3			; one voice less to do
+	jump	ne,(r29)
+	addqt	#VOICE_SIZEOF,r15 ; next voice
+	;;
+	movei	#BG,r29
+	moveq	#0,r28
+	jump	(r30)		; return to main loop
+	storew	r28,(r29)
 	.long
 .dsp_sound_driver_init:
 	;; 
