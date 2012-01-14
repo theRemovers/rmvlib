@@ -279,7 +279,7 @@ SOUND_VOICES	equ	.sound_voices
 	sharq	#32-7,r24		; get volume index
 	movei	#volume_table,r26
 	jr	pl,.get_volume
-	shlq	#16,r23			; clear high part to get fractionnal increment
+	shlq	#16,r23			; clear high part to get resampling increment
 	moveq	#1,r24			; compute maximum volume
 	jr	.volume_ok
 	shlq	#8,r24			; 8 bit fix-point arithmetic 
@@ -290,10 +290,9 @@ SOUND_VOICES	equ	.sound_voices
 	sharq	#32-5,r25		; get right balance
 	movei	#16,r26			; to compute left balance and saturate right balance
 	jr	pl,.balance_ok
-	shrq	#16,r23			; get resampling increment
+	shrq	#31,r22			; get 8 bits/16 bits flag
 	move	r26,r25			; saturate right balance to 16
 .balance_ok:
-	shrq	#31,r22			; get 8 bits/16 bits flag
 	sub	r25,r26			; left balance = 16 - right balance
 	mult	r24,r25			; right factor = right balance * volume factor (on 12 bits)
 	mult	r26,r24			; left factor = left balance * volume factor (on 12 bits)
@@ -304,7 +303,7 @@ SOUND_VOICES	equ	.sound_voices
 	;; r20 = end of replay
 	;; r21 = fractionnal increment
 	;; r22 = 8 bits/16 bits flag (0 = 8 bits, 1 = 16 bits)
-	;; r23 = resampling increment
+	;; r23 = resampling increment << 16
 	;; r24 = left factor
 	;; r25 = right factor
 	moveq	#1,r9
@@ -317,9 +316,9 @@ SOUND_VOICES	equ	.sound_voices
 	sh	r22,r20		; this works because 16 bits samples
 	 			; must be aligned on 2 bytes boundary
 	;;
-	move	r23,r26		;
-	shlq	#16+4,r23	; fractionnal part of resampling increment (in the 12 higher bits)
-	shrq	#12,r26		; integer part of resampling increment
+	move	r23,r26
+	shrq	#32-4,r23   	; integer part of resampling increment	
+	shlq	#4,r26		; fractionnal part of resampling increment
 	;;
 	move	r1,r5
 	move	r1,r4		; left pointer in working buffer
@@ -336,6 +335,8 @@ SOUND_VOICES	equ	.sound_voices
 	cmpq	#0,r17		; is there a sound?
 	jump	eq,(r28)	; => .generate_end
 	move	r17,r12
+	cmp	r17,r18		; current < end?
+	jump	mi,(r28)	; => .generate_end
 	cmpq	#0,r22
 	jr	eq,.read_8_bits
 	add	r12,r12
@@ -355,10 +356,9 @@ SOUND_VOICES	equ	.sound_voices
 	add	r13,r11
 	store	r10,(r4)
 	store	r11,(r5)
-	add	r23,r21		; add fractionnal part to fractionnal increment
+	add	r26,r21		; add fractionnal part to fractionnal increment
 	addqt	#8,r4
-	addc	r26,r17
-	addq	#1,r17
+	addc	r23,r17		; add integer part with carry to current pointer
 	cmp	r4,r2		; have we finished?
 	jump	ne,(r27)	; => .generate_voice
 	addqt	#8,r5	
