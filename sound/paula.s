@@ -305,6 +305,12 @@ SOUND_VOICES	equ	.sound_voices
 	;; r23 = resampling increment
 	;; r24 = left factor
 	;; r25 = right factor
+	sh	r22,r17		; convert address in samples 
+	sh	r22,r18		; this only affect 16 bits samples
+	sh	r22,r19		; and simplify the management
+	sh	r22,r20		; this works because 16 bits samples
+	 			; must be aligned on 2 bytes boundary
+	;; 
 .next_voice:
 	subq	#1,r3			; one voice less to do
 	jump	ne,(r29)
