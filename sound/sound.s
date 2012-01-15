@@ -360,6 +360,9 @@ DSP_FREE_RAM		set	.dsp_sound_driver_init
 				
 	.68000
 
+.macro	dsp_interrupt
+.endm
+	
 	.globl	DSP_SUBROUT_ADDR
 	.globl	__DSP_FREE_RAM
 __DSP_FREE_RAM	equ	DSP_FREE_RAM

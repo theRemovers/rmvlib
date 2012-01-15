@@ -92,7 +92,6 @@ VOICE_SIZEOF:	ds.l	0
 	
 	.offset	0
 DMA_CONTROL:	ds.l	1
-DMA_STATE:	ds.l	1
 DMA_SIZEOF:	ds.l	0
 
 	.text
@@ -113,7 +112,11 @@ dsp_sound_driver:
 	.org	D_RAM
 .dsp_sound_driver_begin:
 	;; CPU interrupt
-	padding_nop	$10
+	movei	#.dsp_sound_cpu_it,r28
+	movei	#D_FLAGS,r30
+	jump	(r28)
+	load	(r30),r29	; read flags
+	padding_nop	(D_RAM+$10-*)
 	;; I2S interrupt
 	movei	#.dsp_sound_i2s_it,r28
 	movei	#D_FLAGS,r30
@@ -128,6 +131,59 @@ dsp_sound_driver:
 	padding_nop	$10
 	;; External 1 interrupt
 	padding_nop	$10
+.dsp_sound_cpu_it:
+	;; r0, r1, r2, r3, r14, r15 = reserved
+	;; r16 = SOUND_DMA
+	;; r17 = VOICES
+	;; r18 = DMA_STATE
+	;; register usage = r4, r5, r6, r7, r8, r9, r10, r11, r12, r18
+	move	r14,r4		; save r14
+	move	r15,r5		; save r15
+	;; 
+	move	r16,r14		; SOUND_DMA
+	move	r17,r15		; SOUND_VOICES
+	load	(r14+DMA_CONTROL/4),r6
+	movei	#.no_command,r28
+	cmpq	#0,r6
+	jump	eq,(r28)	; => .no_command
+	btst	#31,r6		; is it SET or CLEAR?
+	move	r6,r7		; backup command
+	jr	eq,.command_clear
+	moveq	#NB_VOICES,r9
+.command_set:
+	shrq	#1,r6
+	jr	cc,.skip_voice
+	moveq	#0,r10
+	load	(r15+VOICE_START/4),r11		; start address
+	load	(r15+VOICE_LENGTH/4),r12	; length in bytes
+	add	r11,r12				; end address
+	store	r10,(r15+VOICE_FRAC/4)		; clear fractionnal increment
+	store	r11,(r15+VOICE_CURRENT/4)	; update current pointer
+	store	r12,(r15+VOICE_END/4)		; and end pointer
+.skip_voice:
+	subq	#1,r9		; one voice has been processed
+	jr	ne,.command_set
+	addqt	#VOICE_SIZEOF,r15 ; next voice
+	jr	.command_update_state
+	or	r7,r18		; enable voices
+.command_clear:
+	not	r7
+	and	r7,r18		; disable voices
+.command_update_state:
+	moveq	#0,r10
+	store	r10,(r14+DMA_CONTROL/4) ; acknowledge command
+.no_command:
+	;; 
+	move	r4,r14		; restore r14
+	move	r5,r15		; restore r15
+	;; return from interrupt
+	load	(r31),r28	; return address
+	bset	#9,r29		; clear latch 0
+	bclr	#3,r29		; clear IMASK
+	addq	#4,r31		; pop from stack
+	addqt	#2,r28		; next instruction
+	jump	t,(r28)		; return
+	store	r29,(r30)	; restore flags
 .dsp_sound_i2s_it:
 	;; r0 = start of first half (currently played)
 	;; r1 = end of first half
@@ -135,6 +191,8 @@ dsp_sound_driver:
 	;; r3 = end of other half
 	;; r14 = current pointer in played buffer
 	;; r15 = L_I2S
+	;; r16, r17 = reserved
+	;; register usage = r4, r5
 	load	(r14),r4		; left sample
 	load	(r14+1),r5		; right sample
 	addq	#8,r14
@@ -185,50 +243,12 @@ SOUND_VOICES	equ	.sound_voices
 	;; BEWARE: r0 is used by it handler to indicate that audio
 	;;         buffers have been switched
 	move	PC,r30
-	;; process command (if any)
-	movei	#SOUND_DMA,r14
-	movei	#.dma_no_command,r29
-	load	(r14+DMA_CONTROL/4),r16	; read command
-	move	r14,r15
-	cmpq	#0,r16		      ; is there a command?
-	addqt	#DMA_SIZEOF,r15	; VOICEs
-	jump	eq,(r29)	; => .dma_no_command
-	btst	#31,r16		; is it a SET or a CLEAR command
-	move	r16,r17		; copy command
-	load	(r14+DMA_STATE/4),r22 ; read state (will be updated)
-	jr	eq,.dma_command_clear
-	moveq	#NB_VOICES,r18		; NB_VOICES voices to update
-.dma_command_set:
-	shrq	#1,r16
-	jr	cc,.dma_command_skip_voice
-	moveq	#0,r19
-	load	(r15+VOICE_START/4),r20	 ; start address
-	load	(r15+VOICE_LENGTH/4),r21 ; length in bytes
-	add	r20,r21			 ; end address
-	store	r19,(r15+VOICE_FRAC/4)	 ; clear fractionnal increment
-	store	r20,(r15+VOICE_CURRENT/4) ; update current pointer
-	store	r21,(r15+VOICE_END/4)	  ; and end pointer
-.dma_command_skip_voice:
-	subq	#1,r18		; one voice has been processed
-	jr	ne,.dma_command_set
-	addqt	#VOICE_SIZEOF,r15
-	jr	.dma_command_update_state
-	or	r17,r22		; enable voices
-.dma_command_clear:
-	not	r17
-	and	r17,r22		; clear voices
-.dma_command_update_state:
-	moveq	#0,r18
-	store	r22,(r14+DMA_STATE/4) ; update state
-	store	r18,(r14+DMA_CONTROL/4) ; acknowledge command
-.dma_no_command:
-	cmpq	#0,r0
+	cmpq	#0,r0		; is sound generation requested?
 	jump	eq,(r30)	; => .dsp_sound_driver_main
-	move	r14,r15		; SOUND_DMA
+	movefa	r17,r15		; SOUND_VOICES
 	moveq	#0,r0		; reset flag
 	movefa	r2,r1		; get working buffer start address
 	movefa	r3,r2		; and end address
-	addqt	#DMA_SIZEOF,r15	; VOICEs
 	;;
 	.if	DSP_BG
 	movei	#BG,r29
@@ -248,12 +268,11 @@ SOUND_VOICES	equ	.sound_voices
 	jr	ne,.clear_buffer
 	addqt	#8,r4
 	;; we now remix the voices that are enabled
-	;; r14 = SOUND_DMA
 	;; r15 = current voice
 	;; r1 = start address of working buffer
 	;; r2 = end address of working buffer
 	moveq	#NB_VOICES,r3	; number of VOICEs
-	load	(r14+DMA_STATE/4),r16 ; get DMA_STATE
+	movefa	r18,r16		; get DMA_STATE
 .do_voice:
 	movei	#.next_voice,r28      ; .next_voice
 	;; r3 = VOICE counter
@@ -411,7 +430,7 @@ SOUND_DRIVER_LOCK	equ	8
 	shlq	#3,r12
 	add	r13,r11				; second half of audio buffer
 	add	r10,r12				; end of audio buffer
-	;;
+	;; initialise registers of I2S interrupt
 	moveta	r10,r0				; start of first half (buffer played)
 	moveta	r11,r1				; end of first half (buffer played)
 	moveta	r11,r2				; start of other half (buffer generated)
@@ -419,9 +438,16 @@ SOUND_DRIVER_LOCK	equ	8
 	moveta	r10,r14				; current point in buffer played
 	movei	#L_I2S,r13
 	moveta	r13,r15
+	;; and registers of CPU interrupt
+	movei	#SOUND_DMA,r13
+	moveta	r13,r16		; SOUND_DMA
+	addqt	#DMA_SIZEOF,r13
+	moveta	r13,r17		; SOUND_VOICES
+	moveq	#0,r13
+	moveta	r13,r18		; DMA_STATE
 	;; enable interrupts
 	movei	#D_FLAGS,r28
-	movei	#D_I2SENA|REGPAGE,r29
+	movei	#D_CPUENA|D_I2SENA|REGPAGE,r29
 	;; go to driver
 	moveq	#0,r1
 	movei	#.dsp_sound_driver_main,r0
@@ -435,7 +461,7 @@ SOUND_DRIVER_LOCK	equ	8
 	dc.l	0		; lock
 	.long
 .dsp_sound_buffer:
-	.rept	882
+	.rept	885
 	dc.l	0
 	dc.l	0
 	.endr
@@ -454,6 +480,10 @@ SOUND_DRIVER_SIZE	equ	.dsp_sound_driver_end-.dsp_sound_driver_begin
 				
 	.68000
 
+.macro	dsp_interrupt
+	move.l	#DSPGO|DSPINT0,D_CTRL ; generate DSP interrupt
+.endm
+	
 	.globl	_init_sound_driver
 ;; int init_sound_driver(int frequency)
 _init_sound_driver:
@@ -550,6 +580,7 @@ _set_voice:
 	move.l	#SOUND_DMA,a1
 	wait_dma	DMA_CONTROL(a1)
 	move.l	d1,DMA_CONTROL(a1) ; disable voice
+	dsp_interrupt
 	;; 
 	move.l	0+8(sp),VOICE_CONTROL(a0)
 	move.l	0+12(sp),VOICE_START(a0)
@@ -558,6 +589,7 @@ _set_voice:
 	or.l	#$80000000,d1
 	wait_dma	DMA_CONTROL(a1)
 	move.l	d1,DMA_CONTROL(a1) ; enable voice
+	dsp_interrupt
 	wait_dma	DMA_CONTROL(a1)
 	;; 
 	move.l	0+20(sp),VOICE_START(a0)
@@ -578,6 +610,7 @@ _clear_voice:
 	move.l	#SOUND_DMA,a1
 	wait_dma	DMA_CONTROL(a1)
 	move.l	d1,DMA_CONTROL(a1) ; disable voice
+	dsp_interrupt
 	rts
 	
 	.globl	_set_panning

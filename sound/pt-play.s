@@ -92,6 +92,7 @@ OPTIM	equ	1
 	beq.s	.skip\~
 	wait_dma	SOUND_DMA
 	move.l	d7,SOUND_DMA
+	dsp_interrupt
 .skip\~:
 .endm
 	
@@ -103,6 +104,7 @@ OPTIM	equ	1
 	or.l	#$80000000,d7
 	wait_dma	SOUND_DMA
 	move.l	d7,SOUND_DMA
+	dsp_interrupt
 	wait_dma	SOUND_DMA
 .skip\~:
 .endm
@@ -1524,7 +1526,7 @@ mt_RetrigNote:
 	move.l	d6,d2
 	swap	d2
 	and.w	#$fff,d2
-	bne.s	mt_rtnend
+	bne	mt_rtnend
 	.else
 	MOVE.W	(A6),D1
 	AND.W	#$0FFF,D1
@@ -1536,7 +1538,7 @@ mt_RetrigNote:
 	DIVU	D0,D1
 	SWAP	D1
 	TST.W	D1
-	BNE.S	mt_rtnend
+	BNE	mt_rtnend
 mt_DoRetrig:
 	clear_dma	n_dmabit(a6)
 	set_sample	n_start(a6),n_length(a6)
