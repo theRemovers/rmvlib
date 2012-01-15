@@ -85,7 +85,7 @@ VOICE_SIZEOF:	ds.l	0
 ;
 ; private fields
 ; ==============
-; STATE (read/written by DSP)
+; STATE (read/written by DSP) is stored in R18 (IT register bank)
 ; -----
 ; 00000000 00000000 00000000 OOOOOOOO
 ; O: voice on/off
@@ -136,13 +136,11 @@ dsp_sound_driver:
 	;; r16 = SOUND_DMA
 	;; r17 = VOICES
 	;; r18 = DMA_STATE
-	;; register usage = r4, r5, r6, r7, r8, r9, r10, r11, r12, r18
-	move	r14,r4		; save r14
+	;; register usage = r5, r6, r7, r8, r9, r10, r11, r12, r18
 	move	r15,r5		; save r15
 	;; 
-	move	r16,r14		; SOUND_DMA
 	move	r17,r15		; SOUND_VOICES
-	load	(r14+DMA_CONTROL/4),r6
+	load	(r16),r6
 	movei	#.no_command,r28
 	cmpq	#0,r6
 	jump	eq,(r28)	; => .no_command
@@ -171,10 +169,9 @@ dsp_sound_driver:
 	and	r7,r18		; disable voices
 .command_update_state:
 	moveq	#0,r10
-	store	r10,(r14+DMA_CONTROL/4) ; acknowledge command
+	store	r10,(r16)	; acknowledge command
 .no_command:
 	;; 
-	move	r4,r14		; restore r14
 	move	r5,r15		; restore r15
 	;; return from interrupt
 	load	(r31),r28	; return address
@@ -286,8 +283,6 @@ SOUND_VOICES	equ	.sound_voices
 	load	(r15+VOICE_END/4),r18	  ; end pointer
 	load	(r15+VOICE_FRAC/4),r21	  ; fractionnal increment
 	load	(r15+VOICE_CONTROL/4),r22 ; voice control
-	cmpq	#0,r17			; is there a sample to play?
-	jump	eq,(r28)		; no => next voice
 	;; we now extract all the needed information from CONTROL word
 	move	r22,r23			; to get resampling increment
 	move	r22,r24			; to get volume
