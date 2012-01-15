@@ -274,8 +274,8 @@ SOUND_VOICES	equ	.sound_voices
 	move	r22,r23			; to get resampling increment
 	move	r22,r24			; to get volume
 	move	r22,r25			; to get balance
-	shlq	#32-9,r24		; clear high part to get volume
-	shlq	#32-3,r25		; clear high part to get balance
+	shlq	#9,r24			; clear high part to get volume
+	shlq	#3,r25			; clear high part to get balance
 	sharq	#32-7,r24		; get volume index
 	movei	#volume_table,r26
 	jr	pl,.get_volume
@@ -326,8 +326,8 @@ SOUND_VOICES	equ	.sound_voices
 	movei	#.generate_end,r28
 .generate_voice:
 	move	PC,r27
-	cmp	r17,r18		; current < end?
-	jr	pl,.no_loop
+	cmp	r18,r17		; end <= current?
+	jr	mi,.no_loop
 	nop
 	move	r19,r17		; copy loop pointer
 	move	r20,r18		; new end pointer
@@ -335,8 +335,6 @@ SOUND_VOICES	equ	.sound_voices
 	cmpq	#0,r17		; is there a sound?
 	jump	eq,(r28)	; => .generate_end
 	move	r17,r12
-	cmp	r17,r18		; current < end?
-	jump	mi,(r28)	; => .generate_end
 	cmpq	#0,r22
 	jr	eq,.read_8_bits
 	add	r12,r12
