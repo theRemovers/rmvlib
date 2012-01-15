@@ -20,7 +20,7 @@
 
 	include	"../risc.s"
 	
-DSP_BG	equ	0
+DSP_BG	equ	1
 
 DSP_STACK_SIZE	equ	32	; long words
 
@@ -229,10 +229,12 @@ SOUND_VOICES	equ	.sound_voices
 	movefa	r2,r1		; get working buffer start address
 	movefa	r3,r2		; and end address
 	addqt	#DMA_SIZEOF,r15	; VOICEs
-	;; 
+	;;
+	.if	DSP_BG
 	movei	#BG,r29
 	movei	#$f800,r28
 	storew	r28,(r29)
+	.endif
 	;; we first clear the audio buffer
 	move	r1,r4		; 
 	move	r1,r3		; left channel
@@ -372,10 +374,15 @@ SOUND_VOICES	equ	.sound_voices
 	jump	ne,(r29)		; => .do_voice
 	addqt	#VOICE_SIZEOF,r15 ; next voice
 	;;
+	.if	DSP_BG
 	movei	#BG,r29
 	moveq	#0,r28
 	jump	(r30)		; return to main loop
 	storew	r28,(r29)
+	.else
+	jump	(r30)
+	nop
+	.endif
 	.long
 .dsp_sound_driver_init:
 	;; 
@@ -485,6 +492,7 @@ _init_sound_driver:
 	move.l	replay_frequency,d0
 	divu.w	d1,d0		
 	and.l	#$ffff,d0	; number of samples per vbl
+	addq.l	#1,d0
 	move.l	d0,SOUND_DRIVER_PARAM+SOUND_DRIVER_BUFSIZE
 	;; set DSP for interrupts
 	move.l	#REGPAGE,D_FLAGS
