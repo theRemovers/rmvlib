@@ -20,7 +20,7 @@
 
 	include	"../risc.s"
 	
-DSP_BG	equ	1
+DSP_BG	equ	0
 
 DSP_STACK_SIZE	equ	32	; long words
 
@@ -138,18 +138,21 @@ dsp_sound_driver:
 	;; r16 = SOUND_DMA
 	;; r17 = VOICES
 	;; r18 = DMA_STATE
-	;; register usage = r5, r6, r7, r8, r9, r10, r11, r12, r18
+	;; register usage = r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r18
 	move	r15,r5		; save r15
 	;; 
 	move	r17,r15		; SOUND_VOICES
 	load	(r16),r6
 	movei	#.no_command,r28
 	cmpq	#0,r6
+	moveq	#0,r13		; no need to adjust return address
 	jump	eq,(r28)	; => .no_command
 	btst	#31,r6		; is it SET or CLEAR?
+	movei	#.command_clear,r28
 	move	r6,r7		; backup command
-	jr	eq,.command_clear
+	jump	eq,(r28)	; => .command_clear
 	moveq	#NB_VOICES,r9
+	movefa	r3,r4		; load loop counter of main loop
 .command_set:
 	shrq	#1,r6
 	jr	cc,.skip_voice
@@ -159,7 +162,10 @@ dsp_sound_driver:
 	add	r11,r12				; end address
 	store	r10,(r15+VOICE_FRAC/4)		; clear fractionnal increment
 	store	r11,(r15+VOICE_CURRENT/4)	; update current pointer
+	cmp	r4,r9
+	jr	ne,.skip_voice
 	store	r12,(r15+VOICE_END/4)		; and end pointer
+	moveq	#1,r13				; return address needs to be fixed
 .skip_voice:
 	subq	#1,r9		; one voice has been processed
 	jr	ne,.command_set
@@ -175,6 +181,29 @@ dsp_sound_driver:
 .no_command:
 	;; 
 	move	r5,r15		; restore r15
+	;; fix return address
+	movei	#.return_from_interrupt,r28
+	cmpq	#0,r13
+	jump	eq,(r28)
+	nop
+	load	(r31),r13	; load return address
+	addqt	#2,r13		; next instruction
+	;; check whether .load_values <= r13 < .values_loaded
+	movei	#.load_values,r10
+	movei	#.values_loaded,r11
+	cmp	r10,r13
+	jump	mi,(r28)
+	cmp	r11,r13
+	jr	pl,.not_loading
+	subqt	#2,r10
+.loading:
+	store	r10,(r31)
+	movei	#BG,r5
+	movei	#$3f,r4
+	jump	(r28)
+	storew	r4,(r5)
+.not_loading:
+.return_from_interrupt:
 	;; return from interrupt
 	load	(r31),r28	; return address
 	bset	#9,r29		; clear latch 0
