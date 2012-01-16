@@ -24,6 +24,8 @@ DSP_BG	equ	1
 
 DSP_STACK_SIZE	equ	32	; long words
 
+MAX_BUFSIZE	equ	700
+	
 ; 	.bss
 ; 	.phrase
 ; dsp_isp:	ds.l	DSP_STACK_SIZE
@@ -460,7 +462,7 @@ SOUND_DRIVER_LOCK	equ	8
 	dc.l	0		; lock
 	.long
 .dsp_sound_buffer:
-	.rept	885
+	.rept	MAX_BUFSIZE
 	dc.l	0
 	dc.l	0
 	.endr
