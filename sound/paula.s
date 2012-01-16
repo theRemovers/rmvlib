@@ -197,12 +197,26 @@ dsp_sound_driver:
 	jr	pl,.not_loading
 	subqt	#2,r10
 .loading:
-	store	r10,(r31)
-	movei	#BG,r5
-	movei	#$3f,r4
 	jump	(r28)
-	storew	r4,(r5)
+	store	r10,(r31)
 .not_loading:
+	;; check whether .generate_voice <= r13 < .generate_end
+	movei	#.generate_voice,r10
+	movei	#.generate_end,r11
+	movei	#.next_voice,r12
+	cmp	r10,r13
+	jump	mi,(r28)
+	cmp	r11,r13
+	jr	pl,.not_generating
+	nop
+	jump	(r28)
+	moveta	r12,r28
+.not_generating:
+	;; check whether .generate_end <= r13 < .next_voice
+	cmp	r12,r13
+	jr	pl,.return_from_interrupt
+	subqt	#2,r12
+	store	r12,(r31)
 .return_from_interrupt:
 	;; return from interrupt
 	load	(r31),r28	; return address
