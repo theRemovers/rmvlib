@@ -279,6 +279,7 @@ SOUND_VOICES	equ	.sound_voices
 	jump	eq,(r28)	; no => next voice
 	nop
 	;; read voice parameters
+.load_values:
 	load	(r15+VOICE_CURRENT/4),r17 ; current pointer
 	load	(r15+VOICE_END/4),r18	  ; end pointer
 	load	(r15+VOICE_START/4),r19	  ; loop pointer
@@ -286,6 +287,7 @@ SOUND_VOICES	equ	.sound_voices
 	load	(r15+VOICE_FRAC/4),r21	  ; fractionnal increment
 	load	(r15+VOICE_CONTROL/4),r22 ; voice control
 	add	r19,r20			; compute end of loop
+.values_loaded:
 	;; we now extract all the needed information from CONTROL word
 	move	r22,r23			; to get resampling increment
 	move	r22,r24			; to get volume
@@ -375,7 +377,9 @@ SOUND_VOICES	equ	.sound_voices
 	addc	r23,r17		; add integer part with carry to current pointer
 	cmp	r4,r2		; have we finished?
 	jump	ne,(r27)	; => .generate_voice
-	addqt	#8,r5	
+	addqt	#8,r5
+	jump	(r28)		; => .generate_end
+	nop
 .generate_end:
 	neg	r22		       ; negate flag (0 = 8 bits, -1 = 16 bits)
 	store	r21,(r15+VOICE_FRAC/4) ; save fractionnal increment
