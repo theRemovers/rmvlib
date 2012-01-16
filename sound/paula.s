@@ -281,8 +281,11 @@ SOUND_VOICES	equ	.sound_voices
 	;; read voice parameters
 	load	(r15+VOICE_CURRENT/4),r17 ; current pointer
 	load	(r15+VOICE_END/4),r18	  ; end pointer
+	load	(r15+VOICE_START/4),r19	  ; loop pointer
+	load	(r15+VOICE_LENGTH/4),r20  ; length of loop in bytes
 	load	(r15+VOICE_FRAC/4),r21	  ; fractionnal increment
 	load	(r15+VOICE_CONTROL/4),r22 ; voice control
+	add	r19,r20			; compute end of loop
 	;; we now extract all the needed information from CONTROL word
 	move	r22,r23			; to get resampling increment
 	move	r22,r24			; to get volume
@@ -312,6 +315,8 @@ SOUND_VOICES	equ	.sound_voices
 	;; at this point, we have
 	;; r17 = current pointer
 	;; r18 = current end
+	;; r19 = replay pointer
+	;; r20 = end of replay
 	;; r21 = fractionnal increment
 	;; r22 = 8 bits/16 bits flag (0 = 8 bits, 1 = 16 bits)
 	;; r23 = resampling increment << 16
@@ -323,6 +328,9 @@ SOUND_VOICES	equ	.sound_voices
 	shlq	#3,r9		; 0 = 16 bits, 8 = 8 bits
 	sh	r22,r18		; this only affect 16 bits samples
 	neg	r9		; 0 = 16 bits, -8 = 8 bits
+	sh	r22,r19		; and simplify the management
+	sh	r22,r20		; this works because 16 bits samples
+	 			; must be aligned on 2 bytes boundary
 	;;
 	move	r23,r26
 	shrq	#32-4,r23   	; integer part of resampling increment	
@@ -337,11 +345,8 @@ SOUND_VOICES	equ	.sound_voices
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop
 	nop
-	load	(r15+VOICE_START/4),r17		; read start address
-	load	(r15+VOICE_LENGTH/4),r18	; and length in bytes
-	add	r17,r18				; end of sample
-	sh	r22,r17				; convert address in samples
-	sh	r22,r18				; 
+	move	r19,r17		; copy loop pointer
+	move	r20,r18		; new end pointer
 .no_loop:
 	cmpq	#0,r17		; is there a sound?
 	jump	eq,(r28)	; => .generate_end
