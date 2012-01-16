@@ -179,9 +179,9 @@ dsp_sound_driver:
 	load	(r31),r28	; return address
 	bset	#9,r29		; clear latch 0
 	bclr	#3,r29		; clear IMASK
-	addq	#4,r31		; pop from stack
+	addqt	#4,r31		; pop from stack
 	addqt	#2,r28		; next instruction
-	jump	t,(r28)		; return
+	jump	(r28)		; return
 	store	r29,(r30)	; restore flags
 .dsp_sound_i2s_it:
 	;; r0 = start of first half (currently played)
@@ -219,9 +219,9 @@ dsp_sound_driver:
 	load	(r31),r28	; return address
 	bset	#10,r29		; clear latch 1
 	bclr	#3,r29		; clear IMASK
-	addq	#4,r31		; pop from stack
+	addqt	#4,r31		; pop from stack
 	addqt	#2,r28		; next instruction
-	jump	t,(r28)		; return
+	jump	(r28)		; return
 	store	r29,(r30)	; restore flags
 	.long
 .sound_dma:
