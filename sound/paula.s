@@ -582,6 +582,10 @@ _init_sound_driver:
 	divu.w	d1,d0		
 	and.l	#$ffff,d0	; number of samples per vbl
 	addq.l	#1,d0
+	cmp.l	#MAX_BUFSIZE,d0
+	bmi.s	.ok_size
+	move.l	#MAX_BUFSIZE,d0
+.ok_size:
 	move.l	d0,SOUND_DRIVER_PARAM+SOUND_DRIVER_BUFSIZE
 	;; set DSP for interrupts
 	move.l	#REGPAGE,D_FLAGS
