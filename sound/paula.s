@@ -26,6 +26,12 @@ DSP_STACK_SIZE	equ	2	; long words
 
 MAX_BUFSIZE	equ	885
 	
+CHECK_FIXING	equ	0
+
+RED	equ	$f800
+BLUE	equ	$07c0
+GREEN	equ	$003f
+	
 ; 	.bss
 ; 	.phrase
 ; dsp_isp:	ds.l	DSP_STACK_SIZE
@@ -186,6 +192,9 @@ dsp_sound_driver:
 	cmpq	#0,r13
 	jump	eq,(r28)
 	nop
+	.if	CHECK_FIXING
+	movei	#BG,r5
+	.endif
 	load	(r31),r13	; load return address
 	addqt	#2,r13		; next instruction
 	;; check whether .load_values <= r13 < .values_loaded
@@ -198,6 +207,10 @@ dsp_sound_driver:
 	subqt	#2,r10
 .loading:
 	;; here we force reading again the values
+	.if	CHECK_FIXING
+	movei	#GREEN,r4
+	storew	r4,(r5)
+	.endif
 	jump	(r28)
 	store	r10,(r31)
 .not_loading:
@@ -212,6 +225,10 @@ dsp_sound_driver:
 	nop
 	;; here we force the main loop to skip code at .generate_end
 	;; and jump directly at .next_voice when generation is done
+	.if	CHECK_FIXING
+	movei	#BLUE,r4
+	storew	r4,(r5)
+	.endif
 	jump	(r28)
 	moveta	r12,r28
 .not_generating:
@@ -219,6 +236,10 @@ dsp_sound_driver:
 	cmp	r12,r13
 	jr	pl,.return_from_interrupt
 	subqt	#2,r12
+	.if	CHECK_FIXING
+	movei	#RED,r4
+	storew	r4,(r5)
+	.endif
 	;; here we force to skip code at .generate_end and
 	;; jump directly to .next_voice
 	store	r12,(r31)
