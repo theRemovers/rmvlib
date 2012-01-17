@@ -640,7 +640,9 @@ mt_PlayVoice:
 	CMP.W	#$0ED0,D0 ; Notedelay
 	BEQ	mt_CheckMoreEfx
 
+	.if	!(^^defined	PAULA)
 	clear_dma	n_dmabit(a6)
+	.endif
 	
 	BTST	#2,n_wavecontrol(A6)
 	BNE.S	.mt_vibnoc
@@ -1540,7 +1542,9 @@ mt_RetrigNote:
 	TST.W	D1
 	BNE	mt_rtnend
 mt_DoRetrig:
+	.if	!(^^defined	PAULA)
 	clear_dma	n_dmabit(a6)
+	.endif
 	set_sample	n_start(a6),n_length(a6)
 	set_dma		n_dmabit(a6)
 	set_sample	n_loopstart(a6),n_replen(a6)

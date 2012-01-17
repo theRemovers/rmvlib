@@ -20,6 +20,8 @@
 
 	include	"../risc.s"
 
+PAULA	equ	1
+	
 DSP_BG	equ	1
 
 DSP_STACK_SIZE	equ	2	; long words
