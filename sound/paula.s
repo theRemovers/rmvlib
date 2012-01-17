@@ -24,7 +24,7 @@ DSP_BG	equ	0
 
 DSP_STACK_SIZE	equ	2	; long words
 
-MAX_BUFSIZE	equ	700
+MAX_BUFSIZE	equ	885
 	
 ; 	.bss
 ; 	.phrase
