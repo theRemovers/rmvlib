@@ -191,12 +191,13 @@ dsp_sound_driver:
 	;; check whether .load_values <= r13 < .values_loaded
 	movei	#.load_values,r10
 	movei	#.values_loaded,r11
-	cmp	r10,r13
-	jump	mi,(r28)
-	cmp	r11,r13
-	jr	pl,.not_loading
+	cmp	r10,r13		; .load_values <= r13 ?
+	jump	mi,(r28)	; no => .return_from_interrupt
+	cmp	r11,r13		; .values_loaded <= r13 ?
+	jr	pl,.not_loading	; yes => .not_loading
 	subqt	#2,r10
 .loading:
+	;; here we force reading again the values
 	jump	(r28)
 	store	r10,(r31)
 .not_loading:
@@ -204,11 +205,13 @@ dsp_sound_driver:
 	movei	#.generate_voice,r10
 	movei	#.generate_end,r11
 	movei	#.next_voice,r12
-	cmp	r10,r13
-	jump	mi,(r28)
-	cmp	r11,r13
-	jr	pl,.not_generating
+	cmp	r10,r13		; .generate_voice <= r13 ?
+	jump	mi,(r28)	; no => .return_from_interrupt
+	cmp	r11,r13		; .generate_end <= r13 ?
+	jr	pl,.not_generating ; yes => .not_generating
 	nop
+	;; here we force the main loop to skip code at .generate_end
+	;; and jump directly at .next_voice when generation is done
 	jump	(r28)
 	moveta	r12,r28
 .not_generating:
@@ -216,6 +219,8 @@ dsp_sound_driver:
 	cmp	r12,r13
 	jr	pl,.return_from_interrupt
 	subqt	#2,r12
+	;; here we force to skip code at .generate_end and
+	;; jump directly to .next_voice
 	store	r12,(r31)
 .return_from_interrupt:
 	;; return from interrupt
