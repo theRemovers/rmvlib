@@ -730,7 +730,7 @@ volume_table:
 	
 	.data
 	.even
-	dc.b	"Sound Driver by Seb/The Removers"
+	dc.b	"Paula Emulator by Seb/The Removers"
 	.even
 
 	.bss
