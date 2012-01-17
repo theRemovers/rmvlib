@@ -333,7 +333,7 @@ SOUND_VOICES	equ	.sound_voices
 	;; r16 = DMA state (shifted at each iteration)
 	move	PC,r29		; to loop
 	shrq	#1,r16		; is current VOICE enabled?
-	jump	eq,(r28)	; no => next voice
+	jump	cc,(r28)	; no => next voice
 	nop
 	;; read voice parameters
 .load_values:
