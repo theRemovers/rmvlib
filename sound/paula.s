@@ -126,19 +126,48 @@ dsp_sound_driver:
 	load	(r30),r29	; read flags
 	padding_nop	(D_RAM+$10-*)
 	;; I2S interrupt
-	movei	#.dsp_sound_i2s_it,r28
 	movei	#D_FLAGS,r30
-	jump	(r28)
 	load	(r30),r29	; read flags
-	padding_nop	(D_RAM+$20-*)
-	;; Timer 0 interrupt
-	padding_nop	$10
-	;; Timer 1 interrupt
-	padding_nop	$10
-	;; External 0 interrupt
-	padding_nop	$10
-	;; External 1 interrupt
-	padding_nop	$10
+.dsp_sound_i2s_it:
+	;; r0 = start of first half (currently played)
+	;; r1 = end of first half
+	;; r2 = start of other half (currently generated)
+	;; r3 = end of other half
+	;; r14 = current pointer in played buffer
+	;; r15 = L_I2S
+	;; r16, r17 = reserved
+	;; register usage = r4, r5
+	load	(r14),r4		; left sample
+	load	(r14+1),r5		; right sample
+	addq	#8,r14
+	sharq	#8+4+LOG2_NB_VOICES,r4 	; rescale sample (8 for volume, 4 for balance)
+	sharq	#8+4+LOG2_NB_VOICES,r5 	; rescale sample 
+	sat16s	r4			; saturate left sample
+	sat16s	r5			; saturate right sample
+	store	r4,(r15+1)	; write left channel (Zerosquare fix)
+	store	r5,(r15)	; write right channel (Zerosquare fix)
+	cmp	r14,r1
+	jr	ne,.no_swap	; have we reached the end of buffer?
+	moveq	#1,r4
+	;; r0 <-> r2
+	;; r1 <-> r3
+	;; r14 := previous r2 = current r0
+	move	r2,r14		; other half becomes active buffer
+	move	r3,r5		; update end pointer of active buffer
+	move	r0,r2		; first half becomes other half
+	move	r1,r3
+	move	r14,r0		; other half becomes first half
+	move	r5,r1
+	moveta	r4,r0		; indicate switch of sound buffer to main loop
+.no_swap:
+	;; return from interrupt
+	load	(r31),r28	; return address
+	bset	#10,r29		; clear latch 1
+	bclr	#3,r29		; clear IMASK
+	addqt	#4,r31		; pop from stack
+	addqt	#2,r28		; next instruction
+	jump	(r28)		; return
+	store	r29,(r30)	; restore flags
 .dsp_sound_cpu_it:
 	;; r0, r1, r2, r3, r14, r15 = reserved
 	;; r16 = SOUND_DMA
@@ -247,46 +276,6 @@ dsp_sound_driver:
 	;; return from interrupt
 	load	(r31),r28	; return address
 	bset	#9,r29		; clear latch 0
-	bclr	#3,r29		; clear IMASK
-	addqt	#4,r31		; pop from stack
-	addqt	#2,r28		; next instruction
-	jump	(r28)		; return
-	store	r29,(r30)	; restore flags
-.dsp_sound_i2s_it:
-	;; r0 = start of first half (currently played)
-	;; r1 = end of first half
-	;; r2 = start of other half (currently generated)
-	;; r3 = end of other half
-	;; r14 = current pointer in played buffer
-	;; r15 = L_I2S
-	;; r16, r17 = reserved
-	;; register usage = r4, r5
-	load	(r14),r4		; left sample
-	load	(r14+1),r5		; right sample
-	addq	#8,r14
-	sharq	#8+4+LOG2_NB_VOICES,r4 	; rescale sample (8 for volume, 4 for balance)
-	sharq	#8+4+LOG2_NB_VOICES,r5 	; rescale sample 
-	sat16s	r4			; saturate left sample
-	sat16s	r5			; saturate right sample
-	store	r4,(r15+1)	; write left channel (Zerosquare fix)
-	store	r5,(r15)	; write right channel (Zerosquare fix)
-	cmp	r14,r1
-	jr	ne,.no_swap	; have we reached the end of buffer?
-	moveq	#1,r4
-	;; r0 <-> r2
-	;; r1 <-> r3
-	;; r14 := previous r2 = current r0
-	move	r2,r14		; other half becomes active buffer
-	move	r3,r5		; update end pointer of active buffer
-	move	r0,r2		; first half becomes other half
-	move	r1,r3
-	move	r14,r0		; other half becomes first half
-	move	r5,r1
-	moveta	r4,r0		; indicate switch of sound buffer to main loop
-.no_swap:
-	;; return from interrupt
-	load	(r31),r28	; return address
-	bset	#10,r29		; clear latch 1
 	bclr	#3,r29		; clear IMASK
 	addqt	#4,r31		; pop from stack
 	addqt	#2,r28		; next instruction
