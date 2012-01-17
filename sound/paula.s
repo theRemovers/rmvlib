@@ -19,12 +19,12 @@
 	include	"../jaguar.inc"
 
 	include	"../risc.s"
-	
+
 DSP_BG	equ	1
 
 DSP_STACK_SIZE	equ	2	; long words
 
-MAX_BUFSIZE	equ	885
+MAX_BUFSIZE	equ	882
 	
 CHECK_FIXING	equ	0
 
@@ -32,13 +32,6 @@ RED	equ	$f800
 BLUE	equ	$07c0
 GREEN	equ	$003f
 	
-; 	.bss
-; 	.phrase
-; dsp_isp:	ds.l	DSP_STACK_SIZE
-; 	.phrase
-; dsp_usp:	ds.l	DSP_STACK_SIZE
-; DSP_USP	equ	dsp_usp		
-; DSP_ISP	equ	dsp_isp
 DSP_USP	equ	(D_ENDRAM-(4*DSP_STACK_SIZE))
 DSP_ISP	equ	(DSP_USP-(4*DSP_STACK_SIZE))
 
@@ -219,10 +212,14 @@ dsp_sound_driver:
 	;; fix return address
 	movei	#.return_from_interrupt,r28
 	cmpq	#0,r13
-	jump	eq,(r28)
-	nop
 	.if	CHECK_FIXING
 	movei	#BG,r5
+	.endif
+	jump	eq,(r28)
+	.if	CHECK_FIXING
+	moveq	#0,r4
+	.else
+	nop
 	.endif
 	load	(r31),r13	; load return address
 	addqt	#2,r13		; next instruction
@@ -238,7 +235,6 @@ dsp_sound_driver:
 	;; here we force reading again the values
 	.if	CHECK_FIXING
 	movei	#GREEN,r4
-	storew	r4,(r5)
 	.endif
 	jump	(r28)
 	store	r10,(r31)
@@ -256,7 +252,6 @@ dsp_sound_driver:
 	;; and jump directly at .next_voice when generation is done
 	.if	CHECK_FIXING
 	movei	#BLUE,r4
-	storew	r4,(r5)
 	.endif
 	jump	(r28)
 	moveta	r12,r28
@@ -267,12 +262,14 @@ dsp_sound_driver:
 	subqt	#2,r12
 	.if	CHECK_FIXING
 	movei	#RED,r4
-	storew	r4,(r5)
 	.endif
 	;; here we force to skip code at .generate_end and
 	;; jump directly to .next_voice
 	store	r12,(r31)
 .return_from_interrupt:
+	.if	CHECK_FIXING
+	storew	r4,(r5)
+	.endif
 	;; return from interrupt
 	load	(r31),r28	; return address
 	bset	#9,r29		; clear latch 0
@@ -777,4 +774,3 @@ _pause_module	equ	mt_pause
 	.globl	_enable_module_voices
 ;; enable_module_voices(int mask);
 _enable_module_voices	equ	mt_enable_voices
-	
