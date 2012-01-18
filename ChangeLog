@@ -9,13 +9,13 @@
 
 	Clean up of several sources. Reorganisation of the source tree (no
 	more symbolic links!)
-	
-	Addition of a software renderer. 
+
+	Addition of a software renderer.
 
 1.2.1
 -----
 	Correction of a small bug in rendering routine.
-	
+
 	The texture gouraud shading code has been added but it is disabled at
 	compilation.
 
@@ -46,3 +46,13 @@
 	Added "clear screen" option to the renderer.
 	Added option to enable/disable flat shading when texturing.
 	Fixed several bugs in the renderer.
+
+1.3.0
+-----
+	Rewrote a new Paula emulator, which is (almost) retro-compatible
+	with previous Paula emulator. The only drawback of this new
+	emulator is that it uses the DSP entirely. Hence the DSP is now
+	devoted to sound generation. For compatibility reasons, the
+	previous Paula emulator is kept in the distribution, but new
+	applications should use the new Paula emulator, which is far more
+	efficient.
