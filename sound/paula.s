@@ -177,37 +177,41 @@ dsp_sound_driver:
 	cmpq	#0,r6
 	moveq	#0,r13		; no need to adjust return address
 	jump	eq,(r28)	; => .no_command
-	btst	#31,r6		; is it SET or CLEAR?
-	movei	#.command_clear,r28
-	move	r6,r7		; backup command
-	jump	eq,(r28)	; => .command_clear
+	move	r6,r8		; backup command
+	move	r6,r7
+	sharq	#31,r8		; replicate command bit on r8
+				; r8 = 0 if CLEAR, r8 = FFFFFFFF if SET 
 	moveq	#NB_VOICES,r9
 	movefa	r3,r4		; load loop counter of main loop
-.command_set:
+.do_command:
 	shrq	#1,r6
 	jr	cc,.skip_voice
 	moveq	#0,r10
 	load	(r15+VOICE_START/4),r11		; start address
 	load	(r15+VOICE_LENGTH/4),r12	; length in bytes
-	add	r11,r12				; end address
 	store	r10,(r15+VOICE_FRAC/4)		; clear fractionnal increment
+	add	r11,r12				; end address
+	and	r8,r11
+	and	r8,r12
 	store	r11,(r15+VOICE_CURRENT/4)	; update current pointer
-	cmp	r4,r9
+	cmp	r4,r9				; compare voice counter with main loop voice counter
 	jr	ne,.skip_voice
 	store	r12,(r15+VOICE_END/4)		; and end pointer
 	moveq	#1,r13				; return address needs to be fixed
 .skip_voice:
 	subq	#1,r9		; one voice has been processed
-	jr	ne,.command_set
+	jr	ne,.do_command
 	addqt	#VOICE_SIZEOF,r15 ; next voice
-	jr	.command_update_state
-	or	r7,r18		; enable voices
-.command_clear:
-	not	r7
-	and	r7,r18		; disable voices
-.command_update_state:
-	moveq	#0,r10
+	;; new state = command (voice + state) + (not command) (not voice) state
+	move	r7,r6		; voice
+	not	r7		; (not voice)
+	or	r18,r6		; voice + state
+	and	r8,r6		; command (voice + state)
+	not	r8		; (not command)
+	and	r7,r18		; (not voice) state
+	and	r8,r18		; (not command) (not voice) state
 	store	r10,(r16)	; acknowledge command
+	or	r6,r18		; new state
 .no_command:
 	;; 
 	move	r5,r15		; restore r15
