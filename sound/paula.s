@@ -203,15 +203,19 @@ dsp_sound_driver:
 	jr	ne,.do_command
 	addqt	#VOICE_SIZEOF,r15 ; next voice
 	;; new state = command (voice + state) + (not command) (not voice) state
-	move	r7,r6		; voice
-	not	r7		; (not voice)
-	or	r18,r6		; voice + state
-	and	r8,r6		; command (voice + state)
-	not	r8		; (not command)
-	and	r7,r18		; (not voice) state
-	and	r8,r18		; (not command) (not voice) state
+	;; let c = command, s = state, v = voice
+	;; s' = c (v + s) + ~c ~v s = c v + c s + ~c ~v s
+	;; ie s' = c v + c (v + ~v) s + ~c ~v s
+	;;       = c v + c v s + c ~v s + ~c ~v s
+	;;       = c v (1 + s) + (c ~v + ~c ~v) s
+	;;       = c v + (c + ~c) ~v s
+	;;       = c v + ~v s
+	move	r7,r6		; v
+	not	r7		; ~v
+	and	r8,r6		; c v
+	and	r7,r18		; ~v s
 	store	r10,(r16)	; acknowledge command
-	or	r6,r18		; new state
+	or	r6,r18		; c v + ~v s
 .no_command:
 	;; 
 	move	r5,r15		; restore r15
