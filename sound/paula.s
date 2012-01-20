@@ -407,25 +407,49 @@ SOUND_VOICES	equ	.sound_voices
 	move	r1,r5
 	move	r1,r4		; left pointer in working buffer
 	addqt	#4,r5		; right pointer in working buffer
+	;; modify code of load instruction at .read_sample below
+	;; .read_sample must be long aligned!!
+	cmpq	#0,r22
+	movei	#.read_sample,r27
+	jr	ne,.gen_load_16_bits
+	load	(r27),r10	; read the two instructions at .read_sample
+.gen_load_8_bits:
+	movei	#(39 << 10) | (17 << 5) | 12,r11	; loadb (r17),r12
+	jr	.gen_load_instruction
+	shlq	#16,r10		; clear "load" instruction
+.gen_load_16_bits:
+	movei	#(40 << 10) | (12 << 5) | 12,r11	; loadw (r12),r12
+	shlq	#16,r10					; clear "load" instruction
+.gen_load_instruction:
+	or	r11,r10
+	rorq	#16,r10
+	store	r10,(r27)
+	;; 
 .generate_voice:
 	move	PC,r27
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop
-	nop
+	move	r17,r12		; copy r17 to compute address of 16 bit sample 
 	move	r19,r17		; copy loop pointer
+	move	r19,r12		; ensure that r12 = r17
 	move	r20,r18		; new end pointer
 .no_loop:
 	cmpq	#0,r17		; is there a sound?
+	.if	* & 3
+	;; we insert a nop here to ensure that .read_sample is long aligned
+	;; this has no effect on speed because the jump below depends on the cmpq above
+	;; so a pipeline stall has to be inserted!
+	nop
+	.endif
 	jump	eq,(r28)	; => .generate_end
-	move	r17,r12
-	cmpq	#0,r22
-	jr	eq,.read_8_bits
 	add	r12,r12
-.read_16_bits:
-	jr	.do_sample
-	loadw	(r12),r12	; load sample
-.read_8_bits:
-	loadb	(r17),r12
+.read_sample:
+	.if	* & 3
+	.fail
+	.endif
+	nop	 		; this instruction is patched
+;;; 	loadb	(r17),r12	; load 8 bits sample
+;;; 	loadw	(r12),r12	; load 16 bits sample
 .do_sample:
 	add	r26,r21		; add fractionnal part to fractionnal increment
 	load	(r4),r10	; read left voice
