@@ -428,7 +428,7 @@ SOUND_VOICES	equ	.sound_voices
 	move	PC,r27
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop
-	move	r17,r12		; copy r17 to compute address of 16 bit sample 
+	move	r17,r12		; copy r17 to compute address of 16 bits sample 
 	move	r19,r17		; copy loop pointer
 	move	r19,r12		; ensure that r12 = r17
 	move	r20,r18		; new end pointer
@@ -441,7 +441,7 @@ SOUND_VOICES	equ	.sound_voices
 	nop
 	.endif
 	jump	eq,(r28)	; => .generate_end
-	add	r12,r12
+	add	r12,r12		; address of 16 bits sample
 .read_sample:
 	.if	* & 3
 	.fail
