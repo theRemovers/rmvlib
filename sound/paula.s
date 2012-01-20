@@ -249,12 +249,10 @@ dsp_sound_driver:
 	jump	(r28)
 	store	r10,(r31)
 .not_loading:
-	;; check whether .generate_voice <= r13 < .generate_end
-	movei	#.generate_voice,r10
+	;; we already know that .values_loaded <= r13
+	;; check whether .values_loaded <= r13 < .generate_end
 	movei	#.generate_end,r11
 	movei	#.next_voice,r12
-	cmp	r10,r13		; .generate_voice <= r13 ?
-	jump	mi,(r28)	; no => .return_from_interrupt
 	cmp	r11,r13		; .generate_end <= r13 ?
 	jr	pl,.not_generating ; yes => .not_generating
 	nop
@@ -338,14 +336,15 @@ SOUND_VOICES	equ	.sound_voices
 	moveq	#NB_VOICES,r3	; number of VOICEs
 	movefa	r18,r16		; get DMA_STATE
 .do_voice:
+	move	PC,r29		; to loop
 	movei	#.next_voice,r28      ; .next_voice
 	;; r3 = VOICE counter
 	;; r16 = DMA state (shifted at each iteration)
-	move	PC,r29		; to loop
 	shrq	#1,r16		; is current VOICE enabled?
 	jump	cc,(r28)	; no => next voice
 	nop
 	;; read voice parameters
+	movei	#.generate_end,r28 ; is possibly modified by interrupt
 .load_values:
 	load	(r15+VOICE_CURRENT/4),r17 ; current pointer
 	load	(r15+VOICE_END/4),r18	  ; end pointer
@@ -408,7 +407,6 @@ SOUND_VOICES	equ	.sound_voices
 	move	r1,r5
 	move	r1,r4		; left pointer in working buffer
 	addqt	#4,r5		; right pointer in working buffer
-	movei	#.generate_end,r28
 .generate_voice:
 	move	PC,r27
 	cmp	r18,r17		; end <= current?
