@@ -24,7 +24,7 @@
 PAULA	equ	1
 
 	;; enable this to display time devoted to resampling
-DSP_BG	equ	1
+DSP_BG	equ	0
 
 	;; a stack size of 1 is enough
 DSP_STACK_SIZE	equ	2	; long words
