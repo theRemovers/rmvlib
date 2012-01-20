@@ -333,7 +333,7 @@ SOUND_VOICES	equ	.sound_voices
 	;; r15 = current voice
 	;; r1 = start address of working buffer
 	;; r2 = end address of working buffer
-	moveq	#NB_VOICES,r3	; number of VOICEs
+	moveq	#NB_VOICES,r3	; number of VOICEs (WARNING: read by interrupt to detect if hack of return address is needed)
 	movefa	r18,r16		; get DMA_STATE
 .do_voice:
 	move	PC,r29		; to loop
@@ -344,7 +344,7 @@ SOUND_VOICES	equ	.sound_voices
 	jump	cc,(r28)	; no => next voice
 	nop
 	;; read voice parameters
-	movei	#.generate_end,r28 ; is possibly modified by interrupt
+	movei	#.generate_end,r28 ; WARNING: is possibly forced to be .next_voice by interrupt
 .load_values:
 	load	(r15+VOICE_CURRENT/4),r17 ; current pointer
 	load	(r15+VOICE_END/4),r18	  ; end pointer
