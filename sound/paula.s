@@ -20,14 +20,20 @@
 
 	include	"../risc.s"
 
+	;; the following disable clear_dma commands in the mod replayer
 PAULA	equ	1
-	
+
+	;; enable this to display time devoted to resampling
 DSP_BG	equ	1
 
+	;; a stack size of 1 is enough
 DSP_STACK_SIZE	equ	2	; long words
 
+	;; audio buffer size
+	;; max size corresponds to 44100 Hz, for a VBL at 50 Hz
 MAX_BUFSIZE	equ	882
-	
+
+	;; display cases when command interrupt tweak return address
 CHECK_FIXING	equ	0
 
 RED	equ	$f800
