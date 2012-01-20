@@ -427,7 +427,9 @@ SOUND_VOICES	equ	.sound_voices
 .read_8_bits:
 	loadb	(r17),r12
 .do_sample:
+	add	r26,r21		; add fractionnal part to fractionnal increment
 	load	(r4),r10	; read left voice
+	addc	r23,r17		; add integer part with carry to current pointer
 	load	(r5),r11	; read right voice
 	sh	r9,r12		; rescale sample if needed
 	move	r12,r13
@@ -436,10 +438,8 @@ SOUND_VOICES	equ	.sound_voices
 	add	r12,r10
 	add	r13,r11
 	store	r10,(r4)
-	store	r11,(r5)
-	add	r26,r21		; add fractionnal part to fractionnal increment
 	addqt	#8,r4
-	addc	r23,r17		; add integer part with carry to current pointer
+	store	r11,(r5)
 	cmp	r4,r2		; have we finished?
 	jump	ne,(r27)	; => .generate_voice
 	addqt	#8,r5
