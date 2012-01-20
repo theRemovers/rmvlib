@@ -341,18 +341,20 @@ SOUND_VOICES	equ	.sound_voices
 	;; r3 = VOICE counter
 	;; r16 = DMA state (shifted at each iteration)
 	shrq	#1,r16		; is current VOICE enabled?
-	jump	cc,(r28)	; no => next voice
+	jump	cc,(r28)	; no => .next_voice
 	nop
 	;; read voice parameters
-	movei	#.generate_end,r28 ; WARNING: is possibly forced to be .next_voice by interrupt
 .load_values:
-	load	(r15+VOICE_CURRENT/4),r17 ; current pointer
-	load	(r15+VOICE_END/4),r18	  ; end pointer
-	load	(r15+VOICE_START/4),r19	  ; loop pointer
-	load	(r15+VOICE_LENGTH/4),r20  ; length of loop in bytes
-	load	(r15+VOICE_FRAC/4),r21	  ; fractionnal increment
-	load	(r15+VOICE_CONTROL/4),r22 ; voice control
-	add	r19,r20			; compute end of loop
+	load	(r15+VOICE_CURRENT/4),r17	; current pointer
+	load	(r15+VOICE_END/4),r18		; end pointer
+	load	(r15+VOICE_START/4),r19		; loop pointer
+	load	(r15+VOICE_LENGTH/4),r20	; length of loop in bytes
+	cmpq	#0,r17				; is there a sound to play?
+	load	(r15+VOICE_FRAC/4),r21		; fractionnal increment
+	jump	eq,(r28)			; no sound => .next_voice
+	load	(r15+VOICE_CONTROL/4),r22	; voice control
+	add	r19,r20				; compute end of loop
+	movei	#.generate_end,r28		; WARNING: is possibly forced to be .next_voice by interrupt
 .values_loaded:
 	;; we now extract all the needed information from CONTROL word
 	move	r22,r23			; to get resampling increment
@@ -431,16 +433,14 @@ SOUND_VOICES	equ	.sound_voices
 	move	r17,r12		; copy r17 to compute address of 16 bits sample 
 	move	r19,r17		; copy loop pointer
 	move	r19,r12		; ensure that r12 = r17
-	move	r20,r18		; new end pointer
-.no_loop:
 	cmpq	#0,r17		; is there a sound?
+	move	r20,r18		; new end pointer
 	.if	* & 3
 	;; we insert a nop here to ensure that .read_sample is long aligned
-	;; this has no effect on speed because the jump below depends on the cmpq above
-	;; so a pipeline stall has to be inserted!
 	nop
 	.endif
 	jump	eq,(r28)	; => .generate_end
+.no_loop:
 	add	r12,r12		; address of 16 bits sample
 .read_sample:
 	.if	* & 3
@@ -466,7 +466,7 @@ SOUND_VOICES	equ	.sound_voices
 	cmp	r4,r2		; have we finished?
 	jump	ne,(r27)	; => .generate_voice
 	addqt	#8,r5
-	jump	(r28)		; => .generate_end
+	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
 	nop
 .generate_end:
 	neg	r22		       ; negate flag (0 = 8 bits, -1 = 16 bits)
