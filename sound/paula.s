@@ -408,19 +408,19 @@ SOUND_VOICES	equ	.sound_voices
 	cmpq	#0,r22
 	movei	#.read_sample,r27
 	jr	ne,.gen_load_16_bits
-	load	(r27),r10	; read the two instructions at .read_sample
+	load	(r27),r10	; read the two instructions "I1; I2" at .read_sample
 .gen_load_8_bits:
 	movei	#(39<<10)|(17<<5)|(12),r11	; loadb (r17),r12
 	jr	.gen_load_instruction
-	shlq	#16,r10		; clear "load" instruction
+	shlq	#16,r10		; I1 will be replaced by a load
 .gen_load_16_bits:
 	movei	#(40<<10)|(12<<5)|(12),r11	; loadw (r12),r12
-	shlq	#16,r10					; clear "load" instruction
+	shlq	#16,r10		; I1 will be replaced by a load
 .gen_load_instruction:
 	move	r1,r5		;   get pointer in working buffer
-	or	r11,r10		; generate "load" instruction
+	or	r11,r10		; I2; load
 	move	r1,r4		;   left pointer in working buffer	
-	rorq	#16,r10		; load is the first instruction
+	rorq	#16,r10		; load; I2
 	addqt	#4,r5		;   right pointer in working buffer
 	store	r10,(r27)	; patch code
 	;; 
