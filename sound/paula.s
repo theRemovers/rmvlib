@@ -403,10 +403,6 @@ SOUND_VOICES	equ	.sound_voices
 	move	r23,r26
 	shrq	#32-4,r23   	; integer part of resampling increment	
 	shlq	#4,r26		; fractionnal part of resampling increment
-	;;
-	move	r1,r5
-	move	r1,r4		; left pointer in working buffer
-	addqt	#4,r5		; right pointer in working buffer
 	;; modify code of load instruction at .read_sample below
 	;; .read_sample must be long aligned!!
 	cmpq	#0,r22
@@ -414,16 +410,19 @@ SOUND_VOICES	equ	.sound_voices
 	jr	ne,.gen_load_16_bits
 	load	(r27),r10	; read the two instructions at .read_sample
 .gen_load_8_bits:
-	movei	#(39 << 10) | (17 << 5) | 12,r11	; loadb (r17),r12
+	movei	#(39<<10)|(17<<5)|(12),r11	; loadb (r17),r12
 	jr	.gen_load_instruction
 	shlq	#16,r10		; clear "load" instruction
 .gen_load_16_bits:
-	movei	#(40 << 10) | (12 << 5) | 12,r11	; loadw (r12),r12
+	movei	#(40<<10)|(12<<5)|(12),r11	; loadw (r12),r12
 	shlq	#16,r10					; clear "load" instruction
 .gen_load_instruction:
-	or	r11,r10
-	rorq	#16,r10
-	store	r10,(r27)
+	move	r1,r5		;   get pointer in working buffer
+	or	r11,r10		; generate "load" instruction
+	move	r1,r4		;   left pointer in working buffer	
+	rorq	#16,r10		; load is the first instruction
+	addqt	#4,r5		;   right pointer in working buffer
+	store	r10,(r27)	; patch code
 	;; 
 .generate_voice:
 	move	PC,r27
