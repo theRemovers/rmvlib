@@ -56,3 +56,7 @@
 	previous Paula emulator is kept in the distribution, but new
 	applications should use the new Paula emulator, which is far more
 	efficient.
+
+1.3.1
+-----
+	Changed way balance of each voice is computed.
