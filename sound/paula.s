@@ -141,8 +141,8 @@ dsp_sound_driver:
 	load	(r14),r4		; left sample
 	load	(r14+1),r5		; right sample
 	addq	#8,r14
-	sharq	#8+4+LOG2_NB_VOICES,r4 	; rescale sample (8 for volume, 4 for balance)
-	sharq	#8+4+LOG2_NB_VOICES,r5 	; rescale sample 
+	sharq	#8+5+LOG2_NB_VOICES,r4 	; rescale sample (8 for volume, 5 for balance)
+	sharq	#8+5+LOG2_NB_VOICES,r5 	; rescale sample 
 	sat16s	r4			; saturate left sample
 	sat16s	r5			; saturate right sample
 	store	r4,(r15+1)	; write left channel (Zerosquare fix)
@@ -368,8 +368,9 @@ SOUND_VOICES	equ	.sound_voices
 	move	r22,r25			; to get balance
 	shlq	#9,r24			; clear high part to get volume
 	shlq	#3,r25			; clear high part to get balance
-	sharq	#32-7,r24		; get volume index
 	movei	#volume_table,r26
+	sharq	#32-7,r24		; get volume index
+	move	r26,r14
 	jr	pl,.get_volume
 	shlq	#16,r23			; clear high part to get resampling increment
 	moveq	#1,r24			; compute maximum volume
@@ -379,13 +380,46 @@ SOUND_VOICES	equ	.sound_voices
 	add	r24,r26
 	loadb	(r26),r24		; get volume in table
 .volume_ok:
-	sharq	#32-5,r25		; get right balance
-	movei	#16,r26			; to compute left balance and saturate right balance
-	jr	pl,.balance_ok
+	sharq	#32-5,r25		; get balance
+	movei	#16,r26			; to saturate balance
+	jr	pl,.get_balance
 	shrq	#31,r22			; get 8 bits/16 bits flag
-	move	r26,r25			; saturate right balance to 16
+	move	r26,r25			; saturate balance to 16
+.get_balance:
+	cmpq	#8,r25
+	jr	pl,.balanced_right
+	nop
+.balanced_left:
+	;; 0 <= balance < 8
+	;; so left balance = 256
+	;; and right balance is volume_table[balance*32]
+	shlq	#5,r25
+	shlq	#4,r26		; left balance = 16 << 4 = 256
+	add	r14,r25
+	jr	.balance_ok
+	loadb	(r25),r25	; read right balance
+.balanced_right:
+	;; balance >= 8
+	jr	eq,.not_balanced
+	sub	r25,r26		; 16 - balance
+	;; 8 < balance <= 16
+	;; so right balance = 256
+	;; and left balance is volume_table[(16-balance)*32]
+	moveq	#1,r25
+	shlq	#5,r26
+	shlq	#8,r25		; right balance = 256
+	add	r14,r26
+	jr	.balance_ok
+	loadb	(r26),r26	; read left balance
+.not_balanced:
+	;; balance = 8
+	moveq	#1,r25
+	moveq	#1,r26
+	shlq	#8,r25			; right balance = 256
+	shlq	#8,r26			; left balance = 256
 .balance_ok:
-	sub	r25,r26			; left balance = 16 - right balance
+	shrq	#3,r25			; rescale right balance
+	shrq	#3,r26			; rescale left balance
 	mult	r24,r25			; right factor = right balance * volume factor (on 12 bits)
 	mult	r26,r24			; left factor = left balance * volume factor (on 12 bits)
 	;; at this point, we have
