@@ -489,7 +489,20 @@ SOUND_VOICES	equ	.sound_voices
 	nop	 		; this instruction is patched
 ;;; 	loadb	(r17),r12	; load 8 bits sample
 ;;; 	loadw	(r12),r12	; load 16 bits sample
-.do_sample:
+.macro	do_sample
+	;; r21 = fractionnal increment
+	;; r23 = integer part
+	;; r26 = fractionnal part
+	;; r4 = left voice
+	;; r5 = right voice
+	;; r17 = pointer in sample
+	;; r9 = 8 if 8 bits, 0 if 16 bits
+	;; r24 = left volume
+	;; r25 = right volume
+	;; r12 = sample
+	;; r27 = .generate_voice
+	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
+	;; uses r10, r11, r12, r13
 	add	r26,r21		; add fractionnal part to fractionnal increment
 	load	(r4),r10	; read left voice
 	addc	r23,r17		; add integer part with carry to current pointer
@@ -508,6 +521,8 @@ SOUND_VOICES	equ	.sound_voices
 	addqt	#8,r5
 	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
 	nop
+.endm
+	do_sample
 .generate_end:
 	neg	r22		       ; negate flag (0 = 8 bits, -1 = 16 bits)
 	store	r21,(r15+VOICE_FRAC/4) ; save fractionnal increment
