@@ -477,7 +477,7 @@ SOUND_VOICES	equ	.sound_voices
 	load	(r4),r10	; read left voice
 	addc	r23,r17		; add integer part with carry to current pointer
 	load	(r5),r11	; read right voice
-	shlq	#8,r12
+	shlq	#8,r12		; rescale 8 bits sample
 	move	r12,r13
 	imult	r24,r12
 	imult	r25,r13
