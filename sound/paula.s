@@ -451,7 +451,10 @@ SOUND_VOICES	equ	.sound_voices
 	jump	(r27)
 	nop
 .do_voice_8_bits:
+	movei	#~3,r6
+	and	r17,r6
 	movei	#.generate_voice_8_bits,r27
+	load	(r6),r9		; prefetch four samples at (address & ~3)
 .generate_voice_8_bits:
 	;; register usage
 	;; r0 = reserved by interrupt
@@ -476,7 +479,9 @@ SOUND_VOICES	equ	.sound_voices
 	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
 	;; r29 = .do_voice
 	;; r30 = .dsp_sound_driver_main
-	;; free registers = r6, r7, r8, r9, r10, r11, r12, r13, r14
+	;; free/working registers = r6, r7, r8, r9, r10, r11, r12, r13, r14
+	;; r6 = address of last prefetch
+	;; r9 = prefetched samples
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop_8_bits
 	cmpq	#0,r19		; is there a sound
@@ -484,17 +489,30 @@ SOUND_VOICES	equ	.sound_voices
 	jump	eq,(r28)	; => .generate_end
 	move	r20,r18		; new end pointer
 .no_loop_8_bits:
- 	loadb	(r17),r12	; load 8 bits sample
+	moveq	#3,r8
+	movei	#~3,r7
+	and	r17,r8		; address & 3
+	and	r17,r7		; address & ~3
+	shlq	#3,r8		; 8 * (address & 3)
+	cmp	r6,r7
+	subqt	#24,r8		; 8 * (address & 3) - 8 * 3
+	jr	eq,.no_reload_8_bits
+	neg	r8		; 8 * 3 - 8 * (address & 3) 
+	load	(r7),r9		; prefetch four samples at (address & ~3)
+	move	r7,r6
+.no_reload_8_bits:
 	add	r26,r21		; add fractionnal part to fractionnal increment
-	load	(r4),r10	; read left voice
+	move	r9,r12		; copy samples
 	addc	r23,r17		; add integer part with carry to current pointer
-	load	(r5),r11	; read right voice
+	ror	r8,r12		; get current sample
+	load	(r4),r10	; read left voice
 	shlq	#8,r12		; rescale 8 bits sample
+	load	(r5),r11	; read right voice
 	move	r12,r13
-	imult	r24,r12
-	imult	r25,r13
-	add	r12,r10
-	add	r13,r11
+	imult	r24,r12		; * left volume
+	imult	r25,r13		; * right volume
+	add	r12,r10		; add to left channel
+	add	r13,r11		; add to right channel
 	store	r10,(r4)
 	addqt	#8,r4
 	store	r11,(r5)
