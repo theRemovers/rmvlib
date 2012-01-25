@@ -453,6 +453,30 @@ SOUND_VOICES	equ	.sound_voices
 .do_voice_8_bits:
 	movei	#.generate_voice_8_bits,r27
 .generate_voice_8_bits:
+	;; register usage
+	;; r0 = reserved by interrupt
+	;; r1 = working buffer start address
+	;; r2 = working buffer end address
+	;; r3 = voice counter (read by interrupt)
+	;; r4 = left channel
+	;; r5 = right channel
+	;; r15 = current voice
+	;; r16 = voice state
+	;; r17 = current pointer (not null)
+	;; r18 = end pointer
+	;; r19 = loop pointer
+	;; r20 = end of loop
+	;; r21 = fractionnal increment (so that address of "real sample" is r17.r21)
+	;; r22 = 0 if 8 bits, 1 if 16 bits
+	;; r23 = integer part of resampling increment
+	;; r24 = left volume
+	;; r25 = right volume
+	;; r26 = fractionnal part of resampling increment
+	;; r27 = .generate_voice_{8,16}_bits
+	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
+	;; r29 = .do_voice
+	;; r30 = .dsp_sound_driver_main
+	;; free registers = r6, r7, r8, r9, r10, r11, r12, r13, r14
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop_8_bits
 	cmpq	#0,r19		; is there a sound
@@ -461,18 +485,6 @@ SOUND_VOICES	equ	.sound_voices
 	move	r20,r18		; new end pointer
 .no_loop_8_bits:
  	loadb	(r17),r12	; load 8 bits sample
-	;; r21 = fractionnal increment
-	;; r23 = integer part
-	;; r26 = fractionnal part
-	;; r4 = left voice
-	;; r5 = right voice
-	;; r17 = pointer in sample
-	;; r24 = left volume
-	;; r25 = right volume
-	;; r12 = sample
-	;; r27 = .generate_voice
-	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
-	;; uses r10, r11, r12, r13
 	add	r26,r21		; add fractionnal part to fractionnal increment
 	load	(r4),r10	; read left voice
 	addc	r23,r17		; add integer part with carry to current pointer
@@ -492,7 +504,30 @@ SOUND_VOICES	equ	.sound_voices
 	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
 	nop
 .generate_voice_16_bits:
-	;; r12 is a copy of r17
+	;; register usage
+	;; r0 = reserved by interrupt
+	;; r1 = working buffer start address
+	;; r2 = working buffer end address
+	;; r3 = voice counter (read by interrupt)
+	;; r4 = left channel
+	;; r5 = right channel
+	;; r15 = current voice
+	;; r16 = voice state
+	;; r17 = current pointer (not null)
+	;; r18 = end pointer
+	;; r19 = loop pointer
+	;; r20 = end of loop
+	;; r21 = fractionnal increment (so that address of "real sample" is r17.r21)
+	;; r22 = 0 if 8 bits, 1 if 16 bits
+	;; r23 = integer part of resampling increment
+	;; r24 = left volume
+	;; r25 = right volume
+	;; r26 = fractionnal part of resampling increment
+	;; r27 = .generate_voice_{8,16}_bits
+	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
+	;; r29 = .do_voice
+	;; r30 = .dsp_sound_driver_main
+	;; free registers = r6, r7, r8, r9, r10, r11, r12, r13, r14
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop_16_bits
 	move	r17,r12		; copy r17 to compute address of 16 bits sample 
@@ -504,18 +539,6 @@ SOUND_VOICES	equ	.sound_voices
 .no_loop_16_bits:
 	add	r12,r12		; address of 16 bits sample
  	loadw	(r12),r12	; load 16 bits sample
-	;; r21 = fractionnal increment
-	;; r23 = integer part
-	;; r26 = fractionnal part
-	;; r4 = left voice
-	;; r5 = right voice
-	;; r17 = pointer in sample
-	;; r24 = left volume
-	;; r25 = right volume
-	;; r12 = sample
-	;; r27 = .generate_voice
-	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
-	;; uses r10, r11, r12, r13
 	add	r26,r21		; add fractionnal part to fractionnal increment
 	load	(r4),r10	; read left voice
 	addc	r23,r17		; add integer part with carry to current pointer
