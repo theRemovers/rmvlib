@@ -24,7 +24,7 @@
 PAULA	equ	1
 
 	;; enable this to display time devoted to resampling
-DSP_BG	equ	0
+DSP_BG	equ	1
 
 	;; a stack size of 1 is enough
 DSP_STACK_SIZE	equ	2	; long words
@@ -445,50 +445,26 @@ SOUND_VOICES	equ	.sound_voices
 	move	r23,r26
 	shrq	#32-4,r23   	; integer part of resampling increment	
 	shlq	#4,r26		; fractionnal part of resampling increment
-	;; modify code of load instruction at .read_sample below
-	;; .read_sample must be long aligned!!
-	cmpq	#0,r22
-	movei	#.read_sample,r27
-	jr	ne,.gen_load_16_bits
-	load	(r27),r10	; read the two instructions "I1; I2" at .read_sample
-.gen_load_8_bits:
-	movei	#(39<<10)|(17<<5)|(12),r11	; loadb (r17),r12
-	jr	.gen_load_instruction
-	shlq	#16,r10		; I1 will be replaced by a load
-.gen_load_16_bits:
-	movei	#(40<<10)|(12<<5)|(12),r11	; loadw (r12),r12
-	shlq	#16,r10		; I1 will be replaced by a load
-.gen_load_instruction:
-	move	r1,r5		;   get pointer in working buffer
-	or	r11,r10		; I2; load
-	move	r1,r4		;   left pointer in working buffer	
-	rorq	#16,r10		; load; I2
-	addqt	#4,r5		;   right pointer in working buffer
-	store	r10,(r27)	; patch code
-	;; 
-.generate_voice:
-	move	PC,r27
-	cmp	r18,r17		; end <= current?
-	jr	mi,.no_loop
-	move	r17,r12		; copy r17 to compute address of 16 bits sample 
-	move	r19,r17		; copy loop pointer
-	move	r19,r12		; ensure that r12 = r17
-	cmpq	#0,r17		; is there a sound?
-	move	r20,r18		; new end pointer
-	.if	* & 3
-	;; we insert a nop here to ensure that .read_sample is long aligned
+	;;
+	move	r1,r4		; left pointer in working buffer	
+	cmpq	#0,r22		; 8 bits or 16 bits?
+	move	r1,r5		; get pointer in working buffer
+	jr	eq,.do_voice_8_bits
+	addqt	#4,r5		; right pointer in working buffer
+	movei	#.generate_voice_16_bits,r27
+	jump	(r27)
 	nop
-	.endif
+.do_voice_8_bits:
+	movei	#.generate_voice_8_bits,r27
+.generate_voice_8_bits:
+	cmp	r18,r17		; end <= current?
+	jr	mi,.no_loop_8_bits
+	cmpq	#0,r19		; is there a sound
+	move	r19,r17		; copy loop pointer
 	jump	eq,(r28)	; => .generate_end
-.no_loop:
-	add	r12,r12		; address of 16 bits sample
-.read_sample:
-	.if	* & 3
-	.fail
-	.endif
-	nop	 		; this instruction is patched
-;;; 	loadb	(r17),r12	; load 8 bits sample
-;;; 	loadw	(r12),r12	; load 16 bits sample
+	move	r20,r18		; new end pointer
+.no_loop_8_bits:
+ 	loadb	(r17),r12	; load 8 bits sample
 .macro	do_sample
 	;; r21 = fractionnal increment
 	;; r23 = integer part
@@ -522,6 +498,19 @@ SOUND_VOICES	equ	.sound_voices
 	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
 	nop
 .endm
+	do_sample
+.generate_voice_16_bits:
+	cmp	r18,r17		; end <= current?
+	jr	mi,.no_loop_16_bits
+	move	r17,r12		; copy r17 to compute address of 16 bits sample 
+	move	r19,r17		; copy loop pointer
+	move	r19,r12		; ensure that r12 = r17
+	cmpq	#0,r17		; is there a sound?
+	move	r20,r18		; new end pointer
+	jump	eq,(r28)	; => .generate_end
+.no_loop_16_bits:
+	add	r12,r12		; address of 16 bits sample
+ 	loadw	(r12),r12	; load 16 bits sample
 	do_sample
 .generate_end:
 	neg	r22		       ; negate flag (0 = 8 bits, -1 = 16 bits)
