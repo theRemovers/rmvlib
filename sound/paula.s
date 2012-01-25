@@ -451,7 +451,11 @@ SOUND_VOICES	equ	.sound_voices
 	jump	(r27)
 	nop
 .do_voice_8_bits:
+	moveq	#3,r6
+	neg	r6
+	and	r17,r6		; address & ~3
 	movei	#.generate_voice_8_bits,r27
+	load	(r6),r9		; load the four samples located at (address & ~3)
 .generate_voice_8_bits:
 	;; register usage
 	;; r0 = reserved by interrupt
@@ -484,12 +488,26 @@ SOUND_VOICES	equ	.sound_voices
 	jump	eq,(r28)	; => .generate_end
 	move	r20,r18		; new end pointer
 .no_loop_8_bits:
- 	loadb	(r17),r12	; load 8 bits sample
+	moveq	#3,r7
+	neg	r7
+	moveq	#3,r10
+	and	r17,r7		; address & ~3
+	and	r17,r10		; address & 3
+	cmp	r7,r6
+	moveq	#3,r8
+	jr	ne,.no_reload_8_bits
+	sub	r10,r8		; 3 - (address & 3)
+	load	(r7),r9		; load four samples at (address & ~3)
+	move	r7,r6		; refresh (address & ~3)
+.no_reload_8_bits:
+	shlq	#3,r8		; 8 * (3 - (address & 3))
+	move	r9,r12		; copy the four samples
+	sh	r8,r12		; get current sample in low byte
 	add	r26,r21		; add fractionnal part to fractionnal increment
 	load	(r4),r10	; read left voice
 	addc	r23,r17		; add integer part with carry to current pointer
-	load	(r5),r11	; read right voice
 	shlq	#8,r12		; rescale 8 bits sample
+	load	(r5),r11	; read right voice
 	move	r12,r13
 	imult	r24,r12
 	imult	r25,r13
