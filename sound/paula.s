@@ -432,12 +432,8 @@ SOUND_VOICES	equ	.sound_voices
 	;; r23 = resampling increment << 16
 	;; r24 = left factor
 	;; r25 = right factor
-	moveq	#1,r9
-	sub	r22,r9		; 0 = 16 bits, 1 = 8 bits
 	sh	r22,r17		; convert address in samples
-	shlq	#3,r9		; 0 = 16 bits, 8 = 8 bits
 	sh	r22,r18		; this only affect 16 bits samples
-	neg	r9		; 0 = 16 bits, -8 = 8 bits
 	sh	r22,r19		; and simplify the management
 	sh	r22,r20		; this works because 16 bits samples
 	 			; must be aligned on 2 bytes boundary
@@ -465,14 +461,12 @@ SOUND_VOICES	equ	.sound_voices
 	move	r20,r18		; new end pointer
 .no_loop_8_bits:
  	loadb	(r17),r12	; load 8 bits sample
-.macro	do_sample
 	;; r21 = fractionnal increment
 	;; r23 = integer part
 	;; r26 = fractionnal part
 	;; r4 = left voice
 	;; r5 = right voice
 	;; r17 = pointer in sample
-	;; r9 = 8 if 8 bits, 0 if 16 bits
 	;; r24 = left volume
 	;; r25 = right volume
 	;; r12 = sample
@@ -483,7 +477,7 @@ SOUND_VOICES	equ	.sound_voices
 	load	(r4),r10	; read left voice
 	addc	r23,r17		; add integer part with carry to current pointer
 	load	(r5),r11	; read right voice
-	sh	r9,r12		; rescale sample if needed
+	shlq	#8,r12
 	move	r12,r13
 	imult	r24,r12
 	imult	r25,r13
@@ -497,9 +491,8 @@ SOUND_VOICES	equ	.sound_voices
 	addqt	#8,r5
 	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
 	nop
-.endm
-	do_sample
 .generate_voice_16_bits:
+	;; r12 is a copy of r17
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop_16_bits
 	move	r17,r12		; copy r17 to compute address of 16 bits sample 
@@ -511,7 +504,35 @@ SOUND_VOICES	equ	.sound_voices
 .no_loop_16_bits:
 	add	r12,r12		; address of 16 bits sample
  	loadw	(r12),r12	; load 16 bits sample
-	do_sample
+	;; r21 = fractionnal increment
+	;; r23 = integer part
+	;; r26 = fractionnal part
+	;; r4 = left voice
+	;; r5 = right voice
+	;; r17 = pointer in sample
+	;; r24 = left volume
+	;; r25 = right volume
+	;; r12 = sample
+	;; r27 = .generate_voice
+	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
+	;; uses r10, r11, r12, r13
+	add	r26,r21		; add fractionnal part to fractionnal increment
+	load	(r4),r10	; read left voice
+	addc	r23,r17		; add integer part with carry to current pointer
+	load	(r5),r11	; read right voice
+	move	r12,r13
+	imult	r24,r12
+	imult	r25,r13
+	add	r12,r10
+	add	r13,r11
+	store	r10,(r4)
+	addqt	#8,r4
+	store	r11,(r5)
+	cmp	r4,r2		; have we finished?
+	jump	ne,(r27)	; => .generate_voice
+	addqt	#8,r5
+	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
+	nop
 .generate_end:
 	neg	r22		       ; negate flag (0 = 8 bits, -1 = 16 bits)
 	store	r21,(r15+VOICE_FRAC/4) ; save fractionnal increment
