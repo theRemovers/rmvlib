@@ -24,7 +24,7 @@
 PAULA	equ	1
 
 	;; enable this to display time devoted to resampling
-DSP_BG	equ	0
+DSP_BG	equ	1
 
 	;; a stack size of 1 is enough
 DSP_STACK_SIZE	equ	2	; long words
@@ -442,18 +442,20 @@ SOUND_VOICES	equ	.sound_voices
 	shrq	#32-4,r23   	; integer part of resampling increment	
 	shlq	#4,r26		; fractionnal part of resampling increment
 	;;
+	movei	#~3,r14
 	move	r1,r4		; left pointer in working buffer	
 	cmpq	#0,r22		; 8 bits or 16 bits?
 	move	r1,r5		; get pointer in working buffer
 	jr	eq,.do_voice_8_bits
 	addqt	#4,r5		; right pointer in working buffer
-	movei	#.generate_voice_16_bits,r27
+	movei	#.do_voice_16_bits,r27
 	jump	(r27)
-	nop
+	addqt	#.generate_voice_16_bits-.do_voice_16_bits,r27
 .do_voice_8_bits:
-	movei	#~3,r6
+	move	PC,r27
+	move	r14,r6
+	addqt	#.generate_voice_8_bits-.do_voice_8_bits,r27
 	and	r17,r6
-	movei	#.generate_voice_8_bits,r27
 	load	(r6),r9		; prefetch four samples at (address & ~3)
 .generate_voice_8_bits:
 	;; register usage
@@ -482,6 +484,7 @@ SOUND_VOICES	equ	.sound_voices
 	;; free/working registers = r6, r7, r8, r9, r10, r11, r12, r13, r14
 	;; r6 = address of last prefetch
 	;; r9 = prefetched samples
+	;; r14 = ~3
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop_8_bits
 	cmpq	#0,r19		; is there a sound
@@ -490,7 +493,7 @@ SOUND_VOICES	equ	.sound_voices
 	move	r20,r18		; new end pointer
 .no_loop_8_bits:
 	moveq	#3,r8
-	movei	#~3,r7
+	move	r14,r7		; ~3
 	and	r17,r8		; address & 3
 	and	r17,r7		; address & ~3
 	shlq	#3,r8		; 8 * (address & 3)
@@ -521,6 +524,12 @@ SOUND_VOICES	equ	.sound_voices
 	addqt	#8,r5
 	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
 	nop
+.do_voice_16_bits:
+	move	r17,r12
+	move	r14,r6		; ~3
+	add	r12,r12
+	and	r12,r6
+	load	(r6),r9		; prefetch two samples at (address & ~3)
 .generate_voice_16_bits:
 	;; register usage
 	;; r0 = reserved by interrupt
@@ -545,7 +554,10 @@ SOUND_VOICES	equ	.sound_voices
 	;; r28 = .generate_end (may be modified by interrupt to .next_voice)
 	;; r29 = .do_voice
 	;; r30 = .dsp_sound_driver_main
-	;; free registers = r6, r7, r8, r9, r10, r11, r12, r13, r14
+	;; free/working registers = r6, r7, r8, r9, r10, r11, r12, r13, r14
+	;; r6 = address of last prefetch
+	;; r9 = prefetched samples
+	;; r14 = ~3
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop_16_bits
 	move	r17,r12		; copy r17 to compute address of 16 bits sample 
@@ -555,13 +567,26 @@ SOUND_VOICES	equ	.sound_voices
 	move	r20,r18		; new end pointer
 	jump	eq,(r28)	; => .generate_end
 .no_loop_16_bits:
-	add	r12,r12		; address of 16 bits sample
- 	loadw	(r12),r12	; load 16 bits sample
+	add	r12,r12		; address of 16 bits sample (it is even)
+	moveq	#3,r8
+	move	r14,r7
+	and	r12,r8		; address & 3
+	and	r12,r7		; address & ~3
+	shlq	#3,r8		; 8 * (address & 3)
+	cmp	r6,r7
+	subqt	#16,r8		; 8 * (address & 3) - 8 * 2
+	jr	eq,.no_reload_16_bits
+	neg	r8		; 8 * 2 - 8 * (address & 3)
+	load	(r7),r9		; prefetch two samples at (address & 3)
+	move	r7,r6
+.no_reload_16_bits:
 	add	r26,r21		; add fractionnal part to fractionnal increment
-	load	(r4),r10	; read left voice
+	move	r9,r12
 	addc	r23,r17		; add integer part with carry to current pointer
-	load	(r5),r11	; read right voice
+	ror	r8,r12
+	load	(r4),r10	; read left voice
 	move	r12,r13
+	load	(r5),r11	; read right voice
 	imult	r24,r12
 	imult	r25,r13
 	add	r12,r10
