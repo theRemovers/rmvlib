@@ -442,7 +442,8 @@ SOUND_VOICES	equ	.sound_voices
 	shrq	#32-4,r23   	; integer part of resampling increment	
 	shlq	#4,r26		; fractionnal part of resampling increment
 	;;
-	movei	#~3,r14
+	movei	#~3,r14	      	; for prefetching
+	moveq	#0,r6		; no address prefetched initially
 	move	r1,r4		; left pointer in working buffer	
 	cmpq	#0,r22		; 8 bits or 16 bits?
 	move	r1,r5		; get pointer in working buffer
@@ -450,13 +451,10 @@ SOUND_VOICES	equ	.sound_voices
 	addqt	#4,r5		; right pointer in working buffer
 	movei	#.do_voice_16_bits,r27
 	jump	(r27)
-	addqt	#.generate_voice_16_bits-.do_voice_16_bits,r27
+	;; addqt	#.generate_voice_16_bits-.do_voice_16_bits,r27
+	nop
 .do_voice_8_bits:
-	move	PC,r27
-	move	r14,r6
-	addqt	#.generate_voice_8_bits-.do_voice_8_bits,r27
-	and	r17,r6
-	load	(r6),r9		; prefetch four samples at (address & ~3)
+	movei	#.generate_voice_8_bits,r27
 .generate_voice_8_bits:
 	;; register usage
 	;; r0 = reserved by interrupt
@@ -525,11 +523,6 @@ SOUND_VOICES	equ	.sound_voices
 	jump	(r28)		; => .generate_end (interrupt may change to .next_voice)
 	nop
 .do_voice_16_bits:
-	move	r17,r12
-	move	r14,r6		; ~3
-	add	r12,r12
-	and	r12,r6
-	load	(r6),r9		; prefetch two samples at (address & ~3)
 .generate_voice_16_bits:
 	;; register usage
 	;; r0 = reserved by interrupt
