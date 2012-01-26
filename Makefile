@@ -11,7 +11,7 @@ SUBDIRS=$(NASUBDIRS) $(ASUBDIRS) $(OSUBDIRS)
 
 PROJECT=rmvlib
 # also change in Doxyfile!!!
-PROJECT_NUMBER=1.3.2
+PROJECT_NUMBER=1.3.3
 
 export PROJECT_NUMBER
 
