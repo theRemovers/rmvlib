@@ -499,7 +499,7 @@ SOUND_VOICES	equ	.sound_voices
 	subqt	#24,r8		; 8 * (address & 3) - 8 * 3
 	jr	eq,.no_reload_8_bits
 	neg	r8		; 8 * 3 - 8 * (address & 3) 
-	load	(r7),r9		; prefetch four samples at (address & ~3)
+	load	(r7),r9		; prefetch four samples at (address & ~3) [A;B;C;D]
 	move	r7,r6
 .no_reload_8_bits:
 	add	r26,r21		; add fractionnal part to fractionnal increment
@@ -570,7 +570,7 @@ SOUND_VOICES	equ	.sound_voices
 	subqt	#16,r8		; 8 * (address & 3) - 8 * 2
 	jr	eq,.no_reload_16_bits
 	neg	r8		; 8 * 2 - 8 * (address & 3)
-	load	(r7),r9		; prefetch two samples at (address & 3)
+	load	(r7),r9		; prefetch two samples at (address & 3) [A2;A1;B2;B1]
 	move	r7,r6
 .no_reload_16_bits:
 	add	r26,r21		; add fractionnal part to fractionnal increment
