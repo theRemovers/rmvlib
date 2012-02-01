@@ -66,8 +66,8 @@ _vline:
 .depth_ok:
 	or.l	#XADD0,d0
 	move.l	d0,A2_FLAGS
-	moveq	#0,d0
-	move.w	SCREEN_W(a0),d0
+	moveq	#1,d0
+	swap	d0
 	move.l	d0,A2_STEP
 	move.l	d1,B_CMD
 	wait_blitter	d0
