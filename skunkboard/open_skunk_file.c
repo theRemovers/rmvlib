@@ -132,6 +132,7 @@ static int getc(FILE *fp) {
 }
 
 static char *gets(FILE *fp, char *s, int size) {
+  int err = 0;
   char *str = s;
   SkunkWrapper *wrapper = fp->data;
   if(wrapper == NULL) {
@@ -152,6 +153,7 @@ static char *gets(FILE *fp, char *s, int size) {
     wrapper->reply.content = s;
     skunk_synchronous_request(&(wrapper->request), &(wrapper->reply));
     if(wrapper->reply.abstract != 0) {
+      err = 1;
       break;
     }
     int n = strlen(s);
@@ -164,7 +166,7 @@ static char *gets(FILE *fp, char *s, int size) {
     s += n;
     total -= n;
   }
-  if(total == size) {
+  if(err) {
     return NULL;
   }
   return str;
