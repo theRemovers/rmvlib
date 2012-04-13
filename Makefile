@@ -30,7 +30,7 @@ $(PROJECT).a: Makefile subdirs $(OBJS)
 	for dir in $(ASUBDIRS); do $(AR) rvs $(PROJECT).a $$dir/*.o; done
 	$(AR) rvs $(PROJECT).a display/n_display.o
 
-.PHONY: subdirs $(SUBDIRS)
+.PHONY: subdirs $(SUBDIRS) all clean dist list-headers list-objects install
 
 subdirs: $(SUBDIRS)
 
