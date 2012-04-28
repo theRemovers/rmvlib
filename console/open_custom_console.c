@@ -1,11 +1,11 @@
 #include <stdlib.h>
-#include <console.h>
+#include "console.h"
 
 #define USE_BLITTER 0
 
 #if USE_BLITTER
 // scrolling is made with the Blitter
-#include <blit.h>
+#include "blit.h"
 #else
 // scrolling is made with the 68k
 #include <string.h>

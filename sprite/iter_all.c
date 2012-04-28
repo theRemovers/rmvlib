@@ -16,7 +16,7 @@
 /* License along with this library; if not, write to the Free Software */
 /* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <sprite.h>
+#include "sprite.h"
 
 void display_iter_all_layers(display *d,void (*f)(sprite *s)) {
   int layer;

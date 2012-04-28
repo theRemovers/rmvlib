@@ -1,7 +1,6 @@
 include ../Makefile.config
 
 DISTFILES=Makefile Doxyfile
-INSTALLH=
 INSTALLLIB=
 
 all:
@@ -12,9 +11,6 @@ clean:
 
 dist-files:
 	@echo $(DISTFILES)
-
-install-h:
-	@echo $(INSTALLH)
 
 install-lib:
 	@echo $(INSTALLLIB)

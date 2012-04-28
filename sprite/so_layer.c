@@ -16,7 +16,7 @@
 /* License along with this library; if not, write to the Free Software */
 /* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <sprite.h>
+#include "sprite.h"
 
 static inline sprite_header *mergesort(sprite_header *list, int (*compare)(sprite *s1, sprite *s2)) {
   if(list == NULL) {

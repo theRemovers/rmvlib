@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <console.h>
+#include "console.h"
 
 // CONSOLE_WIDTH should be a multiple of 8
 #define DFLT_CONSOLE_WIDTH 40

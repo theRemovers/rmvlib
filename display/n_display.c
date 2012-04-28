@@ -17,9 +17,9 @@
 /* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <jagdefs.h>
-#include <display.h>
 #include <stdlib.h>
-#include <op.h>
+#include "display.h"
+#include "op.h"
 
 void build_display_list_header(display *d,display_list_header *h, qphrase *list) {
   h->ob1.type = BRANCHOBJ;

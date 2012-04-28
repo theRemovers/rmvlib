@@ -16,8 +16,8 @@
 /* License along with this library; if not, write to the Free Software */
 /* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <sprite.h>
 #include <stdlib.h>
+#include "sprite.h"
 
 sprite *new_sprite(int width, int height, int x, int y, depth d, phrase *data) {
   sprite *s;

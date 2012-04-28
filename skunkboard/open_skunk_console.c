@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <skunk.h>
 #include <stdlib.h>
+#include "skunk.h"
 
 #define MAXSIZE 4000
 
