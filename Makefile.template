@@ -1,0 +1,23 @@
+all: .depend $(OBJS)
+
+.PHONY: all clean dist-files install-lib
+
+%.o: %.s
+	$(MADMAC) $(MACFLAGS) $<
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
+
+clean:
+	rm -f *~ $(OBJS) .depend
+
+.depend: $(SRCC)
+	$(CC) $(CFLAGS) -MM $(SRCC) > .depend || [ "$(SRCC)" = "" ]
+
+dist-files:
+	@echo $(DISTFILES)
+
+install-lib:
+	@echo $(INSTALLLIB)
+
+-include .depend
