@@ -311,7 +311,7 @@ mt_init:
 mt_end:
 	movem.l	d7/a5,-(sp)	; the macros uses d7
 
-	move.l	#SOUND_VOICE0,a5
+	move.l	#SOUND_VOICES,a5
 	move.b	#%10011001,d0	; left - right - right - left - ...
 	swap	d0
 	move.w	mt_nbVoices,d0
@@ -441,7 +441,7 @@ mt_NoNewAllChannels:
 
 	move.w	mt_nbVoices,d5
 	subq.w	#1,d5
-	move.l	#SOUND_VOICE0,a5
+	move.l	#SOUND_VOICES,a5
 	move.l	#mt_chan1temp,a6
 .go_CheckEfx:
 	bsr	mt_CheckEfx	
@@ -471,7 +471,7 @@ mt_GetNewNote:
 	move.l	#mt_PeriodTable,a2
 	move.l	#_amiga_frequencies,a4
 
-	move.l	#SOUND_VOICE0,a5
+	move.l	#SOUND_VOICES,a5
 	move.l	#mt_chan1temp,a6
 	move.w	mt_nbVoices,d5
 	subq.w	#1,d5
@@ -663,7 +663,7 @@ mt_SetDMA:
 
 	move.w	mt_nbVoices,d5
 	subq.w	#1,d5
-	move.l	#SOUND_VOICE0,A5
+	move.l	#SOUND_VOICES,A5
 	move.l	#mt_chan1temp,A6
 .go_SetDMA:	
 	set_sample	n_loopstart(a6),n_replen(a6)

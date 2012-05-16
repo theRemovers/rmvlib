@@ -24,6 +24,8 @@ __PAULA_DEF_H	equ	1
 
 	.globl	SOUND_DMA
 	.globl	SOUND_VOICES
+
+	.globl	_amiga_frequencies
 	
 ; VOICEs
 ; ======
@@ -85,8 +87,15 @@ VOICE_SIZEOF:	ds.l	0
 DMA_CONTROL:	ds.l	1
 DMA_SIZEOF:	ds.l	0
 
-	.macro	wait_dma
+	.text
+	
+.macro	wait_dma
 .wait\~:
 	tst.l	\1
 	bne.s	.wait\~
-	.endm
+.endm
+
+.macro	dsp_interrupt
+	move.l	#DSPGO|DSPINT0,D_CTRL ; generate DSP interrupt
+.endm
+

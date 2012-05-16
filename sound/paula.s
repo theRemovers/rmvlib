@@ -20,9 +20,6 @@
 
 	include	"../risc.s"
 
-	;; the following disable clear_dma commands in the mod replayer
-PAULA	equ	1
-
 	;; enable this to display time devoted to resampling
 DSP_BG	equ	0
 
@@ -632,10 +629,6 @@ SOUND_DRIVER_SIZE	equ	.dsp_sound_driver_end-.dsp_sound_driver_begin
 	.print	"Sound driver code size (DSP): ", SOUND_DRIVER_SIZE
 				
 	.68000
-
-.macro	dsp_interrupt
-	move.l	#DSPGO|DSPINT0,D_CTRL ; generate DSP interrupt
-.endm
 	
 	.globl	_init_sound_driver
 ;; int init_sound_driver(int frequency)
@@ -828,40 +821,8 @@ replay_frequency:
 	ds.l	1
 	
 	.long
-	.globl	_amiga_frequencies
 _amiga_frequencies:
 	ds.w	MAX_PERIOD
 	.long
 
-	.text
-SOUND_VOICE0	equ	SOUND_VOICES
-SOUND_VOICE1	equ	SOUND_VOICE0+VOICE_SIZEOF
-SOUND_VOICE2	equ	SOUND_VOICE1+VOICE_SIZEOF
-SOUND_VOICE3	equ	SOUND_VOICE2+VOICE_SIZEOF
-SOUND_VOICE4	equ	SOUND_VOICE3+VOICE_SIZEOF
-SOUND_VOICE5	equ	SOUND_VOICE4+VOICE_SIZEOF
-SOUND_VOICE6	equ	SOUND_VOICE5+VOICE_SIZEOF
-SOUND_VOICE7	equ	SOUND_VOICE6+VOICE_SIZEOF		
 	
-	include	"pt-play.s"
-
-	.text
-	.globl	_init_module
-;; init_module(char *module, int tempo_enabled);
-_init_module	equ	mt_init
-
-	.globl	_play_module
-;; play_module();
-_play_module	equ	mt_music_vbl
-
-	.globl	_clear_module
-;; clear_module();
-_clear_module	equ	mt_clear
-
-	.globl	_pause_module
-;; pause_module();
-_pause_module	equ	mt_pause
-
-	.globl	_enable_module_voices
-;; enable_module_voices(int mask);
-_enable_module_voices	equ	mt_enable_voices
