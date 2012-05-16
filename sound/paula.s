@@ -20,9 +20,6 @@
 
 	include	"../risc.s"
 
-	.globl	SOUND_DMA
-	.globl	SOUND_VOICES
-	
 	;; the following disable clear_dma commands in the mod replayer
 PAULA	equ	1
 
@@ -46,66 +43,8 @@ GREEN	equ	$003f
 DSP_USP	equ	(D_ENDRAM-(4*DSP_STACK_SIZE))
 DSP_ISP	equ	(DSP_USP-(4*DSP_STACK_SIZE))
 
-; VOICEs
-; ======
-; START (read by DSP)
-; -----
-; base address of sound
-;
-; LENGTH (read by DSP)
-; ------
-; length of sound in **bytes**
-;
-; CONTROL (read by DSP)
-; -------
-; 800Bbbbb 0Vvvvvvv IIIIiiii iiiiiiii
-;
-; 8: 0 = 8 bits sound, 1 = 16 bits sound
-; Bbbbb: right balance from 0 to 16 [saturated] (left balance is 16 minus right balance)
-; Vvvvvvv: volume from 0 to 64 [saturated]
-; IIII.iiiiiiiiiiii: 4.12 resampling increment
-;
-; private fields
-; ==============
-; CURRENT (read/written by DSP) 
-; -------
-; current address in the sound
-;
-; END (read/written by DSP)
-; ---
-; end address of the sound
-;
-; FRAC (read/written by DSP)
-; ----
-; fractionnal increment (12 higher bits)
-
-	.offset	0
-VOICE_START:	ds.l	1
-VOICE_LENGTH:	ds.l	1
-VOICE_CONTROL:	ds.l	1
-VOICE_CURRENT:	ds.l	1
-VOICE_END:	ds.l	1
-VOICE_FRAC:	ds.l	1
-VOICE_SIZEOF:	ds.l	0
-
-; CONTROL (read by DSP and cleared for acknowledgement)
-; -------
-; S0000000 00000000 00000000 OOOOOOOO
-;
-; S: 0 = clear bits, 1 = set bits
-; O: activate/deactivate voice
-;
-; private fields
-; ==============
-; STATE (read/written by DSP) is stored in R18 (IT register bank)
-; -----
-; 00000000 00000000 00000000 OOOOOOOO
-; O: voice on/off
+	include	"./paula_def.s"
 	
-	.offset	0
-DMA_CONTROL:	ds.l	1
-DMA_SIZEOF:	ds.l	0
-
 	.text
 
 LOG2_NB_VOICES	equ	3
@@ -777,12 +716,6 @@ compute_amiga_frequencies:
 	dbf	d0,.compute_one_period
 	move.l	(sp)+,d2
 	rts
-
-.macro	wait_dma
-.wait\~:
-	tst.l	\1
-	bne.s	.wait\~
-.endm
 	
 	.globl  _set_voice
 ;; void set_voice(int voice_num, int control, char *start, int len, char *loop_start, int loop_len);
