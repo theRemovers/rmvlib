@@ -4,6 +4,10 @@
 -----
 	Renamed fb2d_copy_straight to screen_copy_straight and moved to
 	screen module.
+
+	Separated Protracker Replay routine and Paula emulator. You should
+	now link against paula.o and protracker.o to stay compatible. Also
+	defined paula_def.s for low level programming of Paula emulator.
 	
 1.3.4
 -----
