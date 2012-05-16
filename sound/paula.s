@@ -20,6 +20,9 @@
 
 	include	"../risc.s"
 
+	.globl	SOUND_DMA
+	.globl	SOUND_VOICES
+	
 	;; the following disable clear_dma commands in the mod replayer
 PAULA	equ	1
 
