@@ -1,20 +1,20 @@
-; The Removers'Library 
+; The Removers'Library
 ; Copyright (C) 2006-2012 Seb/The Removers
 ; http://removers.atari.org/
-	
-; This library is free software; you can redistribute it and/or 
-; modify it under the terms of the GNU Lesser General Public 
-; License as published by the Free Software Foundation; either 
-; version 2.1 of the License, or (at your option) any later version. 
 
-; This library is distributed in the hope that it will be useful, 
-; but WITHOUT ANY WARRANTY; without even the implied warranty of 
-; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-; Lesser General Public License for more details. 
+; This library is free software; you can redistribute it and/or
+; modify it under the terms of the GNU Lesser General Public
+; License as published by the Free Software Foundation; either
+; version 2.1 of the License, or (at your option) any later version.
 
-; You should have received a copy of the GNU Lesser General Public 
-; License along with this library; if not, write to the Free Software 
-; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
+; This library is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+; Lesser General Public License for more details.
+
+; You should have received a copy of the GNU Lesser General Public
+; License along with this library; if not, write to the Free Software
+; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 	include	"../jaguar.inc"
 
@@ -36,19 +36,19 @@ CHECK_FIXING	equ	0
 RED	equ	$f800
 BLUE	equ	$07c0
 GREEN	equ	$003f
-	
+
 DSP_USP	equ	(D_ENDRAM-(4*DSP_STACK_SIZE))
 DSP_ISP	equ	(DSP_USP-(4*DSP_STACK_SIZE))
 
 	include	"./paula_def.s"
-	
+
 	.text
 
 LOG2_NB_VOICES	equ	3
 NB_VOICES	equ	(1<<LOG2_NB_VOICES)
 
 	.extern	_bcopy
-	
+
 ;;; the DSP sound driver
 ;;; for sake of simplicity, it clears the interrupt handlers
 ;;; so you shoud install your own interrupts after having initialised
@@ -80,8 +80,8 @@ dsp_sound_driver:
 	load	(r14),r4		; left sample
 	load	(r14+1),r5		; right sample
 	addq	#8,r14
-	sharq	#8+5+LOG2_NB_VOICES,r4 	; rescale sample (8 for volume, 5 for balance)
-	sharq	#8+5+LOG2_NB_VOICES,r5 	; rescale sample 
+	sharq	#8+5+LOG2_NB_VOICES,r4	; rescale sample (8 for volume, 5 for balance)
+	sharq	#8+5+LOG2_NB_VOICES,r5	; rescale sample
 	sat16s	r4			; saturate left sample
 	sat16s	r5			; saturate right sample
 	store	r4,(r15+1)	; write left channel (Zerosquare fix)
@@ -115,7 +115,7 @@ dsp_sound_driver:
 	;; r18 = DMA_STATE
 	;; register usage = r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r18
 	move	r15,r5		; save r15
-	;; 
+	;;
 	move	r17,r15		; SOUND_VOICES
 	load	(r16),r6
 	movei	#.no_command,r28
@@ -125,7 +125,7 @@ dsp_sound_driver:
 	move	r6,r8		; backup command
 	move	r6,r7
 	sharq	#31,r8		; replicate command bit on r8
-				; r8 = 0 if CLEAR, r8 = FFFFFFFF if SET 
+				; r8 = 0 if CLEAR, r8 = FFFFFFFF if SET
 	moveq	#NB_VOICES,r9
 	movefa	r3,r4		; load loop counter of main loop
 .do_command:
@@ -162,7 +162,7 @@ dsp_sound_driver:
 	store	r10,(r16)	; acknowledge command
 	or	r6,r18		; c v + ~v s
 .no_command:
-	;; 
+	;;
 	move	r5,r15		; restore r15
 	;; fix return address
 	movei	#.return_from_interrupt,r28
@@ -245,7 +245,7 @@ SOUND_VOICES	equ	.sound_voices
 	.rept	VOICE_SIZEOF/4
 	dc.l	0
 	.endr
-	.endr	
+	.endr
 .dsp_sound_driver_main:
 	;; BEWARE: r0 is used by it handler to indicate that audio
 	;;         buffers have been switched
@@ -263,7 +263,7 @@ SOUND_VOICES	equ	.sound_voices
 	storew	r28,(r29)
 	.endif
 	;; we first clear the audio buffer
-	move	r1,r4		; 
+	move	r1,r4		;
 	move	r1,r3		; left channel
 	addqt	#4,r4		; right channel
 	moveq	#0,r5
@@ -314,7 +314,7 @@ SOUND_VOICES	equ	.sound_voices
 	shlq	#16,r23			; clear high part to get resampling increment
 	moveq	#1,r24			; compute maximum volume
 	jr	.volume_ok
-	shlq	#8,r24			; 8 bit fix-point arithmetic 
+	shlq	#8,r24			; 8 bit fix-point arithmetic
 .get_volume:
 	add	r24,r26
 	loadb	(r26),r24		; get volume in table
@@ -375,15 +375,15 @@ SOUND_VOICES	equ	.sound_voices
 	sh	r22,r18		; this only affect 16 bits samples
 	sh	r22,r19		; and simplify the management
 	sh	r22,r20		; this works because 16 bits samples
-	 			; must be aligned on 2 bytes boundary
+				; must be aligned on 2 bytes boundary
 	;;
 	move	r23,r26
-	shrq	#32-4,r23   	; integer part of resampling increment	
+	shrq	#32-4,r23	; integer part of resampling increment
 	shlq	#4,r26		; fractionnal part of resampling increment
 	;;
-	movei	#~3,r14	      	; for prefetching
+	movei	#~3,r14		; for prefetching
 	moveq	#0,r6		; no address prefetched initially
-	move	r1,r4		; left pointer in working buffer	
+	move	r1,r4		; left pointer in working buffer
 	cmpq	#0,r22		; 8 bits or 16 bits?
 	move	r1,r5		; get pointer in working buffer
 	jr	eq,.do_voice_8_bits
@@ -437,7 +437,7 @@ SOUND_VOICES	equ	.sound_voices
 	cmp	r6,r7
 	subqt	#24,r8		; 8 * (address & 3) - 8 * 3
 	jr	eq,.no_reload_8_bits
-	neg	r8		; 8 * 3 - 8 * (address & 3) 
+	neg	r8		; 8 * 3 - 8 * (address & 3)
 	load	(r7),r9		; prefetch four samples at (address & ~3) [A;B;C;D]
 	move	r7,r6
 .no_reload_8_bits:
@@ -492,7 +492,7 @@ SOUND_VOICES	equ	.sound_voices
 	;; r14 = ~3
 	cmp	r18,r17		; end <= current?
 	jr	mi,.no_loop_16_bits
-	move	r17,r12		; copy r17 to compute address of 16 bits sample 
+	move	r17,r12		; copy r17 to compute address of 16 bits sample
 	move	r19,r17		; copy loop pointer
 	move	r19,r12		; ensure that r12 = r17
 	cmpq	#0,r17		; is there a sound?
@@ -554,7 +554,7 @@ SOUND_VOICES	equ	.sound_voices
 	.endif
 	.long
 .dsp_sound_driver_init:
-	;; 
+	;;
 SOUND_DRIVER_FRQ	equ	0
 SOUND_DRIVER_BUFSIZE	equ	4
 SOUND_DRIVER_LOCK	equ	8
@@ -616,26 +616,26 @@ SOUND_DRIVER_LOCK	equ	8
 	dc.l	0
 	.endr
 .dsp_sound_driver_end:
-		
+
 SOUND_DRIVER_INIT	equ	.dsp_sound_driver_init
 SOUND_DRIVER_PARAM	equ	.dsp_sound_driver_param
 SOUND_DRIVER_SIZE	equ	.dsp_sound_driver_end-.dsp_sound_driver_begin
 
 	.if	(SOUND_DRIVER_SIZE+(2*4*DSP_STACK_SIZE)) > (D_ENDRAM-D_RAM)
 	.print	"Sound driver too big: ", (SOUND_DRIVER_SIZE+(2*4*DSP_STACK_SIZE)), " bytes (max allowed = ", (D_ENDRAM-D_RAM), " bytes)"
-	.fail	
+	.fail
 	.endif
-	
+
 	.print	"Sound driver code size (DSP): ", SOUND_DRIVER_SIZE
-				
+
 	.68000
-	
+
 	.globl	_init_sound_driver
 ;; int init_sound_driver(int frequency)
 _init_sound_driver:
 	move.l	#0,D_CTRL
 	;; copy DSP code
-	pea	SOUND_DRIVER_SIZE	
+	pea	SOUND_DRIVER_SIZE
 	pea	D_RAM
 	pea	dsp_sound_driver
 	jsr	_bcopy
@@ -644,7 +644,7 @@ _init_sound_driver:
 	move.l	4(sp),d0
 	; n = (830968,75/(2*freq))-1 = 25 for 16000hz
         ; f = 830968,75/(2*(n+1))
-; 	move.l	d0,replay_frequency
+;	move.l	d0,replay_frequency
 	move.l	#83096875,d1
 	divu.w	d0,d1
 	and.l	#$ffff,d1
@@ -652,12 +652,12 @@ _init_sound_driver:
 	and.l	#$ffff,d1
 	subq.l	#1,d1
 	move.l	d1,SOUND_DRIVER_PARAM+SOUND_DRIVER_FRQ
- 	addq.l	#1,d1
+	addq.l	#1,d1
 	mulu.w	#200,d1
- 	move.l	#83096875,d0
- 	divu.w	d1,d0
+	move.l	#83096875,d0
+	divu.w	d1,d0
 	and.l	#$ffff,d0
- 	move.l	d0,replay_frequency
+	move.l	d0,replay_frequency
 	;; compute size of audio buffer
 	move.w	CONFIG,d0
 	move.w	#50,d1
@@ -666,7 +666,7 @@ _init_sound_driver:
 	move.w	#60,d1
 .ok_frq:
 	move.l	replay_frequency,d0
-	divu.w	d1,d0		
+	divu.w	d1,d0
 	and.l	#$ffff,d0	; number of samples per vbl
 	addq.l	#1,d0
 	cmp.l	#MAX_BUFSIZE,d0
@@ -692,7 +692,7 @@ MAX_PERIOD	equ	1024
 
 compute_amiga_frequencies:
 	move.l	d2,-(sp)
-	move.l	replay_frequency,d2	
+	move.l	replay_frequency,d2
 	move.l	#_amiga_frequencies + (2*MAX_PERIOD),a1
 	move.l	#MAX_PERIOD-1,d0
 .compute_one_period:
@@ -700,7 +700,7 @@ compute_amiga_frequencies:
 	tst.l	d0
 	beq.s	.skip_div
 	divu.w	d0,d1
-.skip_div:	
+.skip_div:
 	swap	d1
 	clr.w	d1
 	lsr.l	#5,d1		; <<11
@@ -709,7 +709,7 @@ compute_amiga_frequencies:
 	dbf	d0,.compute_one_period
 	move.l	(sp)+,d2
 	rts
-	
+
 	.globl  _set_voice
 ;; void set_voice(int voice_num, int control, char *start, int len, char *loop_start, int loop_len);
 _set_voice:
@@ -720,22 +720,22 @@ _set_voice:
 	lsl.l	d0,d1		; select voice
         mulu.w  #VOICE_SIZEOF,d0
         lea     (a0,d0.l),a0
-	;; 
+	;;
 	move.l	#SOUND_DMA,a1
 	wait_dma	DMA_CONTROL(a1)
 	move.l	d1,DMA_CONTROL(a1) ; disable voice
 	dsp_interrupt
-	;; 
+	;;
 	move.l	0+8(sp),VOICE_CONTROL(a0)
 	move.l	0+12(sp),VOICE_START(a0)
 	move.l	0+12+4(sp),VOICE_LENGTH(a0)
-	;; 
+	;;
 	or.l	#$80000000,d1
 	wait_dma	DMA_CONTROL(a1)
 	move.l	d1,DMA_CONTROL(a1) ; enable voice
 	dsp_interrupt
 	wait_dma	DMA_CONTROL(a1)
-	;; 
+	;;
 	move.l	0+20(sp),VOICE_START(a0)
 	move.l	0+20+4(sp),VOICE_LENGTH(a0)
         rts
@@ -750,16 +750,16 @@ _clear_voice:
 	lsl.l	d0,d1		; select voice
         mulu.w  #VOICE_SIZEOF,d0
         lea     (a0,d0.l),a0
-	;; 
+	;;
 	move.l	#SOUND_DMA,a1
 	wait_dma	DMA_CONTROL(a1)
 	move.l	d1,DMA_CONTROL(a1) ; disable voice
 	dsp_interrupt
 	rts
-	
+
 	.globl	_set_panning
 ;; void set_panning(int voice_num, int panning);
-_set_panning:	
+_set_panning:
         move.l  #SOUND_VOICES,a0
 	move.l  0+4(sp),d0
         and.l   #NB_VOICES-1,d0
@@ -780,7 +780,7 @@ _set_panning:
 
 	.globl	_set_volume
 ;; void set_volume(int voice_num, int volume);
-_set_volume:	
+_set_volume:
         move.l  #SOUND_VOICES,a0
 	move.l  0+4(sp),d0
         and.l   #NB_VOICES-1,d0
@@ -800,7 +800,7 @@ _set_volume:
 
 	.data
 	.long
-volume_table:	
+volume_table:
 	dc.b	0, 6, 12, 17, 22, 28, 32, 37
 	dc.b	41, 46, 51, 55, 60, 64, 68, 72
 	dc.b	77, 81, 85, 89, 93, 97, 101, 105
@@ -809,7 +809,7 @@ volume_table:
 	dc.b	169, 173, 176, 180, 184, 187, 191, 195
 	dc.b	199, 203, 207, 209, 213, 218, 220, 224
 	dc.b	227, 231, 233, 238, 241, 245, 248, 253
-	
+
 	.data
 	.even
 	dc.b	"Paula Emulator by Seb/The Removers"
@@ -819,10 +819,10 @@ volume_table:
 	.long
 replay_frequency:
 	ds.l	1
-	
+
 	.long
 _amiga_frequencies:
 	ds.w	MAX_PERIOD
 	.long
 
-	
+
