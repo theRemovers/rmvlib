@@ -32,7 +32,7 @@ static inline void putInt32(SkunkMessage *m, int n) {
   m->length = i;
 }
 
-static inline void putString(SkunkMessage *m, char *s) {
+static inline void putString(SkunkMessage *m, const char *s) {
   int i = m->length;
   strcpy(m->content + i, s);
   m->length += 1+strlen(s);
