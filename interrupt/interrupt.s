@@ -1,35 +1,35 @@
-; The Removers'Library 
+; The Removers'Library
 ; Copyright (C) 2006 Seb/The Removers
 ; http://removers.atari.org/
-	
-; This library is free software; you can redistribute it and/or 
-; modify it under the terms of the GNU Lesser General Public 
-; License as published by the Free Software Foundation; either 
-; version 2.1 of the License, or (at your option) any later version. 
 
-; This library is distributed in the hope that it will be useful, 
-; but WITHOUT ANY WARRANTY; without even the implied warranty of 
-; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-; Lesser General Public License for more details. 
+; This library is free software; you can redistribute it and/or
+; modify it under the terms of the GNU Lesser General Public
+; License as published by the Free Software Foundation; either
+; version 2.1 of the License, or (at your option) any later version.
 
-; You should have received a copy of the GNU Lesser General Public 
-; License along with this library; if not, write to the Free Software 
-; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
-	
+; This library is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+; Lesser General Public License for more details.
+
+; You should have received a copy of the GNU Lesser General Public
+; License along with this library; if not, write to the Free Software
+; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
 	include	"../jaguar.inc"
-	
+
 	.text
 	.68000
-	
+
 VBL_QUEUE_SIZE	equ	8
 
 	;; LOW_PRIORITY is still experimental
 	;; for some unknown reasons it does not work properly yet
-	;; the handlers are executed just after the interrupt 
+	;; the handlers are executed just after the interrupt
 	;; occurs and not during the interrupt
 	;; this allows to use the blitter in an interrupt handler for example
 USE_LOW_PRIORITY	equ	0
-		
+
 	.globl	_init_interrupts
 	.extern	_a_vde
 
@@ -46,6 +46,7 @@ _init_interrupts:
 	move.w	_a_vde,d0
 	or.w	#1,d0
 	move.w	d0,VI
+        move.w  d0,_VI_Reg
 	moveq	#0,d0
 	move.w	#C_VIDCLR|C_VIDENA,d0
 	swap	d0
@@ -65,21 +66,21 @@ _set_timer:
 	move.l	4+4(sp),timer_handler
 	or.w	#C_PITCLR|C_PITENA,irq
 	or.w	#C_PITENA,INT1
-	and.w	#$f8ff,sr	
+	and.w	#$f8ff,sr
 	rts
 
 	.globl	_clear_timer
 _clear_timer:
-	or.w	#$0700,sr	
+	or.w	#$0700,sr
 	clr.l	timer_handler
 	move.w	irq,d0
 	and.w	#~(C_PITCLR|C_PITENA),d0
 	move.w	d0,irq
 	and.w	#$ff,d0
 	move.w	d0,INT1
-	and.w	#$f8ff,sr	
+	and.w	#$f8ff,sr
 	rts
-	
+
 InterruptHandler:
 	.if	USE_LOW_PRIORITY
 	movem.l	d0-d1,-(sp)
@@ -116,7 +117,7 @@ InterruptHandler:
 	jsr	(a0)
 .no_exec:
 	dbf	d2,.exec_vbl_queue
-	swap	d2	
+	swap	d2
 .no_vblank:
 	btst.l	#3,d2
 	beq.s	.no_timer
@@ -169,9 +170,9 @@ InterruptHandler:
 	dc.l	.handler11111
 .handler00000:
 	rts
-; 	movem.l	d0-d1/a0-a1,-(sp)
-; 	moveq	#%00000,d0
-; 	bra	.real_handler
+;	movem.l	d0-d1/a0-a1,-(sp)
+;	moveq	#%00000,d0
+;	bra	.real_handler
 .handler00001:
 	movem.l	d0-d2/a0-a2,-(sp)
 	moveq	#%00001,d2
@@ -308,7 +309,7 @@ InterruptHandler:
 	beq.s	.skip_timer_it
 	move.l	d0,a0
 	jsr	(a0)
-.skip_timer_it:	
+.skip_timer_it:
 	bclr	#3,irq_mutex+1
 .no_timer_it:
 	btst.l	#2,d2
@@ -338,11 +339,11 @@ InterruptHandler:
 	dbf	d2,.exec_vbl_queue
 	swap	d2
 	bclr	#0,irq_mutex+1
-.no_vbl_it:	
-	movem.l	(sp)+,d0-d2/a0-a2 
+.no_vbl_it:
+	movem.l	(sp)+,d0-d2/a0-a2
 	rts
 	.endif
-	
+
 	.globl	_vsync
 
 _vsync:
@@ -355,9 +356,10 @@ _vsync:
 
 	.bss
 
-	.extern	_vblCounter
-	.extern	_vblQueue
-	
+	.globl	_vblCounter
+	.globl	_vblQueue
+        .globl  _VI_Reg
+
 	.long
 irq:		ds.w	1
 irq_mutex:	ds.w	1
@@ -365,6 +367,8 @@ irq_mutex:	ds.w	1
 timer_handler:	ds.l	1
 	.even
 _vblCounter:	ds.w	1
+        .even
+_VI_Reg:        ds.w    1
 	.long
 _vblQueue:	ds.l	VBL_QUEUE_SIZE
 
