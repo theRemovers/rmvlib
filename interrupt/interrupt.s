@@ -26,6 +26,7 @@ VBL_QUEUE_SIZE	equ	8
 	.globl	_init_interrupts
 	.extern	_a_vde
 
+;;; uint16_t init_interrupts();
 _init_interrupts:
 	or.w	#$0700,sr
 	clr.w	_vblCounter
@@ -39,7 +40,8 @@ _init_interrupts:
 	move.w	_a_vde,d0
 	or.w	#1,d0
 	move.w	d0,VI
-        move.w  d0,_VI_Reg
+        moveq   #0,d1
+        move.w  d0,d1
 	moveq	#0,d0
 	move.w	#C_VIDCLR|C_VIDENA,d0
 	swap	d0
@@ -48,6 +50,7 @@ _init_interrupts:
 	and.w	#$ff,d0
 	or.w	d0,INT1
 	and.w	#$f8ff,sr
+        move.l  d1,d0
 	rts
 
 	.globl	_set_timer
@@ -121,7 +124,6 @@ _vsync:
 
 	.globl	_vblCounter
 	.globl	_vblQueue
-        .globl  _VI_Reg
 
 	.long
 irq:		ds.w	1
@@ -130,8 +132,6 @@ irq_mutex:	ds.w	1
 timer_handler:	ds.l	1
 	.even
 _vblCounter:	ds.w	1
-        .even
-_VI_Reg:        ds.w    1
 	.long
 _vblQueue:	ds.l	VBL_QUEUE_SIZE
 

@@ -26,8 +26,8 @@
 /** Size of the VBL queue */
 #define VBL_QUEUE_SIZE 8
 
-/** Initialise interrupts. */
-void init_interrupts();
+/** Initialise interrupts. Returns value used to initialize VI (used for interlacing) */
+uint16_t init_interrupts();
 
 /** Wait for the next VBL. */
 void vsync();
