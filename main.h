@@ -37,7 +37,7 @@
     The core of the library is composed of display.h and sprite.h. 
 
     The ::display structure is an essential component of the library. A
-    ::display is a ::sprite container which is organized in layer. The
+    ::display is a ::sprite container which is organized in layers. The
     maximal number of layers is 16. The layer are displayed on screen in
     ascending order so that layer 0 corresponds to the background and
     layer 15 corresponds to the foreground. A display have coordinates
@@ -50,10 +50,10 @@
     relative to the ::display they belong to.
 
     The sprite can be unscaled or scaled (sprite::scaled), visible or
-    not (sprite::visible), animated or not (sprite::animated). They may
+    not (sprite::invisible), animated or not (sprite::animated). They may
     have a "hot spot" different from the left upper corner
     (sprite::use_hotspot, sprite::hx and sprite::hy). An animated sprite
-    is described by a simple array of ::animation_chunk.
+    is described by a simple array of ::animation_chunk elements.
 
     All the tedious details of the sprites are managed by the display
     manager. The display manager uses a GPU routine for maximal
@@ -85,10 +85,10 @@
     ::init_collision_routine. This last function copies the GPU
     subroutine in GPU ram at the address you give (for example
     &::_GPU_FREE_RAM).  You can then launch a collision test with
-    ::launch_collision_routine and asynchrounously get the result of the
+    ::launch_collision_test and asynchrounously get the result of the
     test with ::get_collision_result. The collision routine not only
-    determines if the two transparent ::sprite collide but also if their
-    bounding box intersect.
+    determines if the two transparent ::sprite instances do collide, but
+    also if their bounding box intersect.
 
     \subsection fb2d_subsec Frame Buffers
 
@@ -105,22 +105,22 @@
     in fb2d.h.  The 2D frame buffer manager is still ongoing work. With
     this manager, you can copy a rectangular area of a screen into
     another screen with the desired copy ::mode. This is done achieved
-    with the function ::fb2d_copy_straight. You can also apply an
+    with the function ::screen_copy_straight. You can also apply an
     ::affine_transform while doing a transformed copy with
     ::fb2d_copy_transformed. Thus, you can easily rotate a part of a
     screen by setting a rotation (with ::fb2d_set_rotation) as the
     considered affine transform. You can also compose transformation
     with ::fb2d_compose_linear_transform. It is easy to make a point
     match in the source screen and the target screen with the function
-    ::fb2d_set_matching_point.
+    ::fb2d_set_matching_points.
 
-    Before using all these functionnalities, you should first initialise
+    Before using all these features, you should first initialize
     the display manager and then the 2D frame buffer manager with
     ::init_fb2d_manager. Similarly to the collision routine, it takes the
     address in DSP ram where the DSP subroutine should be copied.
 
-    Note that now there is a sound manager implemented (with v 1.1 of
-    the library), the fb2d manager has moved to DSP ram.
+    As of version 1.1 of the library, a sound manager has been implemented and
+    the the fb2d manager has moved to DSP memory.
 
     \subsection joy_subsec Joypad management
 
@@ -136,7 +136,7 @@
     moment, you can just initialise interrupts with ::init_interrupts.
     This installs a generic interrupt manager that allows you to put
     several ::irq_handler to be run at each VBL. You simply have to put
-    the address of the handler in the ::VblQueue array. You can also
+    the address of the handler in the ::vblQueue array. You can also
     then wait for the next VBL to occur with ::vsync.
 
     \subsection modplay_subsec Sound manager
