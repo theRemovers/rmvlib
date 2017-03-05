@@ -6,8 +6,8 @@ SRCS=
 SRCC=
 SRCH=
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
-NASUBDIRS=interrupt display collision fb2d sound render
-ASUBDIRS=sprite screen joypad blit console skunkboard 
+NASUBDIRS=interrupt display collision fb2d sound render lz77
+ASUBDIRS=sprite screen joypad blit console skunkboard
 OSUBDIRS=doc
 SUBDIRS=$(NASUBDIRS) $(ASUBDIRS) $(OSUBDIRS)
 
@@ -96,7 +96,7 @@ install: lib
 	  install -m "u+rw,go+r" "$$file" "$(TARGET)/lib"; \
 	done
 
-uninstall: 
+uninstall:
 	for file in include/*.h; do \
 	  rm -f "$(TARGET)/$$file"; \
 	done; \
