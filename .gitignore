@@ -1,2 +1,10 @@
-/doc/html/
-/doc/latex/
+*.o
+*~
+.depend
+*.a
+*.aux
+*.log
+*.pdf
+*.toc
+/doc/html
+/doc/latex
