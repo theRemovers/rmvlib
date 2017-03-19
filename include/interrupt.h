@@ -22,6 +22,8 @@
 #ifndef _INTERRUPT_H
 #define _INTERRUPT_H
 
+#include <jagdefs.h>
+
 #define stop68k() { asm("stop #0x2100"); }
 /** Size of the VBL queue */
 #define VBL_QUEUE_SIZE 8
