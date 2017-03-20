@@ -115,13 +115,26 @@ typedef enum {
   MODE_EXPAND = SRCEN|SRCENX|PATDSEL|BCOMPEN|BKGWREN
 } mode;
 
+/** A screen has basically four characteristics: depth, width, height
+    and address of graphical data.
+
+    The width of a screen must be one of the following value 
+    (a valid blitter width):
+
+    2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80,
+    96, 112, 128, 160, 192, 224, 256, 320, 384, 448, 512, 640, 768,
+    896, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 3584
+
+    Otherwise, the behaviour of the functions manipulating screens is
+    unpredictable. */
+
 /** Allocate a new ::screen with malloc. */
 screen *new_screen();
 
 /** Initialise a ::screen.*/
 void set_simple_screen(/** Depth of the graphical data. */
 		       depth d,
-		       /** Width in pixels of the graphical data. This must be a valid blitter width. */ 
+		       /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
 		       int width,
 		       /** Height in pixels of the graphical data. */
 		       int height,
@@ -134,7 +147,7 @@ void set_simple_screen(/** Depth of the graphical data. */
  * It returns the address of the buffer allocated. */
 phrase *alloc_simple_screen(/** Depth of the graphical data. */
 			    depth d,
-			    /** Width in pixels of the graphical data. This must be a valid blitter width. */ 
+			    /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
 			    int width,
 			    /** Height in pixels of the graphical data. */
 			    int height,
@@ -145,7 +158,7 @@ phrase *alloc_simple_screen(/** Depth of the graphical data. */
  * It returns the address of the buffer allocated. */
 phrase *alloc_double_buffered_screens(/** Depth of the graphical data. */
 				   depth d,
-				   /** Width in pixels of the graphical data. This must be a valid blitter width. */ 
+				   /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
 				   int width,
 				   /** Height in pixels of the graphical data. */
 				   int height,
@@ -158,7 +171,7 @@ phrase *alloc_double_buffered_screens(/** Depth of the graphical data. */
  * It returns the address of the buffer allocated. */
 phrase *alloc_z_double_buffered_screens(/** Depth of the graphical data. */
 				     depth d,
-				     /** Width in pixels of the graphical data. This must be a valid blitter width. */ 
+				     /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
 				     int width,
 				     /** Height in pixels of the graphical data. */
 				     int height,
