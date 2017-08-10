@@ -466,8 +466,8 @@ FILE *open_custom_console(display *d, int x, int y, int idx, int width, int heig
   co->s = s;
   attach_sprite_to_display_at_layer(s,d,layer);
 
-  TOMREGS->clut1[idx] = RGBCOLOR(0, 0, 0);
-  TOMREGS->clut1[idx+1] = RGBCOLOR(255, 255, 255);
+  TOMREGS->clut1[2 * idx] = RGBCOLOR(0, 0, 0);
+  TOMREGS->clut1[2 * idx+1] = RGBCOLOR(255, 255, 255);
 
   FILE *fp = calloc(1, sizeof(FILE));
   fp->data = co;
