@@ -22,6 +22,10 @@
 #ifndef _JOYPAD_H
 #define _JOYPAD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Standard Controller
 /** Up */
 #define JOYPAD_UP (1<<0)
@@ -106,5 +110,9 @@ void read_joypad_state(/** Address of a ::joypad_state structure where
 			* to write the joypad states
 			*/
 		       joypad_state *state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

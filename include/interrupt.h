@@ -24,6 +24,10 @@
 
 #include <jagdefs.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define stop68k() { asm("stop #0x2100"); }
 /** Size of the VBL queue */
 #define VBL_QUEUE_SIZE 8
@@ -48,5 +52,9 @@ void set_timer(long count, irq_handler handler);
 
 /** Clear timer interrupt */
 void clear_timer();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

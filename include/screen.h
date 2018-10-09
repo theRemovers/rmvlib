@@ -39,6 +39,10 @@
 #include <op.h>
 #include <sprite.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RGBCLUT 0
 #define CRYCLUT 1;
 
@@ -267,5 +271,9 @@ void vline(/** Address of the ::screen */
 	   int ymax,
 	   /** Color */
 	   int color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

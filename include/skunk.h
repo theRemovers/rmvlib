@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SKUNK_WRITE_STDERR 1
 #define SKUNK_READ_STDIN 2
 
@@ -34,5 +38,9 @@ int skunk_synchronous_request(SkunkMessage *request, SkunkMessage *reply);
 FILE *skunk_stdin();
 FILE *skunk_stderr();
 FILE *skunk_fopen(const char *path, const char *mode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

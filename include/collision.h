@@ -24,6 +24,10 @@
 
 #include <sprite.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define COLLISION_DONE 0x80000000
 /** The two sprites collide.
  */
@@ -86,5 +90,9 @@ long get_collision_result(/** Y coordinate of the intersection box */
 			  short int *x, 
 			  /** Width of the intersection box */
 			  short int *w);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

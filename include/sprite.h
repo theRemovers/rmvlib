@@ -28,6 +28,10 @@
 #include <op.h>
 #include <display.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** An animation chunck is used to describe one part of an animation.
  */
 typedef struct {
@@ -252,6 +256,11 @@ void show_display_layer(/** Address of the ::display */
 			display *d,
 			/** Layer (modulo 16) */
 			int layer);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 /** \page sprite Sprite Management
