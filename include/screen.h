@@ -272,6 +272,13 @@ void vline(/** Address of the ::screen */
 	   /** Color */
 	   int color);
 
+void line(screen *dst,
+          int x1,
+          int y1,
+          int x2,
+          int y2,
+          int color);
+  
 #ifdef __cplusplus
 }
 #endif
