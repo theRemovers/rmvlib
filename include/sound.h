@@ -22,6 +22,10 @@
 #ifndef _SOUND_H
 #define _SOUND_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Initialises the display driver and the DSP subroutine manager. It
     returns back the real replay frequency. */
 int init_sound_driver(/** desired replay frequency */ 
@@ -107,5 +111,9 @@ extern long _DSP_FREE_RAM;
 /** Amiga period to frequencies increment. Initialised by
     ::init_sound_driver since it depends on the replay frequency. */
 extern short int amiga_frequencies[MAX_PERIOD];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

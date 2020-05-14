@@ -24,6 +24,10 @@
 
 #include "jagtypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BITOBJ 0
 #define SCBITOBJ 1
 #define GPUOBJ 2
@@ -128,5 +132,9 @@ typedef enum {
   DEPTH16 = 4, 
   /** 24 bpp */
   DEPTH32 = 5 } depth;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

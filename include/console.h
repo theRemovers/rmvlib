@@ -26,6 +26,10 @@
 #include <stdio.h>
 #include <sprite.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Open a new console attached to the given display, at given
     coordinates. It is implemented as a 1 bpp screen buffer: you can
     specify the index in the CLUT.
@@ -45,5 +49,9 @@ FILE *open_custom_console(/** display */ display *d,
 			  /** number of columns */ int width, 
 			  /** number of lines */ int height, 
 			  /** layer */ int layer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

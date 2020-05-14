@@ -22,6 +22,10 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Default maximal number of sprites in ::display. */
 #define DISPLAY_DFLT_MAX_SPRITE 256
 
@@ -152,6 +156,11 @@ display *new_display(/** maximal number of sprites the ::display can contain.
 		     * If 0 then the default value of ::DISPLAY_DFLT_MAX_SPRITE is used. 
 		     */
 		    unsigned int max_nb_sprites);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 /** \page display Display driver

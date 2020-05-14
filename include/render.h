@@ -25,6 +25,10 @@
 #include <jagdefs.h>
 #include <screen.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   fixp y;
   fixp x;
@@ -88,5 +92,9 @@ void wait_renderer_completion();
 #define NO_CLR_SCREEN 0x0
 #define CLR_SCREEN 0x1
 #define CLR_Z_SCREEN 0x2
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

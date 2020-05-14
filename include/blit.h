@@ -24,6 +24,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Set the n bytes of the buffer starting at dst with character c. */
 void *blitset(/** Buffer address */
 	      void *dst, 
@@ -41,5 +45,9 @@ void *blitmove(/** Address of the source buffer */
 	       void *dst, 
 	       /** Number of bytes to move */
 	       size_t n);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

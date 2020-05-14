@@ -25,6 +25,10 @@
 #include <jagdefs.h>
 #include <screen.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** A linear transform is defined by four coefficients, thus defining a 2x2 matrix */
 typedef struct {
   /** 0,0 */
@@ -147,5 +151,9 @@ void fb2d_copy_transformed(/** Source ::screen */
 			   mode m,
 			   /** Depends on mode */
 			   ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

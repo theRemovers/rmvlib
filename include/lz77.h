@@ -22,6 +22,10 @@
 #ifndef _RENDER_H
 #define _RENDER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Initialise the LZ77 Depacker.
  *
  * The given address must be an address in GPU ram where to load the
@@ -37,5 +41,9 @@ void *init_lz77(/** Address where to load the GPU routine. It
 /** Unpack LZ77 compressed data.
     Return the size of uncompressed data. */
 int lz77_unpack(uint8_t *in, uint8_t *out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

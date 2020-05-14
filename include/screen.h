@@ -39,6 +39,10 @@
 #include <op.h>
 #include <sprite.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RGBCLUT 0
 #define CRYCLUT 1;
 
@@ -274,4 +278,9 @@ void line(screen *dst,
           int x2,
           int y2,
           int color);
+  
+#ifdef __cplusplus
+}
+#endif
+
 #endif
