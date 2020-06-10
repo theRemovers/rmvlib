@@ -25,10 +25,10 @@
  * by its X coordinate and Y coordinate (screen::x and screen::y) that
  * are to be used by some primitives (for example to define where the
  * left-upper corner of a block is located in the frame).
- * 
+ *
  * Finally, it has also a screen::data field which is the address of
  * the graphical data viewed as a frame buffer.
- * 
+ *
  * Some facilities are offered to allocate certain kind of frame
  * buffers.
  */
@@ -122,7 +122,7 @@ typedef enum {
 /** A screen has basically four characteristics: depth, width, height
     and address of graphical data.
 
-    The width of a screen must be one of the following value 
+    The width of a screen must be one of the following value
     (a valid blitter width):
 
     2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80,
@@ -138,7 +138,7 @@ screen *new_screen();
 /** Initialise a ::screen.*/
 void set_simple_screen(/** Depth of the graphical data. */
 		       depth d,
-		       /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
+		       /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */
 		       int width,
 		       /** Height in pixels of the graphical data. */
 		       int height,
@@ -147,11 +147,11 @@ void set_simple_screen(/** Depth of the graphical data. */
 		       /** Address of the graphical data. This must be phrase aligned. */
 		       phrase *data);
 
-/** Allocate a screen buffer and set the ::screen accordingly. 
+/** Allocate a screen buffer and set the ::screen accordingly.
  * It returns the address of the buffer allocated. */
 phrase *alloc_simple_screen(/** Depth of the graphical data. */
 			    depth d,
-			    /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
+			    /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */
 			    int width,
 			    /** Height in pixels of the graphical data. */
 			    int height,
@@ -162,12 +162,12 @@ phrase *alloc_simple_screen(/** Depth of the graphical data. */
  * It returns the address of the buffer allocated. */
 phrase *alloc_double_buffered_screens(/** Depth of the graphical data. */
 				   depth d,
-				   /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
+				   /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */
 				   int width,
 				   /** Height in pixels of the graphical data. */
 				   int height,
 				   /** Address of the first ::screen. */
-				   screen *scr1, 
+				   screen *scr1,
 				   /** Address of the second ::screen. */
 				   screen *scr2);
 
@@ -175,48 +175,48 @@ phrase *alloc_double_buffered_screens(/** Depth of the graphical data. */
  * It returns the address of the buffer allocated. */
 phrase *alloc_z_double_buffered_screens(/** Depth of the graphical data. */
 				     depth d,
-				     /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */ 
+				     /** Width in pixels of the graphical data. This must be a valid blitter width (see above). */
 				     int width,
 				     /** Height in pixels of the graphical data. */
 				     int height,
 				     /** Address of the first ::screen. */
-				     screen *scr1, 
+				     screen *scr1,
 				     /** Address of the second ::screen. */
 				     screen *scr2);
 
 /** Create a ::sprite corresponding to the given screen. The sprite is not transparent by default. */
 sprite *sprite_of_screen(/** X coordinate of the ::sprite */
-			 int x, 
+			 int x,
 			 /** Y coordinate of the ::sprite */
-			 int y, 
-			 /** Address of the ::screen */ 
+			 int y,
+			 /** Address of the ::screen */
 			 screen *scr);
 
 /** Clear the given screen (fill with color 0).  For low depth screen
  * (< 8bpp), prefer ::blitset instead. */
-void clear_screen(/** Address of the ::screen */ 
+void clear_screen(/** Address of the ::screen */
 		  screen *dst);
 
-/** Clear the given Z-buffered screen (fill with color 0 and Z = 0). 
+/** Clear the given Z-buffered screen (fill with color 0 and Z = 0).
     Will only work on 16bpp screens.
  */
-void clear_zbuffered_screen(/** Address of the ::screen */ 
+void clear_zbuffered_screen(/** Address of the ::screen */
 			    screen *dst);
 
-/** Copy a box of the source ::screen in the target ::screen 
+/** Copy a box of the source ::screen in the target ::screen
  *
  * You can specify from and where it copies with fields screen::x and screen::y.
  *
  * This function does not require fb2d manager to be initialised by ::init_fb2d_manager.
  */
 void screen_copy_straight(/** Source ::screen */
-			  screen *src, 
+			  screen *src,
 			  /** Target ::screen */
-			  screen *dst, 
+			  screen *dst,
 			  /** Width of box */
-			  int w, 
+			  int w,
 			  /** Height of box */
-			  int h, 
+			  int h,
 			  /** Mode of copy */
 			  mode m,
 			  /** Depends on mode */
@@ -272,15 +272,35 @@ void vline(/** Address of the ::screen */
 	   /** Color */
 	   int color);
 
-void line(screen *dst,
+/** Draw a line onto the screen, from point (x1, y1) to point (x2, y2).
+
+    Even if hardware clipping is enabled, it is recommended that the
+    (x1, y1) and (x2, y2) are coordinates inside the screen. */
+void line(/** Address of the ::screen */
+          screen *dst,
+          /** X1 */
           int x1,
+          /** Y1 */
           int y1,
+          /** X2 */
           int x2,
+          /** Y2 */
           int y2,
+          /** Color */
           int color);
 
-void screen_rotate(screen *src, screen *tgt, int alpha);
-  
+/** Rotate a screen and put the result in target screen of the given
+    angle.
+
+    Center of rotation is (scr->x, scr->y) and is mapped in target
+    screen to (tgt->x, tgt->y). */
+void screen_rotate(/** Address of source screen */
+                   screen *src,
+                   /** Adress of target screen */
+                   screen *tgt,
+                   /** Angle of rotation (from 0 to 255) */
+                   int alpha);
+
 #ifdef __cplusplus
 }
 #endif
