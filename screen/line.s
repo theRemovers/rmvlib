@@ -1,5 +1,5 @@
 ; The Removers'Library
-; Copyright (C) 2006-2008 Seb/The Removers
+; Copyright (C) 2006-2020 Seb/The Removers
 ; http://removers.atari.org/
 
 ; This library is free software; you can redistribute it and/or

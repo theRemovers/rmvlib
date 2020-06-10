@@ -278,6 +278,8 @@ void line(screen *dst,
           int x2,
           int y2,
           int color);
+
+void screen_rotate(screen *src, screen *tgt, int alpha);
   
 #ifdef __cplusplus
 }
