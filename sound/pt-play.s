@@ -162,6 +162,7 @@ mt_chunks:
 	new_chunk	6,$43c,"EXO6"
 	new_chunk	8,$43c,"EXO8"
 	new_chunk	4,$43c,"4CHN"
+        new_chunk       5,$43c,"5CHN"
 	new_chunk	6,$43c,"6CHN"
 	new_chunk	8,$43c,"8CHN"
 	new_chunk	8,$43c,"CD81"
