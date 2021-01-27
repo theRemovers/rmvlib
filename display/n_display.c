@@ -21,7 +21,7 @@
 #include "display.h"
 #include "op.h"
 
-void build_display_list_header(display *d,display_list_header *h, qphrase *list) {
+static void build_display_list_header(display *d,display_list_header *h, qphrase *list) {
   h->ob1.type = BRANCHOBJ;
   h->ob1.ypos = a_vde;
   h->ob1.cc = O_BRLT;
@@ -66,7 +66,7 @@ void build_display_list_header(display *d,display_list_header *h, qphrase *list)
   stop->int_flag = 0;
 }
 
-phrase *gen_tree(display *d, char *base, phrase *tree, int i, int j, int n, phrase **stop) {
+static phrase *gen_tree(display *d, char *base, phrase *tree, int i, int j, int n, phrase **stop) {
   int len = j-i;
   op_branch_object *ob;
   if(len <= 1) {
@@ -122,7 +122,7 @@ phrase *gen_tree(display *d, char *base, phrase *tree, int i, int j, int n, phra
   }
 }
 
-void build_display_strip_tree(display *d, qphrase *list) {
+static void build_display_strip_tree(display *d, qphrase *list) {
   char *base = (char *)list;
   base += DISPLAY_STRIP_TREE_SIZEOF;
   phrase *stop = NULL;
