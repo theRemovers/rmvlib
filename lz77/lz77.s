@@ -178,6 +178,28 @@ _lz77_unpack:
 	bmi.s	.wait
 	rts
 
+;;; int lz77_unpack_async(uint8_t *in, uint8_t *out);
+_lz77_unpack_async:
+	move.l	depacker_addr,a0
+	lea	DEPACKER_PARAMS(a0),a1
+	move.l	4(sp),(a1)+	; source data
+	move.l	8(sp),(a1)+	; target buffer
+	move.l	#$80000000,(a1)	; mutex
+	lea	DEPACKER_DEPACK(a0),a0
+        jsr_gpu a0
+	move.l	4(sp),a0
+	move.l	(a0),d0
+	rts
+
+;;; int lz77_unpack_wait:
+_lz77_unpack_wait:
+	move.l	depacker_addr,a0
+	lea	DEPACKER_PARAMS+8(a0),a1
+.wait:
+	tst.l	(a1)
+	bmi.s	.wait
+	rts
+
         .data
         .phrase
         dc.b    'LZ77 Depacker by Seb/The Removers'

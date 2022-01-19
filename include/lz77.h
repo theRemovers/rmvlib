@@ -42,6 +42,9 @@ void *init_lz77(/** Address where to load the GPU routine. It
     Return the size of uncompressed data. */
 int lz77_unpack(uint8_t *in, uint8_t *out);
 
+int lz77_unpack_async(uint8_t *in, uint8_t *out);
+void lz77_unpack_wait();
+
 #ifdef __cplusplus
 }
 #endif
