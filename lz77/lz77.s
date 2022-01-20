@@ -161,7 +161,6 @@ _init_lz77:
 	rts
 
 	.globl	_lz77_unpack
-
 ;;; int lz77_unpack(uint8_t *in, uint8_t *out);
 _lz77_unpack:
 	move.l	depacker_addr,a0
@@ -178,6 +177,7 @@ _lz77_unpack:
 	bmi.s	.wait
 	rts
 
+	.globl	_lz77_unpack_async
 ;;; int lz77_unpack_async(uint8_t *in, uint8_t *out);
 _lz77_unpack_async:
 	move.l	depacker_addr,a0
@@ -191,6 +191,7 @@ _lz77_unpack_async:
 	move.l	(a0),d0
 	rts
 
+	.globl	_lz77_unpack_wait
 ;;; int lz77_unpack_wait:
 _lz77_unpack_wait:
 	move.l	depacker_addr,a0
