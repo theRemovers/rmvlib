@@ -19,8 +19,8 @@
 /** \file lz77.h
  * \brief LZ77 Depacker (to be used with Ray/TSCC packer)
  */
-#ifndef _RENDER_H
-#define _RENDER_H
+#ifndef _LZ77_H
+#define _LZ77_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,10 +39,14 @@ void *init_lz77(/** Address where to load the GPU routine. It
                 void *addr);
 
 /** Unpack LZ77 compressed data.
-    Return the size of uncompressed data. */
+	Return the size of uncompressed data. */
 int lz77_unpack(uint8_t *in, uint8_t *out);
 
+/** Asynchronous unpack LZ77 compressed data.
+	Return the size of uncompressed data. */
 int lz77_unpack_async(uint8_t *in, uint8_t *out);
+/** Wait for asynchronous unpack of LZ77 compressed data
+    to complete, triggered by the function above. */
 void lz77_unpack_wait();
 
 #ifdef __cplusplus
