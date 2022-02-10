@@ -16,8 +16,8 @@
 ; License along with this library; if not, write to the Free Software 
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
-	include	"../jaguar.inc"
-	include	"screen_def.s"
+	include	"jaguar.inc"
+	include	"screen_def.inc"
 	
 	.globl	_screen_copy_straight
 ;;; void fb2d_copy_straight(screen *src, screen *dst, int w, int h, int mode, ...);

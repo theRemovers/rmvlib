@@ -1,6 +1,7 @@
 include ../Makefile.config
 
 INCL+=-I../include
+MACFLAGS+=-i../include
 
 SRCC=
 SRCS=blitset.s blitmove.s

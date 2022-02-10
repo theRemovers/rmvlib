@@ -1,7 +1,7 @@
 	;; the following disable clear_dma commands in the mod replayer
 PAULA	equ	1
 
-	include	"../jaguar.inc"
+	include	"jaguar.inc"
 	
 	include	"paula_def.s"
 

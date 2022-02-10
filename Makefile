@@ -63,7 +63,7 @@ clean:
 dist:
 	mkdir -p $(PROJECT_NAME); \
 	cp $(DISTFILES) $(PROJECT_NAME); \
-	for file in include/*.h; do \
+	for file in include/*.h include/*.inc; do \
 	  mkdir -p "$(PROJECT_NAME)/include"; \
 	  cp "$$file" "$(PROJECT_NAME)/include"; \
 	done; \
@@ -89,7 +89,7 @@ list-objects:
 install: lib
 	mkdir -p "$(TARGET)/include"; \
 	mkdir -p "$(TARGET)/lib"; \
-	for file in include/*.h; do \
+	for file in include/*.h include/*.inc; do \
 	  install -m "u+rw,go+r" "$$file" "$(TARGET)/include"; \
 	done; \
 	for file in lib/*; do \
@@ -97,7 +97,7 @@ install: lib
 	done
 
 uninstall:
-	for file in include/*.h; do \
+	for file in include/*.h include/*.inc; do \
 	  rm -f "$(TARGET)/$$file"; \
 	done; \
 	for file in lib/*; do \

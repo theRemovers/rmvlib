@@ -17,7 +17,7 @@
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
 
 	.if	^^defined	__SCREEN_H
-	.print	"screen_def.s already included"
+	.print	"screen_def.inc already included"
 	end
 	.endif
 __SCREEN_H	equ	1

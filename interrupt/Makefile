@@ -1,6 +1,7 @@
 include ../Makefile.config
 
 INCL+=-I../include
+MACFLAGS+=-i../include
 
 SRCC=
 SRCS=interrupt.s
