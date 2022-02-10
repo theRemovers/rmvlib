@@ -50,6 +50,13 @@ FILE *open_custom_console(/** display */ display *d,
 			  /** number of lines */ int height, 
 			  /** layer */ int layer);
 
+FILE *new_custom_console(/** sprite address (output) */ sprite **s,
+			 /** X coordinate */ int x,
+			 /** Y coordinate */ int y,
+			 /** index in CLUT */ int idx,
+			 /** number of columns */ int width,
+			 /** number of lines */ int height);
+
 #ifdef __cplusplus
 }
 #endif
