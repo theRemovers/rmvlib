@@ -36,16 +36,16 @@ _init_interrupts:
 	clr.l	(a0)+
 	dbf	d0,.clr_queue
 	clr.l	timer_handler
+	clr.l	gpu_handler
 	move.l	#InterruptHandler,LEVEL0
 	move.w	_a_vde,d0
 	or.w	#1,d0
 	move.w	d0,VI
         moveq   #0,d1
         move.w  d0,d1
-	move.w	#C_VIDCLR|C_VIDENA,d0
-	move.w	d0,irq
-	and.w	#$ff,d0
-	or.w	d0,INT1
+	move.w	#C_VIDCLR|C_VIDENA,irq
+	move.w	irq,d0
+	move.w	d0,INT1
 	and.w	#$f8ff,sr	; enable interrupts
         move.l  d1,d0
 	rts
@@ -58,7 +58,9 @@ _set_timer:
 	move.l	d0,PIT0
 	move.l	4+4(sp),timer_handler
 	or.w	#C_PITCLR|C_PITENA,irq
-	or.w	#C_PITENA,INT1
+	move.w	irq,d0
+	and.w	#C_PITCLR|$ff,d0
+	move.w	d0,INT1
 	and.w	#$f8ff,sr
 	rts
 
@@ -68,6 +70,29 @@ _clear_timer:
 	clr.l	timer_handler
 	move.w	irq,d0
 	and.w	#~(C_PITCLR|C_PITENA),d0
+	move.w	d0,irq
+	and.w	#$ff,d0
+	move.w	d0,INT1
+	and.w	#$f8ff,sr
+	rts
+
+	.globl	_set_gpu_interrupt
+_set_gpu_interrupt:
+	or.w	#$0700,sr
+	move.l	4(sp),gpu_handler
+	or.w	#C_GPUCLR|C_GPUENA,irq
+	move.w	irq,d0
+	and.w	#C_GPUCLR|$ff,d0
+	move.w	d0,INT1
+	and.w	#$f8ff,sr
+	rts
+
+	.globl	_clear_gpu_interrupt
+_clear_gpu_interrupt:
+	or.w	#$0700,sr
+	clr.l	gpu_handler
+	move.w	irq,d0
+	and.w	#~(C_GPUCLR|C_GPUENA),d0
 	move.w	d0,irq
 	and.w	#$ff,d0
 	move.w	d0,INT1
@@ -94,6 +119,13 @@ InterruptHandler:
 	dbf	d2,.exec_vbl_queue
 	swap	d2
 .no_vblank:
+	btst.l	#1,d2
+	beq.s	.no_gpu
+	move.l	gpu_handler,d0
+	beq.s	.no_gpu
+	move.l	d0,a0
+	jsr	(a0)
+.no_gpu:
 	btst.l	#3,d2
 	beq.s	.no_timer
 .timer:
@@ -126,6 +158,8 @@ _vsync:
 irq:		ds.w	1
 	.long
 timer_handler:	ds.l	1
+	.long:
+gpu_handler:	ds.l	1
 	.even
 _vblCounter:	ds.w	1
 	.long

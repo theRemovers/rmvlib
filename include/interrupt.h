@@ -53,6 +53,12 @@ void set_timer(long count, irq_handler handler);
 /** Clear timer interrupt */
 void clear_timer();
 
+/** Set GPU interrupt */
+void set_gpu_interrupt(irq_handler handler);
+
+/** Clear GPU interrupt */
+void clear_gpu_interrupt();
+
 #ifdef __cplusplus
 }
 #endif
