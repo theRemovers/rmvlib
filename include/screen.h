@@ -51,14 +51,17 @@ typedef long fixp;
 
 /** Screen characteristics */
 typedef struct {
-  struct {
-    unsigned long reserved0: 17;
-    unsigned long exponent: 4;
-    unsigned long mantissa: 2;
-    unsigned long z_offset: 3;
-    unsigned long depth: 3;
-    unsigned long reserved1: 1;
-    unsigned long pitch: 2;
+  union {
+    struct {
+      unsigned long reserved0: 17;
+      unsigned long exponent: 4;
+      unsigned long mantissa: 2;
+      unsigned long z_offset: 3;
+      unsigned long depth: 3;
+      unsigned long reserved1: 1;
+      unsigned long pitch: 2;
+    };
+    unsigned long blitflags;
   };
   unsigned short int height;
   unsigned short int width;
