@@ -22,9 +22,13 @@
 #ifndef _LZ77_H
 #define _LZ77_H
 
+#include <routine.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern const routine lz77_routine;
 
 /** Initialise the LZ77 Depacker.
  *
@@ -34,20 +38,22 @@ extern "C" {
  * It returns the address of the end of the renderer routine in GPU
  * ram (which is long aligned).
  */
-void *init_lz77(/** Address where to load the GPU routine. It
-                 * should be long aligned. */
-                void *addr);
+static inline void *lz77_init(void *addr) {
+  return init_gpu_routine((routine *)&lz77_routine, addr);
+}
 
-/** Unpack LZ77 compressed data.
-	Return the size of uncompressed data. */
-int lz77_unpack(uint8_t *in, uint8_t *out);
+/** Unpack LZ77 compressed data. */
+static inline void lz77_unpack(void *addr, uint8_t *in, uint8_t *out) {
+  call_gpu_routine((routine *)&lz77_routine, addr, in, out);
+}
 
-/** Asynchronous unpack LZ77 compressed data.
-	Return the size of uncompressed data. */
-int lz77_unpack_async(uint8_t *in, uint8_t *out);
-/** Wait for asynchronous unpack of LZ77 compressed data
-    to complete, triggered by the function above. */
-void lz77_unpack_wait();
+static inline void lz77_unpack_async(void *addr, uint8_t *in, uint8_t *out) {
+  async_call_gpu_routine((routine *)&lz77_routine, addr, in, out);
+}
+
+static inline void lz77_unpack_wait(void *addr) {
+  wait_gpu_routine((routine *)&lz77_routine, addr);
+}
 
 #ifdef __cplusplus
 }

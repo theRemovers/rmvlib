@@ -143,70 +143,20 @@ DEPACKER_DEPACK	equ	.depacker_begin-.depacker_begin
 	.print	"Depacker size = ",DEPACKER_SIZE," bytes"
 
 	.68000
-	.text
 
-	.extern	_bcopy
-
-	.globl	_init_lz77
-;;; void *init_lz77(void *gpu_addr);
-_init_lz77:
-	pea	DEPACKER_SIZE
-	move.l	4+4(sp),-(sp)
-	pea	depacker
-	jsr	_bcopy
-	lea	12(sp),sp
-	move.l	4(sp),d0
-	move.l	d0,depacker_addr
-	add.l	#DEPACKER_SIZE,d0
-	rts
-
-	.globl	_lz77_unpack
-;;; int lz77_unpack(uint8_t *in, uint8_t *out);
-_lz77_unpack:
-	move.l	depacker_addr,a0
-	lea	DEPACKER_PARAMS(a0),a1
-	move.l	4(sp),(a1)+	; source data
-	move.l	8(sp),(a1)+	; target buffer
-	move.l	#$80000000,(a1)	; mutex
-	lea	DEPACKER_DEPACK(a0),a0
-        jsr_gpu a0
-	move.l	4(sp),a0
-	move.l	(a0),d0
-.wait:
-	tst.l	(a1)
-	bmi.s	.wait
-	rts
-
-	.globl	_lz77_unpack_async
-;;; int lz77_unpack_async(uint8_t *in, uint8_t *out);
-_lz77_unpack_async:
-	move.l	depacker_addr,a0
-	lea	DEPACKER_PARAMS(a0),a1
-	move.l	4(sp),(a1)+	; source data
-	move.l	8(sp),(a1)+	; target buffer
-	move.l	#$80000000,(a1)	; mutex
-	lea	DEPACKER_DEPACK(a0),a0
-        jsr_gpu a0
-	move.l	4(sp),a0
-	move.l	(a0),d0
-	rts
-
-	.globl	_lz77_unpack_wait
-;;; int lz77_unpack_wait:
-_lz77_unpack_wait:
-	move.l	depacker_addr,a0
-	lea	DEPACKER_PARAMS+8(a0),a1
-.wait:
-	tst.l	(a1)
-	bmi.s	.wait
-	rts
-
+	.data
+	.globl	_lz77_routine
+	.long
+;;; GPURoutine lz77_routine
+_lz77_routine:
+	dc.l	depacker
+	dc.l	DEPACKER_SIZE	; size of code
+	dc.l	0		; extra buffer size
+	dc.l	DEPACKER_DEPACK	; offset to start address
+	dc.w	2		; 2 parameters
+	dc.l	DEPACKER_PARAMS	; offset to parameters
+	
         .data
         .phrase
         dc.b    'LZ77 Depacker by Seb/The Removers'
         .phrase
-
-	.bss
-	.long
-depacker_addr:
-	ds.l	1

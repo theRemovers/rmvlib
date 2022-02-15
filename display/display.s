@@ -1,27 +1,29 @@
-; The Removers'Library 
+; The Removers'Library
 ; Copyright (C) 2006-2008 Seb/The Removers
 ; http://removers.atari.org/
-	
-; This library is free software; you can redistribute it and/or 
-; modify it under the terms of the GNU Lesser General Public 
-; License as published by the Free Software Foundation; either 
-; version 2.1 of the License, or (at your option) any later version. 
 
-; This library is distributed in the hope that it will be useful, 
-; but WITHOUT ANY WARRANTY; without even the implied warranty of 
-; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-; Lesser General Public License for more details. 
+; This library is free software; you can redistribute it and/or
+; modify it under the terms of the GNU Lesser General Public
+; License as published by the Free Software Foundation; either
+; version 2.1 of the License, or (at your option) any later version.
 
-; You should have received a copy of the GNU Lesser General Public 
-; License along with this library; if not, write to the Free Software 
-; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA 
+; This library is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+; Lesser General Public License for more details.
+
+; You should have received a copy of the GNU Lesser General Public
+; License along with this library; if not, write to the Free Software
+; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 	include	"jaguar.inc"
 
 	include	"../risc.s"
-	
+
 	include	"display_def.inc"
-	
+
+	include	"routine.inc"
+
 	.extern	_a_vdb
 	.extern	_bcopy
 	.extern	_vblCounter
@@ -36,21 +38,21 @@ GPU_DIV_FRAC	equ	1
 
 	;; save registers
 DISPLAY_IT_SAVE_REGS	equ	1
-	
+
 	include	"display_cfg.s"
 
 GPU_STACK_SIZE		equ	32	; in long words
-	
-; 	.bss
-; 	.phrase
+
+;	.bss
+;	.phrase
 ; gpu_isp:	ds.l	GPU_STACK_SIZE
-; 	.phrase
+;	.phrase
 ; gpu_usp:	ds.l	GPU_STACK_SIZE
 ; GPU_ISP	equ	gpu_isp
 ; GPU_USP	equ	gpu_usp
 GPU_ISP	equ	(G_ENDRAM-(4*GPU_STACK_SIZE))
 GPU_USP	equ	(GPU_ISP-(4*GPU_STACK_SIZE))
-			
+
 	.text
 	.68000
 
@@ -66,8 +68,8 @@ GPU_USP	equ	(GPU_ISP-(4*GPU_STACK_SIZE))
 	pop	r14
 	pop	r2
 	pop	r1
-.endm	
-		
+.endm
+
 .macro	display_save_other_regs
 	push	r0
 *	push	r1
@@ -148,15 +150,15 @@ gpu_display_driver:
 	load	(r30),r29	; get flags
 	.endif
 	padding_nop	(G_RAM+$10-*)
-	;; 
+	;;
 	.org	G_RAM+$10
 	;; DSP interrupt
 	padding_nop	$10
-	;; 
+	;;
 	.org	G_RAM+$20
 	;; Timing interrupt
 	padding_nop	$10
-	;; 
+	;;
 	.org	G_RAM+$30
 	;; OP interrupt
 	.if	DISPLAY_USE_OP_IT
@@ -166,8 +168,8 @@ gpu_display_driver:
 	load	(r30),r29	; get flags
 	.endif
 	padding_nop	(G_RAM+$40-*)
-	;; 
-	.org	G_RAM+$40	
+	;;
+	.org	G_RAM+$40
 	;; Blitter interrupt
 	padding_nop	$10
 	.org	G_RAM+$50
@@ -245,32 +247,32 @@ gpu_display_driver:
 	movei	#.gpu_display_strips,r20
 	add	r14,r0		; skip decision tree in logical list
 	move	r20,r2
-	add	r15,r1		; to read strips 
+	add	r15,r1		; to read strips
 	moveq	#DISPLAY_NB_STRIPS,r3
 .gpu_copy_strips:
 ;;;	original code
-;;; 
-;; 	load	(r1),r4		; read Y|H
-;; 	addq	#4,r1
-;; ;; 	move	r4,r6
-;; ;; 	sharq	#16,r4		; Y
-;; 	load	(r1),r5		; read offset (in bytes)	
-;; 	store	r4,(r2)
-;; 	addq	#4,r2
-;; 	addq	#4,r1
-;; 	add	r0,r5		; start of corresponding list
-;; 	shrq	#3,r5		; in phrases
-;; 	subq	#1,r3		; strip--
-;; 	store	r5,(r2)		; do not change flags!
-;; 	jr	ne,.gpu_copy_strips
-;; 	addqt	#4,r2
-;;; 
-;;;  	rescheduled code
-;;; 
+;;;
+;;	load	(r1),r4		; read Y|H
+;;	addq	#4,r1
+;; ;;	move	r4,r6
+;; ;;	sharq	#16,r4		; Y
+;;	load	(r1),r5		; read offset (in bytes)
+;;	store	r4,(r2)
+;;	addq	#4,r2
+;;	addq	#4,r1
+;;	add	r0,r5		; start of corresponding list
+;;	shrq	#3,r5		; in phrases
+;;	subq	#1,r3		; strip--
+;;	store	r5,(r2)		; do not change flags!
+;;	jr	ne,.gpu_copy_strips
+;;	addqt	#4,r2
+;;;
+;;;	rescheduled code
+;;;
 	load	(r1),r4		; read Y|H
 	addqt	#4,r1
 	load	(r1),r5		; read offset (in bytes)
-	addqt	#4,r1	
+	addqt	#4,r1
 	add	r0,r5		; start of corresponding list
 	store	r4,(r2)
 	shrq	#3,r5		; in phrases
@@ -279,16 +281,16 @@ gpu_display_driver:
 	store	r5,(r2)		; do not change flags!
 	jr	ne,.gpu_copy_strips
 	addqt	#4,r2
-;;; 
-	;; 
+;;;
+	;;
 	load	(r1),r4
 	store	r4,(r2)
-;; 	shlq	#16,r6
-;; 	shrq	#16,r6
-;; 	add	r4,r6		; y_max
-;; 	store	r6,(r2)
+;;	shlq	#16,r6
+;;	shrq	#16,r6
+;;	add	r4,r6		; y_max
+;;	store	r6,(r2)
 	;; the strips have been copied in GPU ram at this point!
-	movei	#_a_vdb,r0	
+	movei	#_a_vdb,r0
 	movei	#DISPLAY_HASHTBL,r10
 	loadw	(r0),r0		     ; a_vdb
 	load	(r15+DISPLAY_Y/4),r1 ; read DISPLAY_Y|DISPLAY_X
@@ -338,7 +340,7 @@ gpu_display_driver:
 	;; r2 is DISPLAY_X+LAYER_X
 	;; r3 is y_min+DISPLAY_Y+LAYER_Y
 	load	(r10),r14	; get sprite address
-	jump	(r26)		  ; jump .do_layer_tst	
+	jump	(r26)		  ; jump .do_layer_tst
 	addq	#4,r10		; next layer
 .do_layer:
 	;; r14 is sprite base address
@@ -346,10 +348,10 @@ gpu_display_driver:
 	;;  1-check if visible
 	;;  2-compute DATA base address
 	;; for unscaled sprites:
-	;;  3a-compute coords 
-	;;  4a-emit 
+	;;  3a-compute coords
+	;;  4a-emit
 	;; for scaled sprites:
-	;;  3b-compute coords 
+	;;  3b-compute coords
 	;;  4b-emit
 	load	(r14+SPRITE_SND_PHRASE/4),r9
 	btst	#SPRITE_INVISIBLE,r9 ; invisible?
@@ -411,34 +413,34 @@ gpu_display_driver:
 	;; r10 goes through hash table
 	;; r11 is layer counter
 	;; r14 is sprite base address
-;;; 	original code
-;;; 
-;; 	load	(r14+SPRITE_Y/4),r5 ; Y|X
-;; 	shrq	#3,r4		; DATA in phrases
-;; 	move	r5,r6
-;; 	shlq	#16,r5		; X|0
-;; 	sharq	#16,r6		; Y
-;; 	sharq	#16,r5		; X
-;; 	add	r3,r6		; Y+y_min+DISPLAY_Y+LAYER_Y
-;; 	add	r2,r5		; X+DISPLAY_X+LAYER_X
-;; 	;; r5 is X (still to be adjusted according to HOTSPOT)
-;; 	;; r6 is Y (...)
-;; 	move	r8,r19		; copy low bits of snd phrase
-;; 	move	r8,r7		; copy low bits of snd phrase
-;; 	shlq	#22,r19		; HEIGHT<<22
-;; 	shrq	#12,r8		; clear HEIGHT field
-;; 	cmpq	#0,r19		; HEIGHT<<22 = 0?
-;; 	jump	eq,(r25)	; jump eq,.next_in_layer
-;; 	shrq	#22,r19		; HEIGHT
-;; 	;; r19 is HEIGHT (not null)
-;; 	shlq	#12,r8		; 12 lower bits cleared
-;; 	shlq	#4,r7
-;; 	btst	#SPRITE_TYPE,r9	;
-;; 	jump	eq,(r23)	; jump eq,.non_scaled_sprite
-;; 	shrq	#32-10,r7	; DWIDTH
-;;; 
+;;;	original code
+;;;
+;;	load	(r14+SPRITE_Y/4),r5 ; Y|X
+;;	shrq	#3,r4		; DATA in phrases
+;;	move	r5,r6
+;;	shlq	#16,r5		; X|0
+;;	sharq	#16,r6		; Y
+;;	sharq	#16,r5		; X
+;;	add	r3,r6		; Y+y_min+DISPLAY_Y+LAYER_Y
+;;	add	r2,r5		; X+DISPLAY_X+LAYER_X
+;;	;; r5 is X (still to be adjusted according to HOTSPOT)
+;;	;; r6 is Y (...)
+;;	move	r8,r19		; copy low bits of snd phrase
+;;	move	r8,r7		; copy low bits of snd phrase
+;;	shlq	#22,r19		; HEIGHT<<22
+;;	shrq	#12,r8		; clear HEIGHT field
+;;	cmpq	#0,r19		; HEIGHT<<22 = 0?
+;;	jump	eq,(r25)	; jump eq,.next_in_layer
+;;	shrq	#22,r19		; HEIGHT
+;;	;; r19 is HEIGHT (not null)
+;;	shlq	#12,r8		; 12 lower bits cleared
+;;	shlq	#4,r7
+;;	btst	#SPRITE_TYPE,r9	;
+;;	jump	eq,(r23)	; jump eq,.non_scaled_sprite
+;;	shrq	#32-10,r7	; DWIDTH
+;;;
 ;;;	rescheduled code
-;;; 
+;;;
 	load	(r14+SPRITE_Y/4),r5 ; Y|X
 	move	r8,r19		; copy low bits of snd phrase
 	move	r8,r7		; copy low bits of snd phrase
@@ -458,25 +460,25 @@ gpu_display_driver:
 	btst	#SPRITE_TYPE,r9	;
 	jump	eq,(r23)	; jump eq,.non_scaled_sprite
 	shrq	#32-10,r7	; DWIDTH
-;;; 
+;;;
 .scaled_sprite:
-;; 	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
-;; 	jump	eq,(r25)	; jump eq,.next_in_layer
-;; 	nop
-;; 	.if	0
-;; 	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
-;; 	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
-;; 	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
-;; 	shlq	#32-16,r18		 ; VSCALE|HSCALE|0|0
-;; 	shlq	#8,r0			 ; REMAINDER|VSCALE|HSCALE|0
-;; 	shrq	#32-8,r18	; VSCALE 
-;; 	jump	eq,(r25)	; VSCALE = 0 ? jump eq,.next_in_layer
-;; 	shrq	#8,r0		; 0|REMAINDER|VSCALE|HSCALE
-;; 	shlq	#32-8,r17	; HSCALE|0|0|0
-;; 	btst	#SPRITE_USE_HOTSPOT,r9
-;; 	jr	eq,.scaled_ok_coords
-;; 	shrq	#32-8,r17	; HSCALE
-;; 	.else
+;;	subq	#1,r19		; HEIGHT-- (scaled sprites fix)
+;;	jump	eq,(r25)	; jump eq,.next_in_layer
+;;	nop
+;;	.if	0
+;;	load	(r14+SPRITE_SCALE/4),r18 ; REMAINDER|VSCALE|HSCALE
+;;	move	r18,r0			 ; REMAINDER|VSCALE|HSCALE
+;;	move	r18,r17			 ; REMAINDER|VSCALE|HSCALE
+;;	shlq	#32-16,r18		 ; VSCALE|HSCALE|0|0
+;;	shlq	#8,r0			 ; REMAINDER|VSCALE|HSCALE|0
+;;	shrq	#32-8,r18	; VSCALE
+;;	jump	eq,(r25)	; VSCALE = 0 ? jump eq,.next_in_layer
+;;	shrq	#8,r0		; 0|REMAINDER|VSCALE|HSCALE
+;;	shlq	#32-8,r17	; HSCALE|0|0|0
+;;	btst	#SPRITE_USE_HOTSPOT,r9
+;;	jr	eq,.scaled_ok_coords
+;;	shrq	#32-8,r17	; HSCALE
+;;	.else
 	;; the REMAINDER is initialised to 1<<5 + VSCALE-1
 	;;  which seems to be a good initial value for it
 	;; the maximal valid VSCALE value is thus 7<<5 - 1
@@ -499,13 +501,13 @@ gpu_display_driver:
 	jump	mi,(r25)	; if VSCALE-1 < 0 then VSCALE = 0 so continue to .next_in_layer
 	moveq	#1,r13		; instead of nop
 	or	r16,r0		; VSCALE|HSCALE|0|REMAINDER
-	shlq	#5,r13		
+	shlq	#5,r13
 	shrq	#32-8,r17	; HSCALE
 	add	r13,r0
 	btst	#SPRITE_USE_HOTSPOT,r9
 	jr	eq,.scaled_ok_coords
 	rorq	#16,r0		; 0|REMAINDER|VSCALE|HSCALE
-;; 	.endif
+;;	.endif
 	load	(r14+SPRITE_HY/4),r16 ; HY|HX
 	move	r16,r13
 	sharq	#16,r16		; HY
@@ -527,8 +529,8 @@ gpu_display_driver:
 	;; r2 is DISPLAY_X+LAYER_X
 	;; r3 is y_min+DISPLAY_Y+LAYER_Y
 	;; r4 is DATA in phrases
-	;; r5 is X 
-	;; r6 is Y 
+	;; r5 is X
+	;; r6 is Y
 	;; r7 is DWIDTH
 	;; r8 is low bits of snd phrase (12 lower bits cleared)
 	;; r9 is high bits of snd phrase
@@ -557,7 +559,7 @@ gpu_display_driver:
 	nop
 .scaled_found_strip:
 	cmpq	#DISPLAY_NB_STRIPS,r12
-	jump	ne,(r18)	; jr ne,.scaled_emit_sprite 
+	jump	ne,(r18)	; jr ne,.scaled_emit_sprite
 	addq	#1,r12
 .scaled_first_strip:
 	;; the first strip is particular
@@ -569,7 +571,7 @@ gpu_display_driver:
 	;; there is a substantial overhead
 	;; for cutting scaled sprites
 	;; so spare them!
-;; 	.if	1
+;;	.if	1
 	move	r5,r17		; strip.y
 	move	r0,r18		; 0|REMAINDER|VSCALE|HSCALE
 	sub	r6,r17		; dy = strip.y - y
@@ -589,7 +591,7 @@ gpu_display_driver:
 	jr	pl,.scaled_cut_sprite_end
 	moveq	#0,r17		; DATA will not change in this case
 	neg	r18		; (dy << 5) - REMAINDER
-	div	r16,r18		; ((dy << 5) - REMAINDER) / VSCALE 
+	div	r16,r18		; ((dy << 5) - REMAINDER) / VSCALE
 	move	r18,r17		; wait for division to complete (we really waste cycles there)
 	load	(r5),r18	; get G_REMAIN
 	.if	GPU_DIV_FRAC
@@ -622,44 +624,44 @@ gpu_display_driver:
 	or	r18,r0
 	add	r17,r4		; DATA += q*DWIDTH
 	add	r5,r0		; add 1<<5 to the remainder
-;; 	.else
+;;	.else
 ;;; The following is a direct adaptation of the algorithm
 ;;; that can be found in the NET file (WBK.NET)
-;; 	move	r5,r17		; strip.y
-;; 	move	r0,r18		; 0|REMAINDER|VSCALE|HSCALE
-;; 	sub	r6,r17		; dy = strip.y - y
-;; 	shlq	#16,r0		; VSCALE|HSCALE|0|0
-;; 	shrq	#16,r18		; REMAINDER
-;; 	move	r0,r16		; VSCALE|HSCALE|0|0
-;; 	shrq	#16,r0		; 0|0|VSCALE|HSCALE (ready to update REMAINDER)
-;; 	move	r5,r6		; y = strip.y
-;; 	moveq	#1,r5
-;; 	shrq	#24,r16		; VSCALE
-;; 	shlq	#5,r5		; 1.0
+;;	move	r5,r17		; strip.y
+;;	move	r0,r18		; 0|REMAINDER|VSCALE|HSCALE
+;;	sub	r6,r17		; dy = strip.y - y
+;;	shlq	#16,r0		; VSCALE|HSCALE|0|0
+;;	shrq	#16,r18		; REMAINDER
+;;	move	r0,r16		; VSCALE|HSCALE|0|0
+;;	shrq	#16,r0		; 0|0|VSCALE|HSCALE (ready to update REMAINDER)
+;;	move	r5,r6		; y = strip.y
+;;	moveq	#1,r5
+;;	shrq	#24,r16		; VSCALE
+;;	shlq	#5,r5		; 1.0
 ;; .scaled_cut_sprite_loop:
-;; 	cmpq	#0,r17
-;; 	jr	eq,.scaled_cut_sprite_end
-;; 	subq	#1,r17
-;; 	sub	r5,r18		; REMAINDER -= 1.0
+;;	cmpq	#0,r17
+;;	jr	eq,.scaled_cut_sprite_end
+;;	subq	#1,r17
+;;	sub	r5,r18		; REMAINDER -= 1.0
 ;; .scaled_cut_sprite_loop_line:
-;; 	cmp	r5,r18
-;; 	jr	pl,.scaled_cut_sprite_loop
-;; 	nop
-;; 	subq	#1,r19		; height--
-;; 	jump	mi,(r25)
-;; 	add	r16,r18		; REMAINDER += VSCALE
-;; 	jr	.scaled_cut_sprite_loop_line
-;; 	add	r7,r4		; next line
+;;	cmp	r5,r18
+;;	jr	pl,.scaled_cut_sprite_loop
+;;	nop
+;;	subq	#1,r19		; height--
+;;	jump	mi,(r25)
+;;	add	r16,r18		; REMAINDER += VSCALE
+;;	jr	.scaled_cut_sprite_loop_line
+;;	add	r7,r4		; next line
 ;; .scaled_cut_sprite_end:
-;; 	shlq	#16,r18
-;; 	or	r18,r0
-;; 	.endif
+;;	shlq	#16,r18
+;;	or	r18,r0
+;;	.endif
 .scaled_emit_sprite:
 	load	(r13),r15
 	move	r6,r16		; y
 	btst	#1,r15		; is it 32 bytes aligned?
 	jr	eq,.scaled_emit_aligned	; yes
-	move	r15,r17			; copy 
+	move	r15,r17			; copy
 	shlq	#3,r15			; in bytes
 	addq	#2,r17
 	movei	#O_BREQ|($7ff<<3)|BRANCHOBJ,r5 ; branch always
@@ -722,8 +724,8 @@ gpu_display_driver:
 	;; r2 is DISPLAY_X+LAYER_X
 	;; r3 is y_min+DISPLAY_Y+LAYER_Y
 	;; r4 is DATA in phrases
-	;; r5 is X 
-	;; r6 is Y 
+	;; r5 is X
+	;; r6 is Y
 	;; r7 is DWIDTH
 	;; r8 is low bits of snd phrase (12 lower bits cleared)
 	;; r9 is high bits of snd phrase
@@ -744,14 +746,14 @@ gpu_display_driver:
 	jr	mi,.non_scaled_found_strip ; if y - strip.y < 0 then found
 	subqt	#4,r13		; previous strip (list pointer)
 	subq	#1,r12
-;; 	jr	ne,.non_scaled_search_strip
+;;	jr	ne,.non_scaled_search_strip
 	jr	pl,.non_scaled_search_strip ; pl because of the last strip
 	addq	#12,r13		; next strip
 	;; check whether it is in the last strip
-;; 	load	(r13),r5	; y_max
-;; 	cmp	r5,r6
-;; 	jr	mi,.non_scaled_found_strip
-;; 	subq	#4,r13
+;;	load	(r13),r5	; y_max
+;;	cmp	r5,r6
+;;	jr	mi,.non_scaled_found_strip
+;;	subq	#4,r13
 	;; the sprite is invisible
 	jump	(r25)		; jump .next_in_layer
 	nop
@@ -776,39 +778,39 @@ gpu_display_driver:
 	jump	eq,(r25)	; then jump .next_in_layer
 	add	r17,r4		; DATA += DWIDTH*(strip.y-y)
 .non_scaled_emit_sprite:
-;;; 	original code
-;;; 
-;; 	load	(r13),r15
-;; 	move	r6,r16		; y
-;; 	move	r15,r17
-;; 	shlq	#3,r15		; in bytes
-;; 	addq	#2,r17		; next LINK in 2 phrases
-;; 	move	r19,r5		; height
-;; 	store	r17,(r13)	; next object in list
-;; 	shlq	#32-11+1,r16	; keep 11 bits of Y*2
-;; 	shlq	#32-10,r5
-;; 	shrq	#32-14,r16	; YPOS|0
-;; 	shrq	#32-24,r5
-;; 	addq	#4,r13
-;; 	or	r5,r16		; HEIGHT|YPOS|0
-;; 	move	r17,r5		; copy LINK
-;; 	shlq	#32-8,r17
-;; 	shrq	#8,r5
-;; 	or	r17,r16		; low bits of first phrase
-;; 	move	r4,r17
-;; 	store	r16,(r15+1)
-;; 	shlq	#11,r17		; DATA|0
-;; 	store	r8,(r15+3)
-;; 	or	r5,r17		; high bits of first phrase
-;; 	store	r9,(r15+2)
-;; 	subq	#1,r12		; strip--
-;; 	jr	eq,.next_in_layer
-;; 	store	r17,(r15)
-;; 	load	(r13),r5	; strip.y
-;; 	jump	(r22)		; jump .non_scaled_cut_sprite
-;; 	addq	#4,r13
+;;;	original code
 ;;;
-;;; 	rescheduled code
+;;	load	(r13),r15
+;;	move	r6,r16		; y
+;;	move	r15,r17
+;;	shlq	#3,r15		; in bytes
+;;	addq	#2,r17		; next LINK in 2 phrases
+;;	move	r19,r5		; height
+;;	store	r17,(r13)	; next object in list
+;;	shlq	#32-11+1,r16	; keep 11 bits of Y*2
+;;	shlq	#32-10,r5
+;;	shrq	#32-14,r16	; YPOS|0
+;;	shrq	#32-24,r5
+;;	addq	#4,r13
+;;	or	r5,r16		; HEIGHT|YPOS|0
+;;	move	r17,r5		; copy LINK
+;;	shlq	#32-8,r17
+;;	shrq	#8,r5
+;;	or	r17,r16		; low bits of first phrase
+;;	move	r4,r17
+;;	store	r16,(r15+1)
+;;	shlq	#11,r17		; DATA|0
+;;	store	r8,(r15+3)
+;;	or	r5,r17		; high bits of first phrase
+;;	store	r9,(r15+2)
+;;	subq	#1,r12		; strip--
+;;	jr	eq,.next_in_layer
+;;	store	r17,(r15)
+;;	load	(r13),r5	; strip.y
+;;	jump	(r22)		; jump .non_scaled_cut_sprite
+;;	addq	#4,r13
+;;;
+;;;	rescheduled code
 ;;;
 	load	(r13),r15
 	move	r6,r16		; y
@@ -820,7 +822,7 @@ gpu_display_driver:
 	move	r15,r17
 	addqt	#2,r17		; next LINK in 2 phrases
 	or	r5,r16		; HEIGHT|YPOS|0
-	store	r17,(r13)	; next object in list		
+	store	r17,(r13)	; next object in list
 	move	r17,r5		; copy LINK
 	shlq	#3,r15		; in bytes
 	shlq	#32-8,r17
@@ -839,12 +841,12 @@ gpu_display_driver:
 	load	(r13),r5	; strip.y
 	jump	(r22)		; jump .non_scaled_cut_sprite
 	addq	#4,r13
-;;; 
+;;;
 .next_in_layer:
 	load	(r14+SPRITE_NEXT/4),r14
 .do_layer_tst:
 	cmpq	#0,r14		; is there a sprite? if yes then process it
-	jump	ne,(r27)	; jump ne,.do_layer 
+	jump	ne,(r27)	; jump ne,.do_layer
 	nop
 .end_layer:
 	subq	#1,r11		; one layer less
@@ -852,7 +854,7 @@ gpu_display_driver:
 	nop
 	;; this is the end my friend!!
 	;; write a final stop object at the end of each list
-	moveq	#STOPOBJ,r0	
+	moveq	#STOPOBJ,r0
 	addq	#4,r20		; skip Y|H
 	moveq	#DISPLAY_NB_STRIPS,r2
 .gpu_write_stop_objects:
@@ -866,7 +868,7 @@ gpu_display_driver:
 .gpu_display_end_it:
 	.if	DISPLAY_BG_IT
 	movei	#BG,r1
-	moveq	#0,r0	
+	moveq	#0,r0
 	storew	r0,(r1)
 	.endif
 	movei	#_vblCounter,r28
@@ -918,7 +920,7 @@ GPU_SUBROUT_ADDR	equ	.gpu_display_driver_param
 	moveq	#0,r1		; 32 bits unsigned
 	.endif
 	store	r1,(r0)		; set division mode
- 	moveq	#0,r1		; clear r1 (to clear mutex afterwards)
+	moveq	#0,r1		; clear r1 (to clear mutex afterwards)
 	moveta	r31,r31		; ISP (bank 0)
 	movei	#.gpu_display_driver_param,r0
 	movei	#.gpu_display_driver_loop,r2
@@ -936,7 +938,7 @@ GPU_SUBROUT_ADDR	equ	.gpu_display_driver_param
 	store	r1,(r0)		; clear SUBROUT_ADDR (mutex)
 	.long
 .gpu_display_driver_end:
-		
+
 DISPLAY_DRIVER_INIT	equ	.gpu_display_driver_init
 DISPLAY_DRIVER_SIZE	equ	.gpu_display_driver_end-.gpu_display_driver_begin
 
@@ -944,14 +946,14 @@ GPU_FREE_RAM		set	.gpu_display_driver_init
 
 	.print	"Display manager code size (GPU): ", DISPLAY_DRIVER_SIZE
 	.print	"Available GPU Ram after G_RAM+",GPU_FREE_RAM-G_RAM
-				
+
 	.68000
 
 	.globl	GPU_SUBROUT_ADDR
 	.globl	__GPU_FREE_RAM
 __GPU_FREE_RAM	equ	GPU_FREE_RAM
 
-	.globl	_init_display_driver	
+	.globl	_init_display_driver
 _init_display_driver:
 	move.l	#0,G_CTRL
 	move.l	#_stop_object,d0
@@ -962,7 +964,7 @@ _init_display_driver:
 	.endif
 	clr.w	displayCounter
 	;; copy GPU code
-	pea	DISPLAY_DRIVER_SIZE	
+	pea	DISPLAY_DRIVER_SIZE
 	pea	G_RAM
 	pea	gpu_display_driver
 	jsr	_bcopy
@@ -997,7 +999,7 @@ _hide_display:
 	swap	d0
 	move.l	d0,OLP
 	rts
-	
+
 	.globl	_jump_gpu_subroutine
 _jump_gpu_subroutine:
 	move.l	4(sp),GPU_SUBROUT_ADDR
@@ -1013,20 +1015,100 @@ _wait_display_refresh:
 	bne.s	.wait
 	rts
 
+	.globl	_init_gpu_routine
+;;; void *init_gpu_routine(routine *routine, void *gpu_addr)
+_init_gpu_routine:
+	move.l	4(sp),a0
+	move.l	8(sp),a1
+	move.l	ROUTINE_SIZE(a0),-(sp)
+	move.l	a1,-(sp)
+	move.l	ROUTINE_ADDRESS(a0),-(sp)
+	jsr	_bcopy
+	lea	12(sp),sp
+	move.l	4(sp),a0
+	move.l	8(sp),a1
+	add.l	ROUTINE_SIZE(a0),a1
+	add.l	ROUTINE_EXTRA(a0),a1
+	move.l	a1,d0
+	addq.l	#7,d0
+	and.l	#~7,d0		; phrase aligned
+	rts
+
+	.globl	_call_gpu_routine
+;;; void call_gpu_routine(routine *routine, void *addr, ...)
+_call_gpu_routine:
+	move.l	a2,-(sp)
+	move.l	4+4(sp),a0
+	move.l	4+8(sp),a1
+	add.l	ROUTINE_PARAMS_OFFSET(a0),a1
+	move.w	ROUTINE_NUM_PARAMS(a0),d0
+	subq.w	#1,d0
+	bmi.s	.no_params
+	lea	4+12(sp),a2
+.copy_params:
+	move.l	(a2)+,(a1)+
+	dbf	d0,.copy_params
+.no_params:
+	move.l	#$80000000,(a1)	; mutex
+	move.l	4+8(sp),a2
+	add.l	ROUTINE_START_OFFSET(a0),a2
+	move.l	a2,GPU_SUBROUT_ADDR
+	move.l	(sp)+,a2
+.wait:
+	tst.l	(a1)
+	bmi.s	.wait
+	rts
+
+	.globl	_async_call_gpu_routine
+;;; void async_call_gpu_routine(routine *routine, void *addr, ...)
+_async_call_gpu_routine:
+	move.l	a2,-(sp)
+	move.l	4+4(sp),a0
+	move.l	4+8(sp),a1
+	add.l	ROUTINE_PARAMS_OFFSET(a0),a1
+	move.w	ROUTINE_NUM_PARAMS(a0),d0
+	subq.w	#1,d0
+	bmi.s	.no_params
+	lea	4+12(sp),a2
+.copy_params:
+	move.l	(a2)+,(a1)+
+	dbf	d0,.copy_params
+.no_params:
+	move.l	#$80000000,(a1)	; mutex
+	move.l	4+8(sp),a2
+	add.l	ROUTINE_START_OFFSET(a0),a2
+	move.l	a2,GPU_SUBROUT_ADDR
+	move.l	(sp)+,a2
+	rts
+
+	.globl	_wait_gpu_routine
+;;; void wait_gpu_routine(routine *routine, void *addr)
+_wait_gpu_routine:
+	move.l	4(sp),a0
+	move.l	8(sp),a1
+	add.l	ROUTINE_PARAMS_OFFSET(a0),a1
+	moveq	#0,d0
+	move.w	ROUTINE_NUM_PARAMS(a0),d0
+	add.l	d0,d0
+	add.l	d0,d0
+	add.l	d0,a1
+.wait:
+	tst.l	(a1)
+	bmi.s	.wait
+	rts
+
 	.bss
-	
-	.if	!(DISPLAY_USE_OP_IT&!DISPLAY_OP_IT_COMP_PT)	
+
+	.if	!(DISPLAY_USE_OP_IT&!DISPLAY_OP_IT_COMP_PT)
 	.long
 active_display_list:	ds.l	1
 	.endif
 
 	.bss
-displayCounter:	
+displayCounter:
 	ds.w	1
-			
+
 	.data
 	.even
 	dc.b	"Display Driver by Seb/The Removers"
 	.even
-
-

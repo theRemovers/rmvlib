@@ -22,6 +22,8 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
+#include <routine.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -152,10 +154,15 @@ extern long _GPU_FREE_RAM;
 /** Creates a new ::display that can contain at most max_nb_sprites
  * ::sprite.
  */
-display *new_display(/** maximal number of sprites the ::display can contain. 
-		     * If 0 then the default value of ::DISPLAY_DFLT_MAX_SPRITE is used. 
+display *new_display(/** maximal number of sprites the ::display can contain.
+		     * If 0 then the default value of ::DISPLAY_DFLT_MAX_SPRITE is used.
 		     */
 		    unsigned int max_nb_sprites);
+
+void *init_gpu_routine(routine *rout, void *gpu);
+void call_gpu_routine(routine *rout, void *addr, ...);
+void async_call_gpu_routine(routine *rout, void *addr, ...);
+void wait_gpu_routine(routine *rout, void *addr);
 
 #ifdef __cplusplus
 }
@@ -175,15 +182,15 @@ display *new_display(/** maximal number of sprites the ::display can contain.
 
     Each layer has its own coordinates inside a display and has an
     independent visibility flag.
-    
-    \section display_api API 
+
+    \section display_api API
 
     \code
     void init_display_driver();
     \endcode
 
     Initialise the display driver (load GPU interrupt routine,
-    ...). 
+    ...).
 
     This must be called prior any other display-related operations.
 
@@ -205,7 +212,7 @@ display *new_display(/** maximal number of sprites the ::display can contain.
     \code
     void wait_display_refresh();
     \endcode
-    
+
     Wait for the display to be refreshed on %screen.
 
     \code
@@ -229,7 +236,7 @@ display *new_display(/** maximal number of sprites the ::display can contain.
     located in GPU ram space).
 
     \section display_example Example
-    
+
     Here is the minimal code to create a display and make it the active one.
 
     \subsection display_c_example C example
