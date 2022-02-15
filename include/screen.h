@@ -200,11 +200,27 @@ sprite *sprite_of_screen(/** X coordinate of the ::sprite */
 void clear_screen(/** Address of the ::screen */
 		  screen *dst);
 
+/** Fill the given screen with given color. */
+void fill_screen(/** Address of the ::screen */
+		 screen *dst,
+		 /** Color */
+		 int color);
+
 /** Clear the given Z-buffered screen (fill with color 0 and Z = 0).
     Will only work on 16bpp screens.
  */
 void clear_zbuffered_screen(/** Address of the ::screen */
 			    screen *dst);
+
+/** Fill the given Z-buffered screen with given color and Z.
+    Will only work on 16bpp screens.
+ */
+void fill_zbuffered_screen(/** Address of the ::screen */
+			   screen *dst,
+			   /** Color */
+			   int color,
+			   /** Z */
+			   int z);
 
 /** Copy a box of the source ::screen in the target ::screen
  *
@@ -280,17 +296,17 @@ void vline(/** Address of the ::screen */
     Even if hardware clipping is enabled, it is recommended that the
     (x1, y1) and (x2, y2) are coordinates inside the screen. */
 void line(/** Address of the ::screen */
-          screen *dst,
-          /** X1 */
-          int x1,
-          /** Y1 */
-          int y1,
-          /** X2 */
-          int x2,
-          /** Y2 */
-          int y2,
-          /** Color */
-          int color);
+	  screen *dst,
+	  /** X1 */
+	  int x1,
+	  /** Y1 */
+	  int y1,
+	  /** X2 */
+	  int x2,
+	  /** Y2 */
+	  int y2,
+	  /** Color */
+	  int color);
 
 /** Rotate a screen and put the result in target screen of the given
     angle.
@@ -298,11 +314,11 @@ void line(/** Address of the ::screen */
     Center of rotation is (scr->x, scr->y) and is mapped in target
     screen to (tgt->x, tgt->y). */
 void screen_rotate(/** Address of source screen */
-                   screen *src,
-                   /** Adress of target screen */
-                   screen *tgt,
-                   /** Angle of rotation (from 0 to 255) */
-                   int alpha);
+		   screen *src,
+		   /** Adress of target screen */
+		   screen *tgt,
+		   /** Angle of rotation (from 0 to 255) */
+		   int alpha);
 
 #ifdef __cplusplus
 }
