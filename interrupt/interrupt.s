@@ -42,7 +42,6 @@ _init_interrupts:
 	move.w	d0,VI
         moveq   #0,d1
         move.w  d0,d1
-	moveq	#0,d0
 	move.w	#C_VIDCLR|C_VIDENA,d0
 	move.w	d0,irq
 	and.w	#$ff,d0
