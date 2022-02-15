@@ -28,7 +28,7 @@ VBL_QUEUE_SIZE	equ	8
 
 ;;; uint16_t init_interrupts();
 _init_interrupts:
-	or.w	#$0700,sr
+	or.w	#$0700,sr	; disable interrupts
 	clr.w	_vblCounter
 	move.l	#_vblQueue,a0
 	moveq	#VBL_QUEUE_SIZE-1,d0
@@ -44,12 +44,10 @@ _init_interrupts:
         move.w  d0,d1
 	moveq	#0,d0
 	move.w	#C_VIDCLR|C_VIDENA,d0
-	swap	d0
-	move.l	d0,irq		; clear also mutex
-	swap	d0
+	move.w	d0,irq
 	and.w	#$ff,d0
 	or.w	d0,INT1
-	and.w	#$f8ff,sr
+	and.w	#$f8ff,sr	; enable interrupts
         move.l  d1,d0
 	rts
 
@@ -127,7 +125,6 @@ _vsync:
 
 	.long
 irq:		ds.w	1
-irq_mutex:	ds.w	1
 	.long
 timer_handler:	ds.l	1
 	.even
