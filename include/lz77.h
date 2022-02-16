@@ -23,6 +23,7 @@
 #define _LZ77_H
 
 #include <routine.h>
+#include <gpudriver.h>
 
 #ifdef __cplusplus
 extern "C" {
