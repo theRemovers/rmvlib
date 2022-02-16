@@ -22,8 +22,6 @@
 
 	include	"display_def.inc"
 
-	include	"routine.inc"
-
 	.extern	_a_vdb
 	.extern	_bcopy
 	.extern	_vblCounter
@@ -1013,88 +1011,6 @@ _wait_display_refresh:
 	move.w	(a0),d0		; inside the loop because interrupts can occur at any time
 	cmp.w	(a1),d0
 	bne.s	.wait
-	rts
-
-	.globl	_init_gpu_routine
-;;; void *init_gpu_routine(routine *routine, void *gpu_addr)
-_init_gpu_routine:
-	move.l	4(sp),a0
-	move.l	8(sp),a1
-	move.l	ROUTINE_SIZE(a0),-(sp)
-	move.l	a1,-(sp)
-	move.l	ROUTINE_ADDRESS(a0),-(sp)
-	jsr	_bcopy
-	lea	12(sp),sp
-	move.l	4(sp),a0
-	move.l	8(sp),a1
-	add.l	ROUTINE_SIZE(a0),a1
-	add.l	ROUTINE_EXTRA(a0),a1
-	move.l	a1,d0
-	addq.l	#7,d0
-	and.l	#~7,d0		; phrase aligned
-	rts
-
-	.globl	_call_gpu_routine
-;;; void call_gpu_routine(routine *routine, void *addr, ...)
-_call_gpu_routine:
-	move.l	a2,-(sp)
-	move.l	4+4(sp),a0
-	move.l	4+8(sp),a1
-	add.l	ROUTINE_PARAMS_OFFSET(a0),a1
-	move.w	ROUTINE_NUM_PARAMS(a0),d0
-	subq.w	#1,d0
-	bmi.s	.no_params
-	lea	4+12(sp),a2
-.copy_params:
-	move.l	(a2)+,(a1)+
-	dbf	d0,.copy_params
-.no_params:
-	move.l	#$80000000,(a1)	; mutex
-	move.l	4+8(sp),a2
-	add.l	ROUTINE_START_OFFSET(a0),a2
-	move.l	a2,GPU_SUBROUT_ADDR
-	move.l	(sp)+,a2
-.wait:
-	tst.l	(a1)
-	bmi.s	.wait
-	rts
-
-	.globl	_async_call_gpu_routine
-;;; void async_call_gpu_routine(routine *routine, void *addr, ...)
-_async_call_gpu_routine:
-	move.l	a2,-(sp)
-	move.l	4+4(sp),a0
-	move.l	4+8(sp),a1
-	add.l	ROUTINE_PARAMS_OFFSET(a0),a1
-	move.w	ROUTINE_NUM_PARAMS(a0),d0
-	subq.w	#1,d0
-	bmi.s	.no_params
-	lea	4+12(sp),a2
-.copy_params:
-	move.l	(a2)+,(a1)+
-	dbf	d0,.copy_params
-.no_params:
-	move.l	#$80000000,(a1)	; mutex
-	move.l	4+8(sp),a2
-	add.l	ROUTINE_START_OFFSET(a0),a2
-	move.l	a2,GPU_SUBROUT_ADDR
-	move.l	(sp)+,a2
-	rts
-
-	.globl	_wait_gpu_routine
-;;; void wait_gpu_routine(routine *routine, void *addr)
-_wait_gpu_routine:
-	move.l	4(sp),a0
-	move.l	8(sp),a1
-	add.l	ROUTINE_PARAMS_OFFSET(a0),a1
-	moveq	#0,d0
-	move.w	ROUTINE_NUM_PARAMS(a0),d0
-	add.l	d0,d0
-	add.l	d0,d0
-	add.l	d0,a1
-.wait:
-	tst.l	(a1)
-	bmi.s	.wait
 	rts
 
 	.bss

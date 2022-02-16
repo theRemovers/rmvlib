@@ -159,11 +159,6 @@ display *new_display(/** maximal number of sprites the ::display can contain.
 		     */
 		    unsigned int max_nb_sprites);
 
-void *init_gpu_routine(routine *rout, void *gpu);
-void call_gpu_routine(routine *rout, void *addr, ...);
-void async_call_gpu_routine(routine *rout, void *addr, ...);
-void wait_gpu_routine(routine *rout, void *addr);
-
 #ifdef __cplusplus
 }
 #endif

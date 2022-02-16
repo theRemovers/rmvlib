@@ -6,7 +6,7 @@ SRCS=
 SRCC=
 SRCH=
 OBJS=$(SRCC:.c=.o) $(SRCS:.s=.o)
-NASUBDIRS=interrupt display collision fb2d sound render lz77
+NASUBDIRS=interrupt display collision fb2d sound render lz77 gpudriver
 ASUBDIRS=sprite screen joypad blit console skunkboard
 OSUBDIRS=doc
 SUBDIRS=$(NASUBDIRS) $(ASUBDIRS) $(OSUBDIRS)

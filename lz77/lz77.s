@@ -18,8 +18,6 @@
 
 	.include	"jaguar.inc"
 
-	.include	"../routine.s"
-
 	.macro	movei_label
 	movei	#\2-\1,\3
 	.endm
