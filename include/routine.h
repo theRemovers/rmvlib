@@ -16,8 +16,8 @@
 /* License along with this library; if not, write to the Free Software */
 /* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef _RENDER_H
-#define _RENDER_H
+#ifndef _ROUTINE_H
+#define _ROUTINE_H
 
 #include <stdint.h>
 
