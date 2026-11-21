@@ -19,6 +19,7 @@
 #ifndef _ROUTINE_H
 #define _ROUTINE_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
