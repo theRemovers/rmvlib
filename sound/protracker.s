@@ -30,3 +30,7 @@ _pause_module	equ	mt_pause
 ;; enable_module_voices(int mask);
 _enable_module_voices	equ	mt_enable_voices
 
+	.globl	_set_song_position
+;; set_song_position(int position);
+_set_song_position	equ	mt_SetSongPos
+

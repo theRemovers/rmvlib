@@ -1246,6 +1246,10 @@ mt_PositionJump:
 	MOVE.B	n_cmdlo(A6),D0
 	.endif
 	SUBQ.B	#1,D0
+	bra.s skip_SetSongPos
+mt_SetSongPos:
+	MOVE.L 4(sp),D0
+skip_SetSongPos:
 	MOVE.B	D0,mt_SongPos
 mt_pj2:	
 	CLR.B	mt_PBreakPos

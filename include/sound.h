@@ -93,6 +93,10 @@ void clear_module();
 /** Play/Pause the replay of the current music */
 void pause_module();
 
+/** Set specific postiont to start playback from. */
+void set_song_position(/** Position in song to play */
+			 int position);
+
 /** Set modules voices mask. It returns the mask set. */
 int enable_module_voices(/** Mask to enable/disable voice of a
 			     module. Bit 0 = Voice 0, Bit 1 = Voice 1,
